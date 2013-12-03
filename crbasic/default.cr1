@@ -8,9 +8,11 @@
 ' needed, for example to integrate taking measurements off of a chamber. 
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-Const TOGGLE_TIMER = 4  'Min
 
 Const INTEG = 250
+'''''''''' SETTINGS '''''''''''
+ConstTable
+  Const TOGGLE_TIME = 4*60    'duration between switching sampling sources, seconds
 
 '' 0-495 ppb over 100-5000 mV 
 '   slope of 0.05 ppb/mV with offset of -5 ppb @ 0mV
@@ -19,6 +21,8 @@ Const INTEG = 250
 Const CH1_DF = 1
 Const CH1_MULT = 0.05 
 Const CH1_OFF = -2.5
+EndConstTable
+
 
 Const CH2_DF = 2
 Const CH2_MULT = 0.05
