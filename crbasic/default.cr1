@@ -13,6 +13,7 @@ Const INTEG = 250
 '''''''''' SETTINGS '''''''''''
 ConstTable
   Const TOGGLE_TIME = 4*60    'duration between switching sampling sources, seconds
+  Const USE_3_LEVELS = False  'set true for three-level sampling
 
 '' 0-495 ppb over 100-5000 mV 
 '   slope of 0.05 ppb/mV with offset of -5 ppb @ 0mV
@@ -28,6 +29,7 @@ EndConstTable
 
 '''''''''' WIRING ''''''''''
 Const VALVE_1_CTRL = 7   'C7
+Const VALVE_2_CTRL = 8   'C8
 
 
 
@@ -35,9 +37,9 @@ Const VALVE_1_CTRL = 7   'C7
 
 Public PTemp, batt_volt
 
-'Public sol_2_on As Boolean
 Public valve_on(2) As Boolean
 Alias valve_on(1) = v1_is_on
+Alias valve_on(2) = v2_is_on
 
 Public conc(2)
 Alias conc(1) = chan1_conc
@@ -56,8 +58,8 @@ DataTable (Gradient_solenoid,1,-1)
 	Sample(1,batt_volt,FP2)
 	Sample(1,PTemp,FP2)
 
-	'Sample(1, sol_2_on, Boolean) 
 	Sample(1, v1_is_on, Boolean)
+	'Sample(1, v2_is_on, Boolean) 
 
 	Sample(1,chan1_valve1_open,IEEE4)
 	Sample(1,chan1_valve1_closed,IEEE4)
