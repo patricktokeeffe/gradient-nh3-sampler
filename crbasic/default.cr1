@@ -18,15 +18,14 @@ ConstTable
 '   slope of 0.05 ppb/mV with offset of -5 ppb @ 0mV
 '    --> voltage divider
 '   slope of 0.05 ppb/mV with offset of -2.5 ppb @ 0mV
-Const CH1_DF = 1
-Const CH1_MULT = 0.05 
-Const CH1_OFF = -2.5
+  Const DF1_MULT = 0.05 
+  Const DF1_OFF = -2.5
+  
+  Const DF2_MULT = 0.05
+  Const DF2_OFF = -2.5  
 EndConstTable
 
 
-Const CH2_DF = 2
-Const CH2_MULT = 0.05
-Const CH2_OFF = -2.5
 
 
 Public PTemp, batt_volt
@@ -74,8 +73,8 @@ EndTable
 BeginProg
 	Scan (1,Sec,0,0)
   
-    VoltDiff(chan1_conc,1,mv5000,CH1_DF,1,0,INTEG,CH1_MULT,CH1_OFF)
-    VoltDiff(chan2_conc,1,mv5000,CH2_DF,1,0,INTEG,CH2_MULT,CH2_OFF)
+    VoltDiff(chan1_conc,1,mv5000,1,1,0,INTEG,DF1_MULT,DF1_OFF)
+    VoltDiff(chan2_conc,1,mv5000,2,1,0,INTEG,DF2_MULT,DF2_OFF)
 
 		PanelTemp (PTemp,250)
 		Battery (batt_volt)
