@@ -1,0 +1,105 @@
+    'CR1000 Series Datalogger
+'
+'date: 04 April 2013
+'program author: Sarah Waldo
+' This program is designed for the auxiliary CR1000 datalogger to run the solenoid valves, in 
+' order to prevent corruption of the LI6262 CO2 signal by electronic noise. This program simply 
+' uses "PortSet" to turn the solenoids off and on. The interval can be easily switched if 
+' needed, for example to integrate taking measurements off of a chamber. 
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Const TOGGLE_TIMER = 4  'Min
+
+Const INTEG = 250
+
+'' 0-495 ppb over 100-5000 mV 
+'   slope of 0.05 ppb/mV with offset of -5 ppb @ 0mV
+'    --> voltage divider
+'   slope of 0.05 ppb/mV with offset of -2.5 ppb @ 0mV
+Const CH1_DF = 1
+Const CH1_MULT = 0.05 
+Const CH1_OFF = -2.5
+
+Const CH2_DF = 2
+Const CH2_MULT = 0.05
+Const CH2_OFF = -2.5
+
+
+Public PTemp, batt_volt
+
+Public sol_1_on As Boolean
+'Public sol_2_on As Boolean
+
+Public conc(2)
+Alias conc(1) = chan1_conc
+Alias conc(2) = chan2_conc
+
+Public status(4)
+Alias status(1) = chan1_valve1_open
+Alias status(2) = chan1_valve1_closed
+Alias status(3) = chan2_valve1_open
+Alias status(4) = chan2_valve1_closed
+
+
+DataTable (Gradient_solenoid,1,-1)
+	DataInterval (0,1,Sec,1)
+  CardOut(1,-1)
+	Sample(1,batt_volt,FP2)
+	Sample(1,PTemp,FP2)
+
+	Sample(1, sol_1_on, Boolean)
+	'Sample(1, sol_2_on, Boolean) 
+
+	Sample(1,chan1_valve1_open,IEEE4)
+	Sample(1,chan1_valve1_closed,IEEE4)
+	Sample(1,chan2_valve1_open,IEEE4)
+	Sample(1,chan2_valve1_closed,IEEE4)
+EndTable
+
+DataTable(Gradient_stats,1,-1)
+  DataInterval(0,30,Min,10)
+  CardOut(1,-1)
+  Average(1,chan1_valve1_open,FP2,chan1_valve1_open=NAN)
+  Average(1,chan1_valve1_closed,FP2,chan1_valve1_closed=NAN)
+  Average(1,chan2_valve1_open,FP2,chan2_valve1_open=NAN)
+  Average(1,chan2_valve1_closed,FP2,chan2_valve1_closed=NAN)
+EndTable
+
+
+'Main Program
+BeginProg
+	Scan (1,Sec,0,0)
+  
+    VoltDiff(chan1_conc,1,mv5000,CH1_DF,1,0,INTEG,CH1_MULT,CH1_OFF)
+    VoltDiff(chan2_conc,1,mv5000,CH2_DF,1,0,INTEG,CH2_MULT,CH2_OFF)
+
+		PanelTemp (PTemp,250)
+		Battery (batt_volt)
+      
+'		If ( TimeIntoInterval(0, 8, min)) Then
+'         sol_1_on = 0                     'S1 off -- sampling top tube/room air
+'    ElseIf (TimeIntoInterval (4, 8, min)) Then
+'         sol_1_on = -1                     'S1 on -- sampling middle tube/outside
+'    EndIf
+    If ( TimeIntoInterval(0,TOGGLE_TIMER,Min)) Then sol_1_on = NOT sol_1_on
+
+    If (sol_1_on) Then
+      PortSet(1,True)
+      chan1_valve1_open = chan1_conc
+      chan1_valve1_closed = NAN
+      chan2_valve1_open = chan2_conc
+      chan2_valve1_closed = NAN
+    Else
+      PortSet(1,False)
+      chan1_valve1_open = NAN
+      chan1_valve1_closed = chan1_conc 
+      chan2_valve1_open = NAN
+      chan2_valve1_closed = chan2_conc
+    EndIf
+       
+		CallTable Gradient_solenoid
+		CallTable Gradient_stats
+	NextScan
+EndProg
+
+
