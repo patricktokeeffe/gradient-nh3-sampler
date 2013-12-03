@@ -26,12 +26,18 @@ ConstTable
 EndConstTable
 
 
+'''''''''' WIRING ''''''''''
+Const VALVE_1_CTRL = 7   'C7
+
+
+
 
 
 Public PTemp, batt_volt
 
-Public sol_1_on As Boolean
 'Public sol_2_on As Boolean
+Public valve_on(2) As Boolean
+Alias valve_on(1) = v1_is_on
 
 Public conc(2)
 Alias conc(1) = chan1_conc
@@ -50,8 +56,8 @@ DataTable (Gradient_solenoid,1,-1)
 	Sample(1,batt_volt,FP2)
 	Sample(1,PTemp,FP2)
 
-	Sample(1, sol_1_on, Boolean)
 	'Sample(1, sol_2_on, Boolean) 
+	Sample(1, v1_is_on, Boolean)
 
 	Sample(1,chan1_valve1_open,IEEE4)
 	Sample(1,chan1_valve1_closed,IEEE4)
@@ -78,22 +84,18 @@ BeginProg
 
 		PanelTemp (PTemp,250)
 		Battery (batt_volt)
-      
-'		If ( TimeIntoInterval(0, 8, min)) Then
-'         sol_1_on = 0                     'S1 off -- sampling top tube/room air
-'    ElseIf (TimeIntoInterval (4, 8, min)) Then
-'         sol_1_on = -1                     'S1 on -- sampling middle tube/outside
-'    EndIf
-    If ( TimeIntoInterval(0,TOGGLE_TIMER,Min)) Then sol_1_on = NOT sol_1_on
 
-    If (sol_1_on) Then
-      PortSet(1,True)
+    If ( TimeIntoInterval(0,TOGGLE_TIME,Sec)) Then 
+      v1_is_on = NOT v1_is_on
+      PortSet(VALVE_1_CTRL, v1_is_on)
+    EndIf
+
+    If (v1_is_on) Then
       chan1_valve1_open = chan1_conc
       chan1_valve1_closed = NAN
       chan2_valve1_open = chan2_conc
       chan2_valve1_closed = NAN
     Else
-      PortSet(1,False)
       chan1_valve1_open = NAN
       chan1_valve1_closed = chan1_conc 
       chan2_valve1_open = NAN
