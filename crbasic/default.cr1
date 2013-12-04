@@ -9,7 +9,7 @@
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 
-'''''''''' SETTINGS '''''''''''
+''''''''''''''' SETTINGS ''''''''''''''''
 ConstTable
   Const TOGGLE_TIME = 4*60    'duration between switching sampling sources, seconds
   Const USE_3_LEVELS = False  'set true for three-level sampling
@@ -40,9 +40,10 @@ ConstTable
 EndConstTable
 
 
-'''''''''' WIRING ''''''''''
-Const DF1_IO = 1 'DF1
-Const DF2_IO = 2 'DF2
+''''''''''''''' WIRING '''''''''''''''
+'trace gas analyzer analog input
+Const DF1_IO = 1 'DF
+Const DF2_IO = 2 'DF
 
 'closed-path CO2/H2O analyzer
 Const CP_CO2_IO = 5 'DF
@@ -53,6 +54,8 @@ Const TMPR_BTM_IO = 6 'SE
 Const TMPR_MID_IO = 7 'SE
 Const TMPR_TOP_IO = 8 'SE
 Const TMPR_VX_IO = Vx1
+
+'level-selection valves
 Const VALVE_1_CTRL = 7   'C7
 ' Valve 1 controls selection of bottom- or top-level sampling lines
 '   Normally Open ---------- Bottom level (closest to ground) inlet
@@ -66,16 +69,15 @@ Const VALVE_2_CTRL = 8   'C8
 '   Common ----------------- To analyzer delivery
 
 
-'''''''''' CONSTANTS '''''''''''
+''''''''''''''' CONSTANTS ''''''''''''''''
 Const INTEG = 250
 
 
-'''''''''' VARIABLES '''''''''''
-
+''''''''''''''' VARIABLES ''''''''''''''''
 'measurements from DF1, DF2
-Public raw(2) 
-Alias raw(1) = ch1_value
-Alias raw(2) = ch2_value
+Public raw_conc(2)
+Alias raw_conc(1) = ch1_value
+Alias raw_conc(2) = ch2_value
 
 'level-partitioned readings of DF1, DF2
 Public conc(6)
@@ -116,8 +118,8 @@ Alias valve_on(1) = is_sampling_top 'else bottom
 Alias valve_on(2) = is_sampling_mid 'else top or bottom
 
 
-'''''''''' DATA TABLES '''''''''''
-DataTable (Gradient_solenoid,1,-1)
+''''''''''''''' DATA TABLES ''''''''''''''''
+DataTable (gradient_tsdata,1,-1)
 	DataInterval (0,SCAN_INTV,Sec,1)
   CardOut(1,-1)
 	Sample(1,batt_volt,FP2)
@@ -137,7 +139,7 @@ DataTable (Gradient_solenoid,1,-1)
   Sample(1,tmpr_top,IEEE4)
 EndTable
 
-DataTable(Gradient_stats,1,-1)
+DataTable(gradient_stats,1,-1)
   DataInterval(0,STATS_INTV,Min,10)
   CardOut(1,-1)
   
@@ -178,7 +180,7 @@ DataTable(Gradient_stats,1,-1)
 EndTable
 
 
-'''''''''' MAIN PROGRAM ''''''''''
+''''''''''''''' MAIN PROGRAM '''''''''''''''
 BeginProg
   is_sampling_top = False
   is_sampling_mid = False
@@ -188,6 +190,13 @@ BeginProg
   Move(raw_cp_irga(1),2,NAN,1)
   Move(cp_irga(1),6,NAN,1)
   Move(tmpr(1),3,NAN,1)
+  
+  ' TODO verify toggle timer is a factor of stats interval ??
+  '         at least verify it's a factor of one day 
+  '
+  ' If (USE_3_LEVELS) Then
+  '   If ( STAT_INT MOD (3 * TOGGLE_TIME)) Then
+  ' ...
   
 	Scan (SCAN_INTV,Sec,0,0)
   
@@ -220,6 +229,7 @@ BeginProg
         is_sampling_top = NOT is_sampling_top
         'is_sampling_mid is always False
       EndIf
+      
       PortSet(VALVE_1_CTRL, is_sampling_top)
       PortSet(VALVE_2_CTRL, is_sampling_mid)
       Move(conc(1),6,NAN,1)
@@ -245,8 +255,8 @@ BeginProg
       cp_H2O_btm = cp_H2O_value
     EndIf
        
-		CallTable Gradient_solenoid
-		CallTable Gradient_stats
+		CallTable gradient_tsdata
+		CallTable gradient_stats
 	NextScan
 EndProg
 
