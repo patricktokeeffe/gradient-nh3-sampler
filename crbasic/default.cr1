@@ -14,8 +14,7 @@ ConstTable
   Const TOGGLE_TIME = 4*60    'duration between switching sampling sources, seconds
   Const USE_3_LEVELS = False  'set true for three-level sampling
   
-  Const STATS_INTV = 30
-  Const STATS_UNIT = Min
+  Const STATS_INTV = 30       'time interval of statistics output, minutes
 
 '' 0-495 ppb over 100-5000 mV 
 '   slope of 0.05 ppb/mV with offset of -5 ppb @ 0mV
@@ -92,7 +91,7 @@ DataTable (Gradient_solenoid,1,-1)
 EndTable
 
 DataTable(Gradient_stats,1,-1)
-  DataInterval(0,STATS_INTV,STATS_UNIT,10)
+  DataInterval(0,STATS_INTV,Min,10)
   CardOut(1,-1)
   Average(1,ch1_top,IEEE4,ch1_top=NAN)
   StdDev(1,ch1_top,FP2,ch1_top=NAN)
