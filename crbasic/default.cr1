@@ -120,7 +120,7 @@ BeginProg
     VoltDiff(ch1_value,1,mv5000,DF1_IO,1,0,INTEG,DF1_MULT,DF1_OFF)
     VoltDiff(ch2_value,1,mv5000,DF2_IO,1,0,INTEG,DF2_MULT,DF2_OFF)
 
-		PanelTemp (PTemp,250)
+		PanelTemp (PTemp,INTEG)
 		Battery (batt_volt)
 
     If ( TimeIntoInterval(0,TOGGLE_TIME,Sec)) Then 
