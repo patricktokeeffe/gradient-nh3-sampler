@@ -183,6 +183,12 @@ BeginProg
   is_sampling_top = False
   is_sampling_mid = False
   
+  Move(raw_conc(1),2,NAN,1)
+  Move(conc(1),6,NAN,1)
+  Move(raw_cp_irga(1),2,NAN,1)
+  Move(cp_irga(1),6,NAN,1)
+  Move(tmpr(1),3,NAN,1)
+  
 	Scan (SCAN_INTV,Sec,0,0)
   
     VoltDiff(ch1_value,1,mv5000,DF1_IO,1,0,INTEG,DF1_MULT,DF1_OFF)
