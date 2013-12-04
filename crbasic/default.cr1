@@ -79,12 +79,12 @@ Alias raw(2) = ch2_value
 
 'level-partitioned readings of DF1, DF2
 Public conc(6)
-Alias conc(1) = ch1_top
+Alias conc(1) = ch1_btm
 Alias conc(2) = ch1_mid
-Alias conc(3) = ch1_btm
-Alias conc(4) = ch2_top
+Alias conc(3) = ch1_top
+Alias conc(4) = ch2_btm
 Alias conc(5) = ch2_mid
-Alias conc(6) = ch2_btm
+Alias conc(6) = ch2_top
 
 'measurements from closed-path CO2/H2O analyzer
 Public raw_cp_irga(2)
@@ -140,19 +140,20 @@ EndTable
 DataTable(Gradient_stats,1,-1)
   DataInterval(0,STATS_INTV,Min,10)
   CardOut(1,-1)
-  Average(1,ch1_top,IEEE4,ch1_top=NAN)
-  StdDev(1,ch1_top,FP2,ch1_top=NAN)
-  Average(1,ch1_mid,IEEE4,ch1_mid=NAN)
-  StdDev(1,ch1_mid,FP2,ch1_mid=NAN)
+  
   Average(1,ch1_btm,IEEE4,ch1_btm=NAN)
   StdDev(1,ch1_btm,FP2,ch1_btm=NAN)
+  Average(1,ch1_mid,IEEE4,ch1_mid=NAN)
+  StdDev(1,ch1_mid,FP2,ch1_mid=NAN)
+  Average(1,ch1_top,IEEE4,ch1_top=NAN)
+  StdDev(1,ch1_top,FP2,ch1_top=NAN)
   
-  Average(1,ch2_top,IEEE4,ch2_top=NAN)
-  StdDev(1,ch2_top,FP2,ch2_top=NAN)
-  Average(1,ch2_mid,IEEE4,ch2_mid=NAN)
-  StdDev(1,ch2_mid,FP2,ch2_top=NAN)
   Average(1,ch2_btm,IEEE4,ch2_btm=NAN)
   StdDev(1,ch2_btm,FP2,ch2_btm=NAN)
+  Average(1,ch2_mid,IEEE4,ch2_mid=NAN)
+  StdDev(1,ch2_mid,FP2,ch2_top=NAN)
+  Average(1,ch2_top,IEEE4,ch2_top=NAN)
+  StdDev(1,ch2_top,FP2,ch2_top=NAN)
 
   Average(1,cp_CO2_btm,IEEE4,cp_CO2_btm=NAN)
   StdDev(1,cp_CO2_btm,FP2,cp_CO2_btm=NAN)
