@@ -23,9 +23,14 @@ ConstTable
 '   slope of 0.05 ppb/mV with offset of -2.5 ppb @ 0mV
   Const DF1_MULT = 0.05 
   Const DF1_OFF = -2.5
-  
   Const DF2_MULT = 0.05
-  Const DF2_OFF = -2.5  
+  Const DF2_OFF = -2.5
+  
+  'Applies to all themistors!
+  ' Celcius: mult=1, offset=0
+  ' Fahrenheit: mult=1.8, offset=32
+  Const TMPR_MULT = 1.8
+  Const TMPR_OFF = 32
 EndConstTable
 
 
@@ -33,6 +38,12 @@ EndConstTable
 Const DF1_IO = 1 'DF1
 Const DF2_IO = 2 'DF2
 
+
+'aspirated temperature sensors
+Const TMPR_BTM_IO = 6 'SE
+Const TMPR_MID_IO = 7 'SE
+Const TMPR_TOP_IO = 8 'SE
+Const TMPR_VX_IO = Vx1
 Const VALVE_1_CTRL = 7   'C7
 ' Valve 1 controls selection of bottom- or top-level sampling lines
 '   Normally Open ---------- Bottom level (closest to ground) inlet
@@ -66,6 +77,12 @@ Alias conc(4) = ch2_top
 Alias conc(5) = ch2_mid
 Alias conc(6) = ch2_btm
 
+'measurements from aspirated themistors
+Public tmpr(3)
+Alias tmpr(1) = tmpr_btm
+Alias tmpr(2) = tmpr_mid
+Alias tmpr(3) = tmpr_top
+
 'data logger built-in sensors
 Public PTemp, batt_volt
 
@@ -88,7 +105,10 @@ DataTable (Gradient_solenoid,1,-1)
 
   Sample(1,ch1_value,IEEE4)
   Sample(1,ch2_value,IEEE4)
-  'other measurements here
+  
+  Sample(1,tmpr_btm,IEEE4)
+  Sample(1,tmpr_mid,IEEE4)
+  Sample(1,tmpr_top,IEEE4)
 EndTable
 
 DataTable(Gradient_stats,1,-1)
@@ -107,6 +127,13 @@ DataTable(Gradient_stats,1,-1)
   StdDev(1,ch2_mid,FP2,ch2_top=NAN)
   Average(1,ch2_btm,IEEE4,ch2_btm=NAN)
   StdDev(1,ch2_btm,FP2,ch2_btm=NAN)
+
+  Average(1,tmpr_btm,FP2,tmpr_btm=NAN)
+  StdDev(1,tmpr_btm,FP2,tmpr_btm=NAN)
+  Average(1,tmpr_mid,FP2,tmpr_mid=NAN)
+  StdDev(1,tmpr_mid,FP2,tmpr_mid=NAN)
+  Average(1,tmpr_top,FP2,tmpr_top=NAN)
+  StdDev(1,tmpr_top,FP2,tmpr_top=NAN)
 EndTable
 
 
@@ -119,6 +146,10 @@ BeginProg
   
     VoltDiff(ch1_value,1,mv5000,DF1_IO,1,0,INTEG,DF1_MULT,DF1_OFF)
     VoltDiff(ch2_value,1,mv5000,DF2_IO,1,0,INTEG,DF2_MULT,DF2_OFF)
+
+    Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+    'Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+    Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
 
 		PanelTemp (PTemp,INTEG)
 		Battery (batt_volt)
