@@ -91,10 +91,19 @@ EndTable
 DataTable(Gradient_stats,1,-1)
   DataInterval(0,STATS_INTV,STATS_UNIT,10)
   CardOut(1,-1)
-  Average(1,chan1_valve1_open,FP2,chan1_valve1_open=NAN)
-  Average(1,chan1_valve1_closed,FP2,chan1_valve1_closed=NAN)
-  Average(1,chan2_valve1_open,FP2,chan2_valve1_open=NAN)
-  Average(1,chan2_valve1_closed,FP2,chan2_valve1_closed=NAN)
+  Average(1,ch1_top,IEEE4,ch1_top=NAN)
+  StdDev(1,ch1_top,FP2,ch1_top=NAN)
+  Average(1,ch1_mid,IEEE4,ch1_mid=NAN)
+  StdDev(1,ch1_mid,FP2,ch1_mid=NAN)
+  Average(1,ch1_btm,IEEE4,ch1_btm=NAN)
+  StdDev(1,ch1_btm,FP2,ch1_btm=NAN)
+  
+  Average(1,ch2_top,IEEE4,ch2_top=NAN)
+  StdDev(1,ch2_top,FP2,ch2_top=NAN)
+  Average(1,ch2_mid,IEEE4,ch2_mid=NAN)
+  StdDev(1,ch2_mid,FP2,ch2_top=NAN)
+  Average(1,ch2_btm,IEEE4,ch2_btm=NAN)
+  StdDev(1,ch2_btm,FP2,ch2_btm=NAN)
 EndTable
 
 
