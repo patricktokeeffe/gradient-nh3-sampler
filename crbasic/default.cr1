@@ -40,17 +40,27 @@ Const INTEG = 250
 
 '''''''''' VARIABLES '''''''''''
 
+'measurements from DF1, DF2
+Public raw(2) 
+Alias raw(1) = ch1_value
+Alias raw(2) = ch2_value
 
+'level-partitioned readings of DF1, DF2
+Public conc(6)
+Alias conc(1) = ch1_top
+Alias conc(2) = ch1_mid
+Alias conc(3) = ch1_btm
+Alias conc(4) = ch2_top
+Alias conc(5) = ch2_mid
+Alias conc(6) = ch2_btm
 
+'data logger built-in sensors
 Public PTemp, batt_volt
 
 Public valve_on(2) As Boolean
 Alias valve_on(1) = v1_is_on
 Alias valve_on(2) = v2_is_on
 
-Public conc(2)
-Alias conc(1) = chan1_conc
-Alias conc(2) = chan2_conc
 
 Public status(4)
 Alias status(1) = chan1_valve1_open
@@ -69,10 +79,9 @@ DataTable (Gradient_solenoid,1,-1)
 	Sample(1, v1_is_on, Boolean)
 	'Sample(1, v2_is_on, Boolean) 
 
-	Sample(1,chan1_valve1_open,IEEE4)
-	Sample(1,chan1_valve1_closed,IEEE4)
-	Sample(1,chan2_valve1_open,IEEE4)
-	Sample(1,chan2_valve1_closed,IEEE4)
+  Sample(1,ch1_value,IEEE4)
+  Sample(1,ch2_value,IEEE4)
+  'other measurements here
 EndTable
 
 DataTable(Gradient_stats,1,-1)
@@ -89,8 +98,8 @@ EndTable
 BeginProg
 	Scan (1,Sec,0,0)
   
-    VoltDiff(chan1_conc,1,mv5000,1,1,0,INTEG,DF1_MULT,DF1_OFF)
-    VoltDiff(chan2_conc,1,mv5000,2,1,0,INTEG,DF2_MULT,DF2_OFF)
+    VoltDiff(ch1_value,1,mv5000,1,1,0,INTEG,DF1_MULT,DF1_OFF)
+    VoltDiff(ch2_value,1,mv5000,2,1,0,INTEG,DF2_MULT,DF2_OFF)
 
 		PanelTemp (PTemp,250)
 		Battery (batt_volt)
