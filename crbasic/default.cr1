@@ -14,6 +14,7 @@ ConstTable
   Const TOGGLE_TIME = 4*60    'duration between switching sampling sources, seconds
   Const USE_3_LEVELS = False  'set true for three-level sampling
   
+  Const SCAN_INTV = 1         'scan frequency, seconds
   Const STATS_INTV = 30       'time interval of statistics output, minutes
 
 '' 0-495 ppb over 100-5000 mV 
@@ -77,7 +78,7 @@ Alias valve_on(2) = is_sampling_mid 'else top or bottom
 
 '''''''''' DATA TABLES '''''''''''
 DataTable (Gradient_solenoid,1,-1)
-	DataInterval (0,1,Sec,1)
+	DataInterval (0,SCAN_INTV,Sec,1)
   CardOut(1,-1)
 	Sample(1,batt_volt,FP2)
 	Sample(1,PTemp,FP2)
@@ -114,7 +115,7 @@ BeginProg
   is_sampling_top = False
   is_sampling_mid = False
   
-	Scan (1,Sec,0,0)
+	Scan (SCAN_INTV,Sec,0,0)
   
     VoltDiff(ch1_value,1,mv5000,DF1_IO,1,0,INTEG,DF1_MULT,DF1_OFF)
     VoltDiff(ch2_value,1,mv5000,DF2_IO,1,0,INTEG,DF2_MULT,DF2_OFF)
