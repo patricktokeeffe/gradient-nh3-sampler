@@ -26,6 +26,12 @@ ConstTable
   Const DF2_MULT = 0.05
   Const DF2_OFF = -2.5
   
+  'Closed-path CO2/H2O analyzer, presumably LI-6262
+  Const CP_CO2_MULT = 1
+  Const CP_CO2_OFF = 0
+  Const CP_H2O_MULT = 1
+  Const CP_H2O_OFF = 0
+  
   'Applies to all themistors!
   ' Celcius: mult=1, offset=0
   ' Fahrenheit: mult=1.8, offset=32
@@ -38,6 +44,9 @@ EndConstTable
 Const DF1_IO = 1 'DF1
 Const DF2_IO = 2 'DF2
 
+'closed-path CO2/H2O analyzer
+Const CP_CO2_IO = 5 'DF
+Const CP_H2O_IO = 6 'DF
 
 'aspirated temperature sensors
 Const TMPR_BTM_IO = 6 'SE
@@ -77,6 +86,20 @@ Alias conc(4) = ch2_top
 Alias conc(5) = ch2_mid
 Alias conc(6) = ch2_btm
 
+'measurements from closed-path CO2/H2O analyzer
+Public raw_cp_irga(2)
+Alias raw_cp_irga(1) = cp_CO2_value
+Alias raw_cp_irga(2) = cp_H2O_value
+
+'level-partitioned readings of closed-path CO2/H2O
+Public cp_irga(6)
+Alias cp_irga(1) = cp_CO2_btm
+Alias cp_irga(2) = cp_CO2_mid
+Alias cp_irga(3) = cp_CO2_top
+Alias cp_irga(4) = cp_H2O_btm
+Alias cp_irga(5) = cp_H2O_mid
+Alias cp_irga(6) = cp_H2O_top
+
 'measurements from aspirated themistors
 Public tmpr(3)
 Alias tmpr(1) = tmpr_btm
@@ -106,6 +129,9 @@ DataTable (Gradient_solenoid,1,-1)
   Sample(1,ch1_value,IEEE4)
   Sample(1,ch2_value,IEEE4)
   
+  Sample(1,cp_CO2_value,IEEE4)
+  Sample(1,cp_H2O_value,IEEE4)
+  
   Sample(1,tmpr_btm,IEEE4)
   Sample(1,tmpr_mid,IEEE4)
   Sample(1,tmpr_top,IEEE4)
@@ -128,6 +154,20 @@ DataTable(Gradient_stats,1,-1)
   Average(1,ch2_btm,IEEE4,ch2_btm=NAN)
   StdDev(1,ch2_btm,FP2,ch2_btm=NAN)
 
+  Average(1,cp_CO2_btm,IEEE4,cp_CO2_btm=NAN)
+  StdDev(1,cp_CO2_btm,FP2,cp_CO2_btm=NAN)
+  Average(1,cp_CO2_mid,IEEE4,cp_CO2_mid=NAN)
+  StdDev(1,cp_CO2_mid,FP2,cp_CO2_mid=NAN)
+  Average(1,cp_CO2_top,IEEE4,cp_CO2_top=NAN)
+  StdDev(1,cp_CO2_top,FP2,cp_CO2_top=NAN)
+
+  Average(1,cp_H2O_btm,IEEE4,cp_H2O_btm=NAN)
+  StdDev(1,cp_H2O_btm,FP2,cp_H2O_btm=NAN)
+  Average(1,cp_H2O_mid,IEEE4,cp_H2O_mid=NAN)
+  StdDev(1,cp_H2O_mid,FP2,cp_H2O_mid=NAN)
+  Average(1,cp_H2O_top,IEEE4,cp_H2O_top=NAN)
+  StdDev(1,cp_H2O_top,FP2,cp_H2O_top=NAN)
+
   Average(1,tmpr_btm,FP2,tmpr_btm=NAN)
   StdDev(1,tmpr_btm,FP2,tmpr_btm=NAN)
   Average(1,tmpr_mid,FP2,tmpr_mid=NAN)
@@ -146,6 +186,9 @@ BeginProg
   
     VoltDiff(ch1_value,1,mv5000,DF1_IO,1,0,INTEG,DF1_MULT,DF1_OFF)
     VoltDiff(ch2_value,1,mv5000,DF2_IO,1,0,INTEG,DF2_MULT,DF2_OFF)
+
+    VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG,CP_CO2_MULT,CP_CO2_OFF)
+    VoltDiff(cp_h2o_value,1,mv5000,CP_H2O_IO,1,0,INTEG,CP_H2O_MULT,CP_H2O_OFF)
 
     Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
     'Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
@@ -173,6 +216,7 @@ BeginProg
       PortSet(VALVE_1_CTRL, is_sampling_top)
       PortSet(VALVE_2_CTRL, is_sampling_mid)
       Move(conc(1),6,NAN,1)
+      Move(cp_irga(1),6,NAN,1)
     EndIf
 
     'record measurements into correct level variable set
@@ -180,12 +224,18 @@ BeginProg
     If (is_sampling_mid) Then
       ch1_mid = ch1_value
       ch2_mid = ch2_value
+      cp_CO2_mid = cp_CO2_value
+      cp_H2O_mid = cp_H2O_value
     ElseIf (is_sampling_top) Then
       ch1_top = ch1_value
       ch2_top = ch2_value
+      cp_CO2_top = cp_CO2_value
+      cp_H2O_top = cp_H2O_value
     Else
       ch1_btm = ch1_value
       ch2_btm = ch2_value
+      cp_CO2_btm = cp_CO2_value
+      cp_H2O_btm = cp_H2O_value
     EndIf
        
 		CallTable Gradient_solenoid
