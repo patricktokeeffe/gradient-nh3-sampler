@@ -9,7 +9,6 @@
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 
-Const INTEG = 250
 '''''''''' SETTINGS '''''''''''
 ConstTable
   Const TOGGLE_TIME = 4*60    'duration between switching sampling sources, seconds
@@ -32,6 +31,11 @@ Const VALVE_1_CTRL = 7   'C7
 Const VALVE_2_CTRL = 8   'C8
 
 
+'''''''''' CONSTANTS '''''''''''
+Const INTEG = 250
+
+
+'''''''''' VARIABLES '''''''''''
 
 
 
@@ -52,6 +56,7 @@ Alias status(3) = chan2_valve1_open
 Alias status(4) = chan2_valve1_closed
 
 
+'''''''''' DATA TABLES '''''''''''
 DataTable (Gradient_solenoid,1,-1)
 	DataInterval (0,1,Sec,1)
   CardOut(1,-1)
@@ -77,7 +82,7 @@ DataTable(Gradient_stats,1,-1)
 EndTable
 
 
-'Main Program
+'''''''''' MAIN PROGRAM ''''''''''
 BeginProg
 	Scan (1,Sec,0,0)
   
