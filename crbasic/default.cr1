@@ -31,7 +31,16 @@ EndConstTable
 
 '''''''''' WIRING ''''''''''
 Const VALVE_1_CTRL = 7   'C7
+' Valve 1 controls selection of bottom- or top-level sampling lines
+'   Normally Open ---------- Bottom level (closest to ground) inlet
+'   Normally Closed -------- Top level (farthest from fround) inlet
+'   Common ----------------- EITHER (a) to analyzer delivery 
+'                                   (b) Valve #2 NO
 Const VALVE_2_CTRL = 8   'C8
+' Valve 2 controls selection of mid-level sampling line or other valve (top/btm lines)
+'   Normally Open ---------- Valve #1 Common 
+'   Normally Closed -------- Middle level (between bottom, top) inlet
+'   Common ----------------- To analyzer delivery
 
 
 '''''''''' CONSTANTS '''''''''''
@@ -57,16 +66,11 @@ Alias conc(6) = ch2_btm
 'data logger built-in sensors
 Public PTemp, batt_volt
 
+'level-selection valve control
+' TODO Dim these variables ? 
 Public valve_on(2) As Boolean
-Alias valve_on(1) = v1_is_on
-Alias valve_on(2) = v2_is_on
-
-
-Public status(4)
-Alias status(1) = chan1_valve1_open
-Alias status(2) = chan1_valve1_closed
-Alias status(3) = chan2_valve1_open
-Alias status(4) = chan2_valve1_closed
+Alias valve_on(1) = is_sampling_top 'else bottom
+Alias valve_on(2) = is_sampling_mid 'else top or bottom
 
 
 '''''''''' DATA TABLES '''''''''''
@@ -76,8 +80,8 @@ DataTable (Gradient_solenoid,1,-1)
 	Sample(1,batt_volt,FP2)
 	Sample(1,PTemp,FP2)
 
-	Sample(1, v1_is_on, Boolean)
-	'Sample(1, v2_is_on, Boolean) 
+	Sample(1,is_sampling_top, Boolean)
+	Sample(1,is_sampling_mid, Boolean)
 
   Sample(1,ch1_value,IEEE4)
   Sample(1,ch2_value,IEEE4)
@@ -96,6 +100,9 @@ EndTable
 
 '''''''''' MAIN PROGRAM ''''''''''
 BeginProg
+  is_sampling_top = False
+  is_sampling_mid = False
+  
 	Scan (1,Sec,0,0)
   
     VoltDiff(ch1_value,1,mv5000,1,1,0,INTEG,DF1_MULT,DF1_OFF)
@@ -105,20 +112,37 @@ BeginProg
 		Battery (batt_volt)
 
     If ( TimeIntoInterval(0,TOGGLE_TIME,Sec)) Then 
-      v1_is_on = NOT v1_is_on
-      PortSet(VALVE_1_CTRL, v1_is_on)
+      If (USE_3_LEVELS) Then
+        If (is_sampling_mid) Then
+          is_sampling_top = True
+          is_sampling_mid = False
+        ElseIf (is_sampling_top) Then
+          is_sampling_top = False
+          'is_sampling_mid should still be False
+        Else
+          'is_sampling_top should still be False
+          is_sampling_mid = True
+        EndIf
+      Else 'FOR ONLY TWO LEVELS
+        is_sampling_top = NOT is_sampling_top
+        'is_sampling_mid is always False
+      EndIf
+      PortSet(VALVE_1_CTRL, is_sampling_top)
+      PortSet(VALVE_2_CTRL, is_sampling_mid)
+      Move(conc(1),6,NAN,1)
     EndIf
 
-    If (v1_is_on) Then
-      chan1_valve1_open = chan1_conc
-      chan1_valve1_closed = NAN
-      chan2_valve1_open = chan2_conc
-      chan2_valve1_closed = NAN
+    'record measurements into correct level variable set
+    'other variables are set to NAN during source level transition
+    If (is_sampling_mid) Then
+      ch1_mid = ch1_value
+      ch2_mid = ch2_value
+    ElseIf (is_sampling_top) Then
+      ch1_top = ch1_value
+      ch2_top = ch2_value
     Else
-      chan1_valve1_open = NAN
-      chan1_valve1_closed = chan1_conc 
-      chan2_valve1_open = NAN
-      chan2_valve1_closed = chan2_conc
+      ch1_btm = ch1_value
+      ch2_btm = ch2_value
     EndIf
        
 		CallTable Gradient_solenoid
