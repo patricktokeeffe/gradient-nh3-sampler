@@ -30,6 +30,9 @@ EndConstTable
 
 
 '''''''''' WIRING ''''''''''
+Const DF1_IO = 1 'DF1
+Const DF2_IO = 2 'DF2
+
 Const VALVE_1_CTRL = 7   'C7
 ' Valve 1 controls selection of bottom- or top-level sampling lines
 '   Normally Open ---------- Bottom level (closest to ground) inlet
@@ -114,8 +117,8 @@ BeginProg
   
 	Scan (1,Sec,0,0)
   
-    VoltDiff(ch1_value,1,mv5000,1,1,0,INTEG,DF1_MULT,DF1_OFF)
-    VoltDiff(ch2_value,1,mv5000,2,1,0,INTEG,DF2_MULT,DF2_OFF)
+    VoltDiff(ch1_value,1,mv5000,DF1_IO,1,0,INTEG,DF1_MULT,DF1_OFF)
+    VoltDiff(ch2_value,1,mv5000,DF2_IO,1,0,INTEG,DF2_MULT,DF2_OFF)
 
 		PanelTemp (PTemp,250)
 		Battery (batt_volt)
