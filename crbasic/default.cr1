@@ -15,7 +15,7 @@ ConstTable
   Const USE_3_LEVELS = False  'set true for three-level sampling
   
   Const SCAN_INTV = 1         'scan frequency, seconds
-  Const STATS_INTV = 30       'time interval of statistics output, minutes
+  Const STATS_INTV = 30*60    'time interval of statistics output, seconds
   Const CAL_INTV = 60         'time interval of output to themistor calibration table, seconds
 
 '' 0-495 ppb over 100-5000 mV 
@@ -148,7 +148,7 @@ DataTable (gradient_tsdata,1,-1)
 EndTable
 
 DataTable(gradient_stats,1,-1)
-  DataInterval(0,STATS_INTV,Min,10)
+  DataInterval(0,STATS_INTV,Sec,10)
   CardOut(1,-1)
   
   Average(1,ch1_btm,IEEE4,ch1_btm=NAN)
