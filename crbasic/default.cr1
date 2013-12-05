@@ -16,6 +16,7 @@ ConstTable
   
   Const SCAN_INTV = 1         'scan frequency, seconds
   Const STATS_INTV = 30       'time interval of statistics output, minutes
+  Const CAL_INTV = 60         'time interval of output to themistor calibration table, seconds
 
 '' 0-495 ppb over 100-5000 mV 
 '   slope of 0.05 ppb/mV with offset of -5 ppb @ 0mV
@@ -117,6 +118,11 @@ Public valve_on(2) As Boolean
 Alias valve_on(1) = is_sampling_top 'else bottom
 Alias valve_on(2) = is_sampling_mid 'else top or bottom
 
+'public value user can change via menu to signal whether themistors
+'are in sample mode (btm/mid/top) or calibration mode (same level);
+'changes which data file themistor statistics are saved to
+Public doing_tmpr_cal As Boolean 
+
 
 ''''''''''''''' DATA TABLES ''''''''''''''''
 DataTable (gradient_tsdata,1,-1)
@@ -125,8 +131,8 @@ DataTable (gradient_tsdata,1,-1)
 	Sample(1,batt_volt,FP2)
 	Sample(1,PTemp,FP2)
 
-	Sample(1,is_sampling_top, Boolean)
-	Sample(1,is_sampling_mid, Boolean)
+	Sample(1,is_sampling_top,Boolean)
+	Sample(1,is_sampling_mid,Boolean)
 
   Sample(1,ch1_value,IEEE4)
   Sample(1,ch2_value,IEEE4)
@@ -134,6 +140,8 @@ DataTable (gradient_tsdata,1,-1)
   Sample(1,cp_CO2_value,IEEE4)
   Sample(1,cp_H2O_value,IEEE4)
   
+  Sample(1,doing_tmpr_cal,Boolean)
+
   Sample(1,tmpr_btm,IEEE4)
   Sample(1,tmpr_mid,IEEE4)
   Sample(1,tmpr_top,IEEE4)
@@ -171,19 +179,40 @@ DataTable(gradient_stats,1,-1)
   Average(1,cp_H2O_top,IEEE4,cp_H2O_top=NAN)
   StdDev(1,cp_H2O_top,FP2,cp_H2O_top=NAN)
 
-  Average(1,tmpr_btm,FP2,tmpr_btm=NAN)
-  StdDev(1,tmpr_btm,FP2,tmpr_btm=NAN)
-  Average(1,tmpr_mid,FP2,tmpr_mid=NAN)
-  StdDev(1,tmpr_mid,FP2,tmpr_mid=NAN)
-  Average(1,tmpr_top,FP2,tmpr_top=NAN)
-  StdDev(1,tmpr_top,FP2,tmpr_top=NAN)
+  Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR doing_tmpr_cal)
+  StdDev(1,tmpr_btm,FP2,tmpr_btm=NAN OR doing_tmpr_cal)
+  Average(1,tmpr_mid,FP2,tmpr_mid=NAN OR doing_tmpr_cal)
+  StdDev(1,tmpr_mid,FP2,tmpr_mid=NAN OR doing_tmpr_cal)
+  Average(1,tmpr_top,FP2,tmpr_top=NAN OR doing_tmpr_cal)
+  StdDev(1,tmpr_top,FP2,tmpr_top=NAN OR doing_tmpr_cal)
 EndTable
+
+DataTable(tmpr_cal,doing_tmpr_cal,-1)
+  DataInterval(0,CAL_INTV,Sec,10)
+  CardOut(1,-1)
+  Average(1,tmpr_btm,IEEE4,tmpr_btm=NAN)
+  StdDev(1,tmpr_btm,IEEE4,tmpr_btm=NAN)
+  Average(1,tmpr_mid,IEEE4,tmpr_mid=NAN)
+  StdDev(1,tmpr_mid,IEEE4,tmpr_mid=NAN)
+  Average(1,tmpr_top,IEEE4,tmpr_top=NAN)
+  StdDev(1,tmpr_top,IEEE4,tmpr_top=NAN)
+EndTable
+
+
+''''''''''''''' MENU '''''''''''''''
+Const Yes = True
+Const No = False
+DisplayMenu("Settings", 0)
+  MenuItem("Cal. themistors", doing_tmpr_cal)
+    MenuPick(No,Yes)
+EndMenu
 
 
 ''''''''''''''' MAIN PROGRAM '''''''''''''''
 BeginProg
   is_sampling_top = False
   is_sampling_mid = False
+  doing_tmpr_cal = False
   
   Move(raw_conc(1),2,NAN,1)
   Move(conc(1),6,NAN,1)
@@ -257,6 +286,7 @@ BeginProg
        
 		CallTable gradient_tsdata
 		CallTable gradient_stats
+		CallTable tmpr_cal
 	NextScan
 EndProg
 
