@@ -108,9 +108,12 @@ Public tmpr(3)
 Alias tmpr(1) = tmpr_btm
 Alias tmpr(2) = tmpr_mid
 Alias tmpr(3) = tmpr_top
+Units tmpr = degF  'depends on mult/offset constants
 
 'data logger built-in sensors
 Public logger_temp, logger_voltage
+Units logger_temp = degC
+Units logger_voltage = volts
 
 'level-selection valve control
 ' TODO Dim these variables ? 
