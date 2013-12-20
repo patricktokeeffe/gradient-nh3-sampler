@@ -110,7 +110,7 @@ Alias tmpr(2) = tmpr_mid
 Alias tmpr(3) = tmpr_top
 
 'data logger built-in sensors
-Public PTemp, batt_volt
+Public logger_temp, logger_voltage
 
 'level-selection valve control
 ' TODO Dim these variables ? 
@@ -128,8 +128,6 @@ Public doing_tmpr_cal As Boolean
 DataTable (gradient_tsdata,1,-1)
 	DataInterval (0,SCAN_INTV,Sec,1)
   CardOut(1,-1)
-	Sample(1,batt_volt,FP2)
-	Sample(1,PTemp,FP2)
 
 	Sample(1,is_sampling_top,Boolean)
 	Sample(1,is_sampling_mid,Boolean)
@@ -185,6 +183,9 @@ DataTable(gradient_stats,1,-1)
   StdDev(1,tmpr_mid,FP2,tmpr_mid=NAN OR doing_tmpr_cal)
   Average(1,tmpr_top,FP2,tmpr_top=NAN OR doing_tmpr_cal)
   StdDev(1,tmpr_top,FP2,tmpr_top=NAN OR doing_tmpr_cal)
+  
+  Average(1,logger_voltage,FP2,logger_voltage=NAN)
+  Average(1,logger_temp,FP2,logger_temp=NAN)
 EndTable
 
 DataTable(tmpr_cal,doing_tmpr_cal,-1)
@@ -239,8 +240,8 @@ BeginProg
     'Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
     Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
 
-		PanelTemp (PTemp,INTEG)
-		Battery (batt_volt)
+		PanelTemp (logger_temp,INTEG)
+		Battery (logger_voltage)
 
     If ( TimeIntoInterval(0,TOGGLE_TIME,Sec)) Then 
       If (USE_3_LEVELS) Then
