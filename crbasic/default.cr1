@@ -217,6 +217,7 @@ EndMenu
 BeginProg
   is_sampling_top = False
   is_sampling_mid = False
+  'no need for bottom state indicator; both top/mid false implies bottom=true
   thermistor_state = Normal
   
   Move(raw_conc(1),2,NAN,1)
