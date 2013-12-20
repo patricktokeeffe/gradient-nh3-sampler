@@ -241,14 +241,16 @@ BeginProg
     VoltDiff(cp_h2o_value,1,mv5000,CP_H2O_IO,1,0,INTEG,CP_H2O_MULT,CP_H2O_OFF)
 
     Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-    'Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+    #If (USE_3_LEVELS) Then
+      Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+    #EndIf
     Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
 
 		PanelTemp (logger_temp,INTEG)
 		Battery (logger_voltage)
 
     If ( TimeIntoInterval(0,TOGGLE_TIME,Sec)) Then 
-      If (USE_3_LEVELS) Then
+      #If (USE_3_LEVELS) Then
         If (is_sampling_mid) Then
           is_sampling_top = True
           is_sampling_mid = False
@@ -259,10 +261,10 @@ BeginProg
           'is_sampling_top should still be False
           is_sampling_mid = True
         EndIf
-      Else 'FOR ONLY TWO LEVELS
+      #Else 'FOR ONLY TWO LEVELS
         is_sampling_top = NOT is_sampling_top
         'is_sampling_mid is always False
-      EndIf
+      #EndIf
       
       PortSet(VALVE_1_CTRL, is_sampling_top)
       PortSet(VALVE_2_CTRL, is_sampling_mid)
