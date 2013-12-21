@@ -1,0 +1,73 @@
+===========================
+Gradient system user manual
+===========================
+
+Physical deployment
+===================
+
+Plumbing 
+--------
+Two or three tubes are setup so the inlets are approximately plumb and spread
+out several heights, typically ~0.5m, ~1.5m and ~2.5m. The tubes are attached 
+to specific ports of a pair of three-way valves; in a two-tube configuration, 
+only one 3-way valve is used.
+
+Slow-response trace gas analyzer inputs
+---------------------------------------
+The gradient system has (2) differential analog input (0-5V) terminals 
+reserved for input from a slow-response trace gas analyzer. 
+
+Thermistor inputs
+-----------------
+A set of aspirated thermistors is used to measure the gradient of temperature.
+When combined with eddy-covariance measurements of sensible heat flux, an 
+eddy diffusivity constant (k) may be estimated.
+
+Closed-path CO2/H2O analyzer inputs
+-----------------------------------
+A closed-path CO2/H2O analyzer is plumbed in parallel with the slow-response
+trace gas analyzer so that a gradient of CO2 concentrations is measured. When
+coupled with eddy-covariance measurements of CO2 flux, an eddy diffusivity 
+constant (k) may be estimated.
+
+Datalogger program
+==================
+
+Upon receiving power, the datalogger will turn on and compile the program. Once
+running the user can make changes to settings and monitor measurements. 
+
+Sensor settings
+---------------
+
+Thermistors
+```````````
+The thermistors may be set in three different 'modes' of operation: normal,
+calibrating or disabled. When turned on, the default mode is "normal" but the
+mode may be changed by navigating the menu 'Sensor setup' > 'Thermistors' >
+'Set mode'. When in calibration mode, the thermistor data is recorded to a
+separate data table; it is not included in generated statistics. When disabled,
+thermistor data is not saved in the statistics or calibration tables.
+Regardless of mode, the thermistor data is saved in the time-series table. A 
+pair of boolean values in the time-series table indicates the operating mode
+of the thermistors at a given time.
+
+
+Data products
+-------------
+
+gradient_tsdata
+```````````````
+Table with 1Hz measurement values
+
+gradient_stats
+``````````````
+Table with statistics computed for a given interval. Default interval = 30min
+
+tmpr_cal
+````````
+Table with avg/stdev of thermistors. Output interval is 1min (default). Because
+of how the calibration table is triggered, the first interval only may be of
+partial length; all other intervals will represent data collected over the 
+entire interval. 
+
+
