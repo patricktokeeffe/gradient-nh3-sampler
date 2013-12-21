@@ -122,10 +122,10 @@ Alias valve_on(1) = is_sampling_top 'else bottom
 Alias valve_on(2) = is_sampling_mid 'else top or bottom
 
 'control whether/where themistor data is stored
-Public thermistor_state As Long 'no Int type available
 Const Normal = -1
 Const Calibrating = -2
 Const Disabled = -3
+Public thermistor_state = {Normal}
 
 
 ''''''''''''''' DATA TABLES ''''''''''''''''
@@ -218,7 +218,6 @@ BeginProg
   is_sampling_top = False
   is_sampling_mid = False
   'no need for bottom state indicator; both top/mid false implies bottom=true
-  thermistor_state = Normal
   
   Move(raw_conc(1),2,NAN,1)
   Move(conc(1),6,NAN,1)
