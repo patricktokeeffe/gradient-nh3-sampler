@@ -243,7 +243,8 @@ BeginProg
     VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG,CP_CO2_MULT,CP_CO2_OFF)
     VoltDiff(cp_h2o_value,1,mv5000,CP_H2O_IO,1,0,INTEG,CP_H2O_MULT,CP_H2O_OFF)
 
-    Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+    'Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+    tmpr_btm = 99
     #If (USE_3_LEVELS) Then
       Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
     #EndIf
