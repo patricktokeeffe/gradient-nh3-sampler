@@ -142,7 +142,10 @@ DataTable (gradient_tsdata,1,-1)
   Sample(1,cp_CO2_value,IEEE4)
   Sample(1,cp_H2O_value,IEEE4)
   
-  Sample(1,thermistor_state,Boolean)
+  Sample(1,(thermistor_state=Calibrating),Boolean)
+  FieldNames("calibrating_tmpr")
+  Sample(1,(thermistor_state=Disabled),Boolean)
+  FieldNames("tmpr_is_disabled")
 
   Sample(1,tmpr_btm,IEEE4)
   Sample(1,tmpr_mid,IEEE4)
