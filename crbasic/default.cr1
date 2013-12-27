@@ -244,11 +244,13 @@ BeginProg
     VoltDiff(cp_h2o_value,1,mv5000,CP_H2O_IO,1,0,INTEG,CP_H2O_MULT,CP_H2O_OFF)
 
     'Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+    tmpr_top = 97
+    tmpr_mid = 98
     tmpr_btm = 99
-    #If (USE_3_LEVELS) Then
-      Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-    #EndIf
-    Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+'    #If (USE_3_LEVELS) Then
+'      Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+'    #EndIf
+'    Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
 
 		PanelTemp (logger_temp,INTEG)
 		Battery (logger_voltage)
