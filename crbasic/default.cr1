@@ -131,7 +131,7 @@ Alias valve_on(2) = is_sampling_mid 'else top or bottom
 Const Normal = -1
 Const Calibrating = -2
 Const Disabled = -3
-Public thermistor_state = {Normal}
+Dim thermistor_state = {Normal}
 
 
 ''''''''''''''' DATA TABLES ''''''''''''''''
