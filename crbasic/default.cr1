@@ -279,7 +279,7 @@ BeginProg
         EndIf
       Else 'FOR ONLY TWO LEVELS
         is_sampling_top = NOT is_sampling_top
-        'is_sampling_mid is always False
+        is_sampling_mid = False 'catch case of switch 3->2 levels while sampling mid
         valve_state = IIF(is_sampling_top, TOP, BOTTOM)
       EndIf
       
