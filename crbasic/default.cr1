@@ -11,7 +11,7 @@
 
 ''''''''''''''' SETTINGS ''''''''''''''''
 ConstTable
-  Const TOGGLE_TIME = 4*60    'duration between switching sampling sources, seconds
+  Const TOGGLE_TIME = 3*60    'duration between switching sampling sources, seconds
   
   Const SCAN_INTV = 1         'scan frequency, seconds
   Const STATS_INTV = 30*60    'time interval of statistics output, seconds
