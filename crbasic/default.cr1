@@ -12,7 +12,6 @@
 ''''''''''''''' SETTINGS ''''''''''''''''
 ConstTable
   Const TOGGLE_TIME = 4*60    'duration between switching sampling sources, seconds
-  Const USE_3_LEVELS = False  'set true for three-level sampling
   
   Const SCAN_INTV = 1         'scan frequency, seconds
   Const STATS_INTV = 1*60    'time interval of statistics output, seconds
@@ -75,6 +74,12 @@ Const INTEG = 250
 
 
 ''''''''''''''' VARIABLES ''''''''''''''''
+'public view of valve status
+Public valve_state As String * 8
+Const TOP = "top"
+Const MIDDLE = "middle"
+Const BOTTOM = "bottom"
+
 'measurements from DF1, DF2
 Public raw_conc(2)
 Alias raw_conc(1) = ch1_value
@@ -115,9 +120,10 @@ Public logger_temp, logger_voltage
 Units logger_temp = degC
 Units logger_voltage = volts
 
+Dim num_levels = {2} '2 or 3, determines if mid level is sampled
+
 'level-selection valve control
-' TODO Dim these variables ? 
-Public valve_on(2) As Boolean
+Dim valve_on(2) As Boolean
 Alias valve_on(1) = is_sampling_top 'else bottom
 Alias valve_on(2) = is_sampling_mid 'else top or bottom
 
@@ -209,6 +215,10 @@ EndTable
 
 ''''''''''''''' MENU '''''''''''''''
 DisplayMenu("Sensor setup", 0)
+  SubMenu("Gas gradient")
+    MenuItem("# levels", num_levels)
+      MenuPick(2,3)
+  EndSubMenu
   SubMenu("Thermistors")
     MenuItem("Set mode", thermistor_state)
       MenuPick(Normal, Calibrating, Disabled)
@@ -244,30 +254,34 @@ BeginProg
     VoltDiff(cp_h2o_value,1,mv5000,CP_H2O_IO,1,0,INTEG,CP_H2O_MULT,CP_H2O_OFF)
 
     Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-    #If (USE_3_LEVELS) Then
+    If (num_levels = 3) Then
       Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-    #EndIf
+    EndIf
     Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
 
 		PanelTemp (logger_temp,INTEG)
 		Battery (logger_voltage)
 
     If ( TimeIntoInterval(0,TOGGLE_TIME,Sec)) Then 
-      #If (USE_3_LEVELS) Then
+      If (num_levels = 3) Then
         If (is_sampling_mid) Then
           is_sampling_top = True
           is_sampling_mid = False
+          valve_state = TOP
         ElseIf (is_sampling_top) Then
           is_sampling_top = False
           'is_sampling_mid should still be False
+          valve_state = BOTTOM
         Else
           'is_sampling_top should still be False
           is_sampling_mid = True
+          valve_state = MIDDLE
         EndIf
-      #Else 'FOR ONLY TWO LEVELS
+      Else 'FOR ONLY TWO LEVELS
         is_sampling_top = NOT is_sampling_top
         'is_sampling_mid is always False
-      #EndIf
+        valve_state = IIF(is_sampling_top, TOP, BOTTOM)
+      EndIf
       
       PortSet(VALVE_1_CTRL, is_sampling_top)
       PortSet(VALVE_2_CTRL, is_sampling_mid)
