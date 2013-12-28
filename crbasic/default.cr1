@@ -50,10 +50,10 @@ Const CP_CO2_IO = 5 'DF
 Const CP_H2O_IO = 6 'DF
 
 'aspirated temperature sensors
-Const TMPR_BTM_IO = 6 'SE
-Const TMPR_MID_IO = 7 'SE
-Const TMPR_TOP_IO = 8 'SE
-Const TMPR_VX_IO = Vx1
+Const TMPR_BTM_IO = 14 'SE
+Const TMPR_MID_IO = 15 'SE
+Const TMPR_TOP_IO = 16 'SE
+Const TMPR_VX_IO = Vx3
 
 'level-selection valves
 Const VALVE_1_CTRL = 7   'C7
