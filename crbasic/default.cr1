@@ -110,15 +110,14 @@ Alias valve_on(1) = is_sampling_top 'else bottom
 Alias valve_on(2) = is_sampling_mid 'else top or bottom
 
 'control whether/where themistor data is storeds; aligned to boolean as in:
-Const Recording = -1 'True
+Const Normal = -1 'True
 Const Calibrating = 1 'True * -1
-Const Disabled = 0 'False
-Dim thermistor_state = {Recording}
+Const Standby = 0 'False
 
 ''''''''''''''' SETTINGS RETENTION ''''''''''''''
 Dim filehandle as Long
 Const SETTINGS_FILE = "CPU:grad_settings.dat"
-Const NUM_SETTINGS = {19}
+Const NUM_SETTINGS = {20}
 Const WRITEFILE = 0
 Const READFILE = 1
 
@@ -139,13 +138,20 @@ Alias settings(9)  = cp_co2_offset
 Alias settings(10) = cp_h2o_enabled
 Alias settings(11) = cp_h2o_mult
 Alias settings(12) = cp_h2o_offset
-Alias settings(13) = tmpr_state
-Alias settings(14) = sonic_azimuth
-Alias settings(15) = toggle_time
-Alias settings(16) = top_inlet_H
-Alias settings(17) = btm_inlet_H
-Alias settings(18) = top_tmpr_H
-Alias settings(19) = btm_tmpr_H
+Alias settings(13) = tmpr_enabled
+Alias settings(14) = tmpr_state
+Alias settings(15) = sonic_azimuth
+Alias settings(16) = toggle_time
+Alias settings(17) = top_inlet_H
+Alias settings(18) = btm_inlet_H
+Alias settings(19) = top_tmpr_H
+Alias settings(20) = btm_tmpr_H
+Units sonic_azimuth = deg TN
+Units toggle_time = min
+Units top_inlet_H = cm
+Units btm_inlet_H = cm
+Units top_tmpr_H = cm
+Units btm_tmpr_H = cm
 
 Dim choice(NUM_SETTINGS)
 Alias choice(1)  = ch_ch1_enabled
@@ -160,13 +166,14 @@ Alias choice(9)  = ch_cp_co2_offset
 Alias choice(10) = ch_cp_h2o_enabled
 Alias choice(11) = ch_cp_h2o_mult
 Alias choice(12) = ch_cp_h2o_offset
-Alias choice(13) = ch_tmpr_state
-Alias choice(14) = ch_sonic_azimuth
-Alias choice(15) = ch_toggle_time
-Alias choice(16) = ch_top_inlet_H
-Alias choice(17) = ch_btm_inlet_H
-Alias choice(18) = ch_top_tmpr_H
-Alias choice(19) = ch_btm_tmpr_H
+Alias choice(13) = ch_tmpr_enabled
+Alias choice(14) = ch_tmpr_state
+Alias choice(15) = ch_sonic_azimuth
+Alias choice(16) = ch_toggle_time
+Alias choice(17) = ch_top_inlet_H
+Alias choice(18) = ch_btm_inlet_H
+Alias choice(19) = ch_top_tmpr_H
+Alias choice(20) = ch_btm_tmpr_H
 
 Sub set_default_choices()
   ch_ch1_enabled    = Disable
@@ -181,7 +188,8 @@ Sub set_default_choices()
   ch_cp_h2o_enabled = Disable
   ch_cp_h2o_mult    = 1.0
   ch_cp_h2o_offset  = 0
-  ch_tmpr_state     = Disabled
+  ch_tmpr_enabled   = Disable
+  ch_tmpr_state     = Standby
   ch_sonic_azimuth  = 0
   ch_toggle_time    = 5 'in minutes
   ch_top_inlet_H    = 0
@@ -221,8 +229,9 @@ DataTable(info,TRUE,50)
     FieldNames("DF_2_enabled")
   Sample(1,ch2_mult,FP2)
   Sample(1,ch2_offset,FP2)
-  Sample(1,tmpr_state=Recording OR tmpr_state=Calibrating,Boolean)
-    FieldNames("tmpr_enabled")
+  Sample(1,tmpr_enabled,Boolean)
+  Sample(1,(tmpr_state=Normal),Boolean)
+    FieldNames("tmpr_normal")
   Sample(1,(tmpr_state=Calibrating),Boolean)
     FieldNames("tmpr_calibrating")
   Sample(1,cp_co2_enabled,Boolean)
@@ -247,11 +256,7 @@ DataTable (gradient_tsdata,1,-1)
   Sample(1,cp_CO2_value,IEEE4)
   Sample(1,cp_H2O_value,IEEE4)
   
-  Sample(1,(thermistor_state=Calibrating),Boolean)
-  FieldNames("calibrating_tmpr")
-  Sample(1,(thermistor_state=Disabled),Boolean)
-  FieldNames("tmpr_is_disabled")
-
+  Sample(1,tmpr_state,FP2)
   Sample(1,tmpr_btm,IEEE4)
 '  Sample(1,tmpr_mid,IEEE4)
   Sample(1,tmpr_top,IEEE4)
@@ -289,18 +294,15 @@ DataTable(gradient_stats,1,-1)
   Average(1,cp_H2O_top,IEEE4,cp_H2O_top=NAN)
   StdDev(1,cp_H2O_top,FP2,cp_H2O_top=NAN)
 
-  Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR thermistor_state<>Recording)
-  StdDev(1,tmpr_btm,FP2,tmpr_btm=NAN OR thermistor_state<>Recording)
-'  Average(1,tmpr_mid,FP2,tmpr_mid=NAN OR thermistor_state<>Recording)
-'  StdDev(1,tmpr_mid,FP2,tmpr_mid=NAN OR thermistor_state<>Recording)
-  Average(1,tmpr_top,FP2,tmpr_top=NAN OR thermistor_state<>Recording)
-  StdDev(1,tmpr_top,FP2,tmpr_top=NAN OR thermistor_state<>Recording)
+  Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR tmpr_state<>Normal)
+'  Average(1,tmpr_mid,FP2,tmpr_mid=NAN OR tmpr_state<>Normal)
+  Average(1,tmpr_top,FP2,tmpr_top=NAN OR tmpr_state<>Normal)
   
   Average(1,logger_voltage,FP2,logger_voltage=NAN)
   Average(1,logger_temp,FP2,logger_temp=NAN)
 EndTable
 
-DataTable(tmpr_cal,(thermistor_state=Calibrating),-1)
+DataTable(tmpr_cal,(tmpr_state=Calibrating),-1)
   DataInterval(0,CAL_INTV,Sec,10)
   CardOut(1,-1)
   Average(1,tmpr_btm,IEEE4,tmpr_btm=NAN)
@@ -337,8 +339,10 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
     MenuItem("DF 2 offset", ch_ch2_mult)
   EndSubMenu
   SubMenu("Thermistors")
+    MenuItem("Recording", ch_tmpr_enabled)
+      MenuPick(Disable,Enable)
     MenuItem("Set mode", ch_tmpr_state)
-      MenuPick(Disabled, Recording, Calibrating)
+      MenuPick(Standby, Normal, Calibrating)
     MenuItem("Top height, cm", ch_top_tmpr_H
     MenuItem("Btm height, cm", ch_btm_tmpr_H
   EndSubMenu
@@ -465,7 +469,7 @@ BeginProg
       If (NOT ch2_enabled) Then ch2_value = NAN
       If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
       If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
-      If (NOT tmpr_state) Then Move(tmpr(1),3,NAN,1)
+      If (NOT tmpr_enabled) Then Move(tmpr(1),3,NAN,1)
       CallTable(info)
     EndIf
 	NextScan 
