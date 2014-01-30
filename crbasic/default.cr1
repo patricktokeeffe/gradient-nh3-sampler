@@ -31,12 +31,6 @@ ConstTable
   Const CP_CO2_OFF = 0
   Const CP_H2O_MULT = 1
   Const CP_H2O_OFF = 0
-  
-  'Applies to all themistors!
-  ' Celcius: mult=1, offset=0
-  ' Fahrenheit: mult=1.8, offset=32
-  Const TMPR_MULT = 1.8
-  Const TMPR_OFF = 32
 EndConstTable
 
 
@@ -71,6 +65,9 @@ Const VALVE_2_CTRL = 8   'C8
 
 ''''''''''''''' CONSTANTS ''''''''''''''''
 Const INTEG = 250
+
+Const TMPR_MULT = 1  'use Celcius for thermistors
+Const TMPR_OFF = 0
 
 
 ''''''''''''''' VARIABLES ''''''''''''''''
@@ -113,7 +110,7 @@ Public tmpr(3)
 Alias tmpr(1) = tmpr_btm
 Alias tmpr(2) = tmpr_mid
 Alias tmpr(3) = tmpr_top
-Units tmpr = degF  'depends on mult/offset constants
+Units tmpr = degC
 
 'data logger built-in sensors
 Public logger_temp, logger_voltage
