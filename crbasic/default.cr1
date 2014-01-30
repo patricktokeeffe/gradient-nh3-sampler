@@ -11,33 +11,16 @@
 
 ''''''''''''''' SETTINGS ''''''''''''''''
 ConstTable
-  Const TOGGLE_TIME = 3*60    'duration between switching sampling sources, seconds
-  
   Const SCAN_INTV = 1         'scan frequency, seconds
   Const STATS_INTV = 30*60    'time interval of statistics output, seconds
   Const CAL_INTV = 60         'time interval of output to themistor calibration table, seconds
-
-'' 0-495 ppb over 100-5000 mV 
-'   slope of 0.05 ppb/mV with offset of -5 ppb @ 0mV
-'    --> voltage divider
-'   slope of 0.05 ppb/mV with offset of -2.5 ppb @ 0mV
-  Const DF1_MULT = 0.05 
-  Const DF1_OFF = -2.5
-  Const DF2_MULT = 0.05
-  Const DF2_OFF = -2.5
-  
-  'Closed-path CO2/H2O analyzer, presumably LI-6262
-  Const CP_CO2_MULT = 1
-  Const CP_CO2_OFF = 0
-  Const CP_H2O_MULT = 1
-  Const CP_H2O_OFF = 0
 EndConstTable
 
 
 ''''''''''''''' WIRING '''''''''''''''
 'trace gas analyzer analog input
-Const DF1_IO = 1 'DF
-Const DF2_IO = 2 'DF
+Const CH1_IO = 1 'DF
+Const CH2_IO = 2 'DF
 
 'closed-path CO2/H2O analyzer
 Const CP_CO2_IO = 5 'DF
@@ -76,6 +59,8 @@ Public valve_state As String * 8
 Const TOP = "top"
 Const MIDDLE = "middle"
 Const BOTTOM = "bottom"
+Const Enable = True
+Const Disable = False
 
 'measurements from DF1, DF2
 Public raw_conc(2)
@@ -124,12 +109,126 @@ Dim valve_on(2) As Boolean
 Alias valve_on(1) = is_sampling_top 'else bottom
 Alias valve_on(2) = is_sampling_mid 'else top or bottom
 
-'control whether/where themistor data is stored
-Const Normal = -1
-Const Calibrating = -2
-Const Disabled = -3
-Dim thermistor_state = {Normal}
+'control whether/where themistor data is storeds; aligned to boolean as in:
+Const Recording = -1 'True
+Const Calibrating = 1 'True * -1
+Const Disabled = 0 'False
+Dim thermistor_state = {Recording}
 
+''''''''''''''' SETTINGS RETENTION ''''''''''''''
+Dim filehandle as Long
+Const SETTINGS_FILE = "CPU:grad_settings.dat"
+Const NUM_SETTINGS = {19}
+Const WRITEFILE = 0
+Const READFILE = 1
+
+Dim save_changes As Boolean
+Dim settings(NUM_SETTINGS)
+Alias settings(1)  = ch1_enabled
+Alias settings(2)  = ch1_mult
+Alias settings(3)  = ch1_offset
+Alias settings(4)  = ch2_enabled
+Alias settings(5)  = ch2_mult
+Alias settings(6)  = ch2_offset
+Alias settings(7)  = cp_co2_enabled
+Alias settings(8)  = cp_co2_mult
+Alias settings(9)  = cp_co2_offset
+Alias settings(10) = cp_h2o_enabled
+Alias settings(11) = cp_h2o_mult
+Alias settings(12) = cp_h2o_offset
+Alias settings(13) = tmpr_state
+Alias settings(14) = sonic_azimuth
+Alias settings(15) = toggle_time
+Alias settings(16) = top_inlet_H
+Alias settings(17) = btm_inlet_H
+Alias settings(18) = top_tmpr_H
+Alias settings(19) = btm_tmpr_H
+
+Dim choice(NUM_SETTINGS)
+Alias choice(1)  = ch_ch1_enabled
+Alias choice(2)  = ch_ch1_mult
+Alias choice(3)  = ch_ch1_offset
+Alias choice(4)  = ch_ch2_enabled
+Alias choice(5)  = ch_ch2_mult
+Alias choice(6)  = ch_ch2_offset
+Alias choice(7)  = ch_cp_co2_enabled
+Alias choice(8)  = ch_cp_co2_mult
+Alias choice(9)  = ch_cp_co2_offset
+Alias choice(10) = ch_cp_h2o_enabled
+Alias choice(11) = ch_cp_h2o_mult
+Alias choice(12) = ch_cp_h2o_offset
+Alias choice(13) = ch_tmpr_state
+Alias choice(14) = ch_sonic_azimuth
+Alias choice(15) = ch_toggle_time
+Alias choice(16) = ch_top_inlet_H
+Alias choice(17) = ch_btm_inlet_H
+Alias choice(18) = ch_top_tmpr_H
+Alias choice(19) = ch_btm_tmpr_H
+
+Sub set_default_choices()
+  ch_ch1_enabled    = Disable
+  ch_ch1_mult       = 1.0
+  ch_ch1_offset     = 0
+  ch_ch2_enabled    = Disable
+  ch_ch2_mult       = 1.0
+  ch_ch2_offset     = 0
+  ch_cp_co2_enabled = Disable
+  ch_cp_co2_mult    = 1.0
+  ch_cp_co2_offset  = 0
+  ch_cp_h2o_enabled = Disable
+  ch_cp_h2o_mult    = 1.0
+  ch_cp_h2o_offset  = 0
+  ch_tmpr_state     = Disabled
+  ch_sonic_azimuth  = 0
+  ch_toggle_time    = 5*60 'in seconds
+  ch_top_inlet_H    = 0
+  ch_btm_inlet_H    = 0
+  ch_top_tmpr_H     = 0
+  ch_btm_tmpr_H     = 0
+EndSub
+
+Sub populate_choices()
+  Move(choice(1),NUM_SETTINGS,settings(1),NUM_SETTINGS)
+EndSub
+
+Sub save_current_choices()
+  Move(settings(1),NUM_SETTINGS,choice(1),NUM_SETTINGS)
+  Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,WRITEFILE)
+EndSub
+
+DataTable(info,TRUE,50)
+  CardOut(0,1000)
+  Sample(1,sonic_azimuth,FP2)
+    FieldNames("sonic_azimuth")
+    Units sonic_azimuth = degEofTN
+  Sample(1,toggle_time,FP2)
+    FieldNames("toggle_time")
+    Units toggle_time = seconds
+  Sample(1,btm_inlet_H,FP2)
+    FieldNames("btm_inlet_height")
+    Units btm_inlet_H = cm
+  Sample(1,top_inlet_H,FP2)
+    FieldNames("top_inlet_height")
+    Units top_inlet_H = cm
+  Sample(1,ch1_enabled,Boolean)
+    FieldNames("DF_1_enabled")
+  Sample(1,ch1_mult,FP2)
+  Sample(1,ch1_offset,FP2)
+  Sample(1,ch2_enabled,Boolean)
+    FieldNames("DF_2_enabled")
+  Sample(1,ch2_mult,FP2)
+  Sample(1,ch2_offset,FP2)
+  Sample(1,tmpr_state=Recording OR tmpr_state=Calibrating,Boolean)
+    FieldNames("tmpr_enabled")
+  Sample(1,(tmpr_state=Calibrating),Boolean)
+    FieldNames("tmpr_calibrating")
+  Sample(1,cp_co2_enabled,Boolean)
+  Sample(1,cp_co2_mult,FP2)
+  Sample(1,cp_co2_offset,FP2)
+  Sample(1,cp_h2o_enabled,Boolean)
+  Sample(1,cp_h2o_mult,FP2)
+  Sample(1,cp_h2o_offset,FP2)
+EndTable
 
 ''''''''''''''' DATA TABLES ''''''''''''''''
 DataTable (gradient_tsdata,1,-1)
@@ -187,12 +286,12 @@ DataTable(gradient_stats,1,-1)
   Average(1,cp_H2O_top,IEEE4,cp_H2O_top=NAN)
   StdDev(1,cp_H2O_top,FP2,cp_H2O_top=NAN)
 
-  Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR thermistor_state<>Normal)
-  StdDev(1,tmpr_btm,FP2,tmpr_btm=NAN OR thermistor_state<>Normal)
-  Average(1,tmpr_mid,FP2,tmpr_mid=NAN OR thermistor_state<>Normal)
-  StdDev(1,tmpr_mid,FP2,tmpr_mid=NAN OR thermistor_state<>Normal)
-  Average(1,tmpr_top,FP2,tmpr_top=NAN OR thermistor_state<>Normal)
-  StdDev(1,tmpr_top,FP2,tmpr_top=NAN OR thermistor_state<>Normal)
+  Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR thermistor_state<>Recording)
+  StdDev(1,tmpr_btm,FP2,tmpr_btm=NAN OR thermistor_state<>Recording)
+  Average(1,tmpr_mid,FP2,tmpr_mid=NAN OR thermistor_state<>Recording)
+  StdDev(1,tmpr_mid,FP2,tmpr_mid=NAN OR thermistor_state<>Recording)
+  Average(1,tmpr_top,FP2,tmpr_top=NAN OR thermistor_state<>Recording)
+  StdDev(1,tmpr_top,FP2,tmpr_top=NAN OR thermistor_state<>Recording)
   
   Average(1,logger_voltage,FP2,logger_voltage=NAN)
   Average(1,logger_temp,FP2,logger_temp=NAN)
@@ -211,20 +310,63 @@ EndTable
 
 
 ''''''''''''''' MENU '''''''''''''''
-DisplayMenu("Sensor setup", 0)
+Const Yes = True
+Const Cancel = False
+DisplayMenu("Gradient setup", 0) 'as submenu to main
+  MenuItem("Sonic azimuth, deg TN", ch_sonic_azimuth)
   SubMenu("Gas gradient")
+    MenuItem("Dwell time, sec", ch_toggle_time)
     MenuItem("# levels", num_levels)
-      MenuPick(2,3)
+      MenuPick(2)',3)
+    MenuItem("Top inlet H, cm", ch_top_inlet_H
+    MenuItem("Btm inlet H, cm", ch_btm_inlet_H
+  EndSubMenu
+  SubMenu("Analog input")
+    MenuItem("DF 1 recording", ch_ch1_enabled)
+      MenuPick(Disable, Enable)
+    MenuItem("DF 1 mult)", ch_ch1_mult)
+    MenuItem("DF 1 offset", ch_ch1_offset)
+    MenuItem("DF 2 recording", ch_ch2_enabled)
+      MenuPick(Disable, Enable)
+    MenuItem("DF 2 mult", ch_ch2_mult)
+    MenuItem("DF 2 offset", ch_ch2_mult)
   EndSubMenu
   SubMenu("Thermistors")
-    MenuItem("Set mode", thermistor_state)
-      MenuPick(Normal, Calibrating, Disabled)
+    MenuItem("Set mode", ch_tmpr_state)
+      MenuPick(Disabled, Recording, Calibrating)
+    MenuItem("Top height, cm", ch_top_tmpr_H
+    MenuItem("Btm height, cm", ch_btm_tmpr_H
+  EndSubMenu
+  SubMenu("Closed-path IRGA")
+    MenuItem("CO2 recording", ch_cp_co2_enabled)
+      MenuPick(Disable, Enable)
+    MenuItem("CO2 mult", ch_cp_co2_mult)
+    MenuItem("CO2 offset", ch_cp_co2_offset)
+    MenuItem("H2O recording", ch_cp_h2o_enabled)
+      MenuPick(Disable, Enable)
+    MenuItem("H2O mult", ch_cp_h2o_mult)
+    MenuItem("H2O offset", ch_cp_h2o_offset)
+  EndSubMenu
+  SubMenu("Save changes")
+    MenuItem("Save now?", save_changes)
+    MenuPick(Cancel,Yes)
   EndSubMenu
 EndMenu
 
 
 ''''''''''''''' MAIN PROGRAM '''''''''''''''
 BeginProg
+  filehandle = FileOpen(SETTINGS_FILE,"rb",0)
+  FileClose(filehandle)
+  If (filehandle = 0) Then 'file was not found
+    set_default_choices()
+  Else
+    Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,READFILE)
+    populate_choices()
+  EndIf
+  save_current_choices()
+  CallTable(info)
+
   is_sampling_top = False
   is_sampling_mid = False
   'no need for bottom state indicator; both top/mid false implies bottom=true
@@ -259,7 +401,7 @@ BeginProg
 		PanelTemp (logger_temp,INTEG)
 		Battery (logger_voltage)
 
-    If ( TimeIntoInterval(0,TOGGLE_TIME,Sec)) Then 
+    If ( TimeIntoInterval(0,toggle_time,Sec)) Then 
       If (num_levels = 3) Then
         If (is_sampling_mid) Then
           is_sampling_top = True
@@ -308,7 +450,18 @@ BeginProg
 		CallTable gradient_tsdata
 		CallTable gradient_stats
 		CallTable tmpr_cal
-	NextScan
+		
+    If (save_changes) Then
+      save_changes = False
+      save_current_choices()
+      If (NOT ch1_enabled) Then ch1_value = NAN
+      If (NOT ch2_enabled) Then ch2_value = NAN
+      If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
+      If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
+      If (NOT tmpr_state) Then Move(tmpr(1),3,NAN,1)
+      CallTable(info)
+    EndIf
+	NextScan 
 EndProg
 
 
