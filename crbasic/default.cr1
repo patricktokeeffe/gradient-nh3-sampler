@@ -204,6 +204,11 @@ EndSub
 
 Sub save_current_choices()
   Move(settings(1),NUM_SETTINGS,choice(1),NUM_SETTINGS)
+  toggle_intv = toggle_time * 60
+  While (sonic_azimuth < 0)
+    sonic_azimuth = (sonic_azimuth+360)
+  Wend
+  sonic_azimuth = sonic_azimuth MOD 360
   Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,WRITEFILE)
 EndSub
 
@@ -464,7 +469,6 @@ BeginProg
     If (save_changes) Then
       save_changes = False
       save_current_choices()  
-      toggle_intv = toggle_time * 60
       If (NOT ch1_enabled) Then ch1_value = NAN
       If (NOT ch2_enabled) Then ch2_value = NAN
       If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
