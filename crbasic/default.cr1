@@ -384,18 +384,26 @@ BeginProg
   
 	Scan (SCAN_INTV,Sec,0,0)
   
-    VoltDiff(ch1_value,1,mv5000,DF1_IO,1,0,INTEG,DF1_MULT,DF1_OFF)
-    VoltDiff(ch2_value,1,mv5000,DF2_IO,1,0,INTEG,DF2_MULT,DF2_OFF)
-
-    VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG,CP_CO2_MULT,CP_CO2_OFF)
-    VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG,CP_H2O_MULT,CP_H2O_OFF)
-
-    Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-    If (num_levels = 3) Then
-      Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+    If (ch1_enabled) Then
+      VoltDiff(ch1_value,1,mv5000,CH1_IO,1,0,INTEG,ch1_mult,ch1_offset)
     EndIf
-    Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-
+    If (ch2_enabled) Then
+      VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG,ch2_mult,ch2_offset)
+    EndIf
+    If (cp_co2_enabled) Then
+      VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG,cp_co2_mult,cp_co2_offset)
+    EndIf
+    If (cp_h2o_enabled) Then
+      VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG,cp_h2o_mult,cp_h2o_offset)
+    EndIf
+    If (tmpr_state) Then
+      Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+      If (num_levels = 3) Then
+        Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+      EndIf
+      Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+    EndIf
+    
 		PanelTemp (logger_temp,INTEG)
 		Battery (logger_voltage)
 
