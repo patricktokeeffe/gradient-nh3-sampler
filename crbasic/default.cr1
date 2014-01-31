@@ -102,9 +102,31 @@ Public logger_temp, logger_voltage
 Units logger_temp = degC
 Units logger_voltage = volts
 
-Dim num_levels = {2} '2 or 3, determines if mid level is sampled
+'for post-statistics manipulation
+Public stats_out(10) 'match length of work_stats table
+Alias stats_out(1)  = ch1_btm_Avg
+Alias stats_out(2)  = ch1_top_Avg
+Alias stats_out(3)  = ch2_btm_Avg
+Alias stats_out(4)  = ch2_top_Avg
+Alias stats_out(5)  = cp_CO2_btm_Avg
+Alias stats_out(6)  = cp_CO2_top_Avg
+Alias stats_out(7)  = cp_H2O_btm_Avg
+Alias stats_out(8)  = cp_H2O_top_Avg
+Alias stats_out(9)  = tmpr_btm_Avg
+Alias stats_out(10) = tmpr_top_Avg
+
+'gradient & flux calculation variables
+Public tmpr_gradient
+Units tmpr_gradient = degC/m
+
+' TODO !!!! need sonic integration for online evaluation of eddy diffusivity of
+' heat
+' 
+' specifically, need cov_w_Ts 
+
 
 'level-selection valve control
+Dim num_levels = {2} '2 or 3, determines if mid level is sampled
 Dim valve_on(2) As Boolean
 Alias valve_on(1) = is_sampling_top 'else bottom
 Alias valve_on(2) = is_sampling_mid 'else top or bottom
@@ -212,7 +234,7 @@ Sub save_current_choices()
   Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,WRITEFILE)
 EndSub
 
-DataTable(info,TRUE,50)
+DataTable(gradient_info,TRUE,50)
   CardOut(0,1000)
   Sample(1,sonic_azimuth,FP2)
   Sample(1,toggle_time,FP2)
@@ -261,9 +283,9 @@ DataTable (gradient_tsdata,1,-1)
   Sample(1,tmpr_top,IEEE4)
 EndTable
 
-DataTable(gradient_stats,1,-1)
+DataTable(work_stats,1,-1)
+  'TableHide
   DataInterval(0,STATS_INTV,Sec,10)
-  CardOut(1,-1)
   
   Average(1,ch1_btm,IEEE4,ch1_btm=NAN)
 '  Average(1,ch1_mid,IEEE4,ch1_mid=NAN)
@@ -282,6 +304,26 @@ DataTable(gradient_stats,1,-1)
   Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR tmpr_state<>Normal)
 '  Average(1,tmpr_mid,FP2,tmpr_mid=NAN OR tmpr_state<>Normal)
   Average(1,tmpr_top,FP2,tmpr_top=NAN OR tmpr_state<>Normal)
+EndTable
+
+DataTable(gradient_stats,True,-1)
+  DataInterval(0,STATS_INTV,Sec,10)
+  CardOut(1,-1)
+  
+  Sample(1,ch1_btm_Avg,FP2)
+  Sample(1,ch1_top_Avg,FP2)
+  Sample(1,ch2_btm_Avg,FP2)
+  Sample(1,ch2_top_Avg,FP2)
+  
+  Sample(1,cp_CO2_btm_Avg,FP2)
+  Sample(1,cp_CO2_top_Avg,FP2)
+  Sample(1,cp_H2O_btm_Avg,FP2)
+  Sample(1,cp_H2O_top_Avg,FP2)
+
+  Sample(1,tmpr_btm_Avg,FP2)
+  Sample(1,tmpr_top_Avg,FP2)
+  
+  'TODO add gradient, flux stats
   
   Average(1,logger_voltage,FP2,logger_voltage=NAN)
   Average(1,logger_temp,FP2,logger_temp=NAN)
@@ -359,7 +401,7 @@ BeginProg
     populate_choices()
   EndIf
   save_current_choices()
-  CallTable(info)
+  CallTable(gradient_info)
 
   is_sampling_top = False
   is_sampling_mid = False
@@ -441,10 +483,18 @@ BeginProg
       cp_CO2_btm = cp_CO2_value
       cp_H2O_btm = cp_H2O_value
     EndIf
-       
+    
 		CallTable gradient_tsdata
-		CallTable gradient_stats
 		CallTable tmpr_cal
+		
+		CallTable work_stats		
+    If ( work_stats.Output(1,1) ) Then
+      GetRecord(stats_out(1),work_stats,1)
+      ' TODO gradient calculations
+      ' 
+      ' XXX account for height=0, set gradient=NAN
+      CallTable gradient_stats
+    EndIf
 		
     If (save_changes) Then
       save_changes = False
@@ -454,7 +504,7 @@ BeginProg
       If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
       If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
       If (NOT tmpr_enabled) Then Move(tmpr(1),3,NAN,1)
-      CallTable(info)
+      CallTable(gradient_info)
     EndIf
 	NextScan 
 EndProg
