@@ -81,6 +81,8 @@ Public raw_cp_irga(2)
 Alias raw_cp_irga(1) = cp_CO2_value
 Alias raw_cp_irga(2) = cp_H2O_value
 
+' TODO !!!! Determine a specific set of input units for CO2/H2O
+
 'level-partitioned readings of closed-path CO2/H2O
 Public cp_irga(6)
 Alias cp_irga(1) = cp_CO2_btm
@@ -119,6 +121,12 @@ Alias stats_out(10) = tmpr_top_Avg
 Public tmpr_gradient
 Units tmpr_gradient = degC/m
 
+Public tmpr_gradient_H
+Units tmpr_gradient_H = cm
+
+Public gas_gradient_H
+Units gas_gradient_H = cm
+
 ' TODO !!!! need sonic integration for online evaluation of eddy diffusivity of
 ' heat
 ' 
@@ -144,7 +152,7 @@ Const WRITEFILE = 0
 Const READFILE = 1
 
 Const Logarithmic = 0
-Const Linear = 1
+Const Linear = -1
 
 'necessary to retain whole # equivalent of toggle_time for use in TimeIntoInterval
 Dim toggle_intv 'seconds
@@ -168,18 +176,18 @@ Alias settings(14) = tmpr_state
 Alias settings(15) = tmpr_top_btm 'cal. offset
 Alias settings(16) = sonic_azimuth
 Alias settings(17) = toggle_time
-Alias settings(18) = top_inlet_H
-Alias settings(19) = btm_inlet_H
-Alias settings(20) = top_tmpr_H
-Alias settings(21) = btm_tmpr_H
+Alias settings(18) = inlet_top_H
+Alias settings(19) = inlet_btm_H
+Alias settings(20) = tmpr_top_H
+Alias settings(21) = tmpr_btm_H
 Alias settings(22) = grad_type
 Units tmpr_top_btm = degC
 Units sonic_azimuth = deg TN
 Units toggle_time = min
-Units top_inlet_H = cm
-Units btm_inlet_H = cm
-Units top_tmpr_H = cm
-Units btm_tmpr_H = cm
+Units inlet_top_H = cm
+Units inlet_btm_H = cm
+Units tmpr_top_H = cm
+Units tmpr_btm_H = cm
 
 Dim choice(NUM_SETTINGS)
 Alias choice(1)  = ch_ch1_enabled
@@ -199,10 +207,10 @@ Alias choice(14) = ch_tmpr_state
 Alias choice(15) = ch_tmpr_top_btm
 Alias choice(16) = ch_sonic_azimuth
 Alias choice(17) = ch_toggle_time
-Alias choice(18) = ch_top_inlet_H
-Alias choice(19) = ch_btm_inlet_H
-Alias choice(20) = ch_top_tmpr_H
-Alias choice(21) = ch_btm_tmpr_H
+Alias choice(18) = ch_inlet_top_H
+Alias choice(19) = ch_inlet_btm_H
+Alias choice(20) = ch_tmpr_top_H
+Alias choice(21) = ch_tmpr_btm_H
 Alias choice(22) = ch_grad_type
 
 Sub set_default_choices()
@@ -223,10 +231,10 @@ Sub set_default_choices()
   ch_tmpr_top_btm   = 0.0
   ch_sonic_azimuth  = 0
   ch_toggle_time    = 5 'in minutes
-  ch_top_inlet_H    = 0
-  ch_btm_inlet_H    = 0
-  ch_top_tmpr_H     = 0
-  ch_btm_tmpr_H     = 0
+  ch_inlet_top_H    = 0
+  ch_inlet_btm_H    = 0
+  ch_tmpr_top_H     = 0
+  ch_tmpr_btm_H     = 0
   ch_grad_type      = Logarithmic
 EndSub
 
@@ -235,10 +243,9 @@ DataTable(gradient_info,True,50)
   CardOut(0,1000)
   Sample(1,sonic_azimuth,FP2)
   Sample(1,toggle_time,FP2)
-  Sample(1,btm_inlet_H,FP2)
-    FieldNames("btm_inlet_height")
-  Sample(1,top_inlet_H,FP2)
-    FieldNames("top_inlet_height")
+  Sample(1,inlet_btm_H,FP2)
+  Sample(1,inlet_top_H,FP2)
+  Sample(1,gas_gradient_H,FP2)
   Sample(1,ch1_enabled,Boolean)
   Sample(1,ch1_mult,FP2)
   Sample(1,ch1_offset,FP2)
@@ -252,6 +259,9 @@ DataTable(gradient_info,True,50)
     FieldNames("tmpr_calibrating")
   Sample(1,tmpr_top_btm,IEEE4)
     FieldNames("tmpr_top_less_btm")
+  Sample(1,tmpr_btm_H,FP2)
+  Sample(1,tmpr_top_H,FP2)
+  Sample(1,tmpr_gradient_H,FP2)
   Sample(1,cp_co2_enabled,Boolean)
   Sample(1,cp_co2_mult,FP2)
   Sample(1,cp_co2_offset,FP2)
@@ -339,11 +349,36 @@ EndSub
 Sub save_current_choices()
   Move(settings(1),NUM_SETTINGS,choice(1),NUM_SETTINGS)
 
+  'Input validation
   toggle_intv = toggle_time * 60
   While (sonic_azimuth < 0)
     sonic_azimuth = (sonic_azimuth+360)
   Wend
   sonic_azimuth = sonic_azimuth MOD 360
+  
+  'Update dependent states
+  If (inlet_top_H > 0 AND inlet_btm_H > 0) Then
+    If (grad_type = Logarithmic) Then
+      gas_gradient_H = SQR(inlet_top_H * inlet_btm_H)
+    ElseIf (grad_type = Linear) Then
+      gas_gradient_H = (inlet_top_H + inlet_btm_H)/2
+    Else
+      gas_gradient_H = 0
+    EndIf
+  Else
+    gas_gradient_H = 0
+  EndIf
+  If (tmpr_top_H > 0 AND tmpr_btm_H > 0) Then
+    If (grad_type = Logarithmic) Then
+      tmpr_gradient_H = SQR(tmpr_top_H * tmpr_btm_H)
+    ElseIf (grad_type = Linear) Then
+      tmpr_gradient_H = (tmpr_top_H + tmpr_btm_H)/2
+    Else
+      tmpr_gradient_H = 0
+    EndIf
+  Else
+    tmpr_gradient_H = 0
+  EndIf
   If (NOT ch1_enabled) Then ch1_value = NAN
   If (NOT ch2_enabled) Then ch2_value = NAN
   If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
@@ -364,8 +399,8 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
       MenuPick(1, 1.5, 2, 3, 5, 6, 10, 15)
     MenuItem("# levels", num_levels)
       MenuPick(2)',3)
-    MenuItem("Top inlet H, cm", ch_top_inlet_H
-    MenuItem("Btm inlet H, cm", ch_btm_inlet_H
+    MenuItem("Top inlet H, cm", ch_inlet_top_H
+    MenuItem("Btm inlet H, cm", ch_inlet_btm_H
   EndSubMenu
   SubMenu("Analog input")
     MenuItem("Chan 1 recording", ch_ch1_enabled)
@@ -382,8 +417,8 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
       MenuPick(Disable,Enable)
     MenuItem("Set mode", ch_tmpr_state)
       MenuPick(Standby, Normal, Calibrating)
-    MenuItem("Top height, cm", ch_top_tmpr_H
-    MenuItem("Btm height, cm", ch_btm_tmpr_H
+    MenuItem("Top height, cm", ch_tmpr_top_H
+    MenuItem("Btm height, cm", ch_tmpr_btm_H
     MenuItem("Top-btm offset, degC", ch_tmpr_top_btm)
     ' XXX maybe ability change duration of calibration stats output (from 1min)
   EndSubMenu
