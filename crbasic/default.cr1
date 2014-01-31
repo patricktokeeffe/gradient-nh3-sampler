@@ -289,11 +289,13 @@ EndTable
 
 DataTable(tmpr_cal,(tmpr_state=Calibrating),-1)
   DataInterval(0,CAL_INTV,Sec,10)
-  CardOut(1,-1)
+  CardOut(1,1000)
   Average(1,tmpr_btm,IEEE4,tmpr_btm=NAN)
 '  Average(1,tmpr_mid,IEEE4,tmpr_mid=NAN)
   Average(1,tmpr_top,IEEE4,tmpr_top=NAN)
-  StdDev(1,tmpr_top,IEEE4,tmpr_top=NAN)
+  Average(1,(tmpr_top-tmpr_btm),IEEE4,(tmpr_top=NAN OR tmpr_btm=NAN))
+    FieldNames("diff_Top_less_Btm")
+    Units diff_Top_less_Btm = degC
 EndTable
 
 
