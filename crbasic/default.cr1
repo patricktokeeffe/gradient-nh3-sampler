@@ -139,9 +139,12 @@ Const Standby = 0 'False
 ''''''''''''''' SETTINGS RETENTION ''''''''''''''
 Dim filehandle as Long
 Const SETTINGS_FILE = "CPU:grad_settings.dat"
-Const NUM_SETTINGS = {20}
+Const NUM_SETTINGS = {22}
 Const WRITEFILE = 0
 Const READFILE = 1
+
+Const Logarithmic = 0
+Const Linear = 1
 
 'necessary to retain whole # equivalent of toggle_time for use in TimeIntoInterval
 Dim toggle_intv 'seconds
@@ -162,12 +165,15 @@ Alias settings(11) = cp_h2o_mult
 Alias settings(12) = cp_h2o_offset
 Alias settings(13) = tmpr_enabled
 Alias settings(14) = tmpr_state
-Alias settings(15) = sonic_azimuth
-Alias settings(16) = toggle_time
-Alias settings(17) = top_inlet_H
-Alias settings(18) = btm_inlet_H
-Alias settings(19) = top_tmpr_H
-Alias settings(20) = btm_tmpr_H
+Alias settings(15) = tmpr_top_btm 'cal. offset
+Alias settings(16) = sonic_azimuth
+Alias settings(17) = toggle_time
+Alias settings(18) = top_inlet_H
+Alias settings(19) = btm_inlet_H
+Alias settings(20) = top_tmpr_H
+Alias settings(21) = btm_tmpr_H
+Alias settings(22) = grad_type
+Units tmpr_top_btm = degC
 Units sonic_azimuth = deg TN
 Units toggle_time = min
 Units top_inlet_H = cm
@@ -190,12 +196,14 @@ Alias choice(11) = ch_cp_h2o_mult
 Alias choice(12) = ch_cp_h2o_offset
 Alias choice(13) = ch_tmpr_enabled
 Alias choice(14) = ch_tmpr_state
-Alias choice(15) = ch_sonic_azimuth
-Alias choice(16) = ch_toggle_time
-Alias choice(17) = ch_top_inlet_H
-Alias choice(18) = ch_btm_inlet_H
-Alias choice(19) = ch_top_tmpr_H
-Alias choice(20) = ch_btm_tmpr_H
+Alias choice(15) = ch_tmpr_top_btm
+Alias choice(16) = ch_sonic_azimuth
+Alias choice(17) = ch_toggle_time
+Alias choice(18) = ch_top_inlet_H
+Alias choice(19) = ch_btm_inlet_H
+Alias choice(20) = ch_top_tmpr_H
+Alias choice(21) = ch_btm_tmpr_H
+Alias choice(22) = ch_grad_type
 
 Sub set_default_choices()
   ch_ch1_enabled    = Disable
@@ -212,12 +220,14 @@ Sub set_default_choices()
   ch_cp_h2o_offset  = 0
   ch_tmpr_enabled   = Disable
   ch_tmpr_state     = Standby
+  ch_tmpr_top_btm   = 0.0
   ch_sonic_azimuth  = 0
   ch_toggle_time    = 5 'in minutes
   ch_top_inlet_H    = 0
   ch_btm_inlet_H    = 0
   ch_top_tmpr_H     = 0
   ch_btm_tmpr_H     = 0
+  ch_grad_type      = Logarithmic
 EndSub
 
 Sub populate_choices()
@@ -255,12 +265,15 @@ DataTable(gradient_info,TRUE,50)
     FieldNames("tmpr_normal")
   Sample(1,(tmpr_state=Calibrating),Boolean)
     FieldNames("tmpr_calibrating")
+  Sample(1,tmpr_top_btm,IEEE4)
+    FieldNames("tmpr_top_less_btm") ' XXX short enough ?
   Sample(1,cp_co2_enabled,Boolean)
   Sample(1,cp_co2_mult,FP2)
   Sample(1,cp_co2_offset,FP2)
   Sample(1,cp_h2o_enabled,Boolean)
   Sample(1,cp_h2o_mult,FP2)
   Sample(1,cp_h2o_offset,FP2)
+  Sample(1,grad_type,Boolean)
 EndTable
 
 ''''''''''''''' DATA TABLES ''''''''''''''''
@@ -345,7 +358,6 @@ EndTable
 Const Yes = True
 Const Cancel = False
 DisplayMenu("Gradient setup", 0) 'as submenu to main
-  MenuItem("Sonic azimuth, deg TN", ch_sonic_azimuth)
   SubMenu("Gas gradient")
     MenuItem("Dwell time, min", ch_toggle_time)
       'TODO figure out best-compatible values for future 3rd level addition
@@ -356,14 +368,14 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
     MenuItem("Btm inlet H, cm", ch_btm_inlet_H
   EndSubMenu
   SubMenu("Analog input")
-    MenuItem("DF 1 recording", ch_ch1_enabled)
+    MenuItem("Chan 1 recording", ch_ch1_enabled)
       MenuPick(Disable, Enable)
-    MenuItem("DF 1 mult)", ch_ch1_mult)
-    MenuItem("DF 1 offset", ch_ch1_offset)
-    MenuItem("DF 2 recording", ch_ch2_enabled)
+    MenuItem("Chan 1 mult)", ch_ch1_mult)
+    MenuItem("Chan 1 offset", ch_ch1_offset)
+    MenuItem("Chan 2 recording", ch_ch2_enabled)
       MenuPick(Disable, Enable)
-    MenuItem("DF 2 mult", ch_ch2_mult)
-    MenuItem("DF 2 offset", ch_ch2_mult)
+    MenuItem("Chan 2 mult", ch_ch2_mult)
+    MenuItem("Chan 2 offset", ch_ch2_mult)
   EndSubMenu
   SubMenu("Thermistors")
     MenuItem("Recording", ch_tmpr_enabled)
@@ -372,6 +384,8 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
       MenuPick(Standby, Normal, Calibrating)
     MenuItem("Top height, cm", ch_top_tmpr_H
     MenuItem("Btm height, cm", ch_btm_tmpr_H
+    MenuItem("Top-btm offset, degC", ch_tmpr_top_btm)
+    ' XXX maybe ability change duration of calibration stats output (from 1min)
   EndSubMenu
   SubMenu("Closed-path IRGA")
     MenuItem("CO2 recording", ch_cp_co2_enabled)
@@ -383,9 +397,15 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
     MenuItem("H2O mult", ch_cp_h2o_mult)
     MenuItem("H2O offset", ch_cp_h2o_offset)
   EndSubMenu
+  SubMenu("Other")
+    MenuItem("Sonic azimuth, deg TN", ch_sonic_azimuth)
+    MenuItem("Gradient type", ch_grad_type)
+      MenuPick(Logarithmic, Linear)
+  EndSubMenu
   SubMenu("Save changes")
     MenuItem("Save now?", save_changes)
-    MenuPick(Cancel,Yes)
+    MenuPick(Cancel,Yes) ' TODO add "Discard" here
+    ' TODO add a set default here
   EndSubMenu
 EndMenu
 
