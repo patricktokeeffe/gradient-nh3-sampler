@@ -230,20 +230,6 @@ Sub set_default_choices()
   ch_grad_type      = Logarithmic
 EndSub
 
-Sub populate_choices()
-  Move(choice(1),NUM_SETTINGS,settings(1),NUM_SETTINGS)
-EndSub
-
-Sub save_current_choices()
-  Move(settings(1),NUM_SETTINGS,choice(1),NUM_SETTINGS)
-  toggle_intv = toggle_time * 60
-  While (sonic_azimuth < 0)
-    sonic_azimuth = (sonic_azimuth+360)
-  Wend
-  sonic_azimuth = sonic_azimuth MOD 360
-  Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,WRITEFILE)
-EndSub
-
 DataTable(gradient_info,TRUE,50)
   CardOut(0,1000)
   Sample(1,sonic_azimuth,FP2)
@@ -353,6 +339,28 @@ DataTable(tmpr_cal,(tmpr_state=Calibrating),-1)
     Units diff_Top_less_Btm = degC
 EndTable
 
+'''''''''''' SUBROUTINES ''''''''''''''''
+Sub populate_choices()
+  Move(choice(1),NUM_SETTINGS,settings(1),NUM_SETTINGS)
+EndSub
+
+Sub save_current_choices()
+  Move(settings(1),NUM_SETTINGS,choice(1),NUM_SETTINGS)
+
+  toggle_intv = toggle_time * 60
+  While (sonic_azimuth < 0)
+    sonic_azimuth = (sonic_azimuth+360)
+  Wend
+  sonic_azimuth = sonic_azimuth MOD 360
+  If (NOT ch1_enabled) Then ch1_value = NAN
+  If (NOT ch2_enabled) Then ch2_value = NAN
+  If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
+  If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
+  If (NOT tmpr_enabled) Then Move(tmpr(1),3,NAN,1)
+
+  Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,WRITEFILE)
+  CallTable(gradient_info)
+EndSub
 
 ''''''''''''''' MENU '''''''''''''''
 Const Yes = True
@@ -421,17 +429,10 @@ BeginProg
     populate_choices()
   EndIf
   save_current_choices()
-  CallTable(gradient_info)
 
   is_sampling_top = False
   is_sampling_mid = False
   'no need for bottom state indicator; both top/mid false implies bottom=true
-  
-  Move(raw_conc(1),2,NAN,1)
-  Move(conc(1),6,NAN,1)
-  Move(raw_cp_irga(1),2,NAN,1)
-  Move(cp_irga(1),6,NAN,1)
-  Move(tmpr(1),3,NAN,1)
   
 	Scan (SCAN_INTV,Sec,0,0)
   
@@ -519,12 +520,6 @@ BeginProg
     If (save_changes) Then
       save_changes = False
       save_current_choices()  
-      If (NOT ch1_enabled) Then ch1_value = NAN
-      If (NOT ch2_enabled) Then ch2_value = NAN
-      If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
-      If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
-      If (NOT tmpr_enabled) Then Move(tmpr(1),3,NAN,1)
-      CallTable(gradient_info)
     EndIf
 	NextScan 
 EndProg
