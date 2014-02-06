@@ -290,7 +290,8 @@ Table with statistics computed for each 30 minute interval.
 | cp_H2O_top_Avg      |    *    | Mean CP-IRGA H2O when sampling top inlet    |
 | tmpr_btm_Avg        | degC    | Mean temp. at top thermistor level**        |
 | tmpr_top_Avg        | degC    | Mean temp. at btm thermistor level**        |
-| ...
+| tmpr_gradient       | degC/m  | Mean temp. gradient at effective height     |
+|                     |         | (`gas_gradient_H` in 'gradient_info' table) |
 | logger_voltage      | volts   | Mean input voltage to datalogger            |
 | logger_temp         | degC    | Mean panel temp. of datalogger              |
 +---------------------+---------+---------------------------------------------+
