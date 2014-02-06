@@ -5,69 +5,372 @@ Gradient system user manual
 Physical deployment
 ===================
 
+Presently, the system is designed for only two inlet levels.
+
 Plumbing 
 --------
-Two or three tubes are setup so the inlets are approximately plumb and spread
-out several heights, typically ~0.5m, ~1.5m and ~2.5m. The tubes are attached 
-to specific ports of a pair of three-way valves; in a two-tube configuration, 
-only one 3-way valve is used.
+Two sampling tubes are setup so the inlets are approximately plumb at heights
+reasonable for the sampling terrain; ~0.5m and ~1.5m are a good start. A vacuum
+pump is responsible for flushing the tubing lines while a smaller diaphragm 
+pump draws sample from the appropriate sampling level via 3-way valve. 
+
+Refer to block diagram for tubing plumbing configuration.
 
 Slow-response trace gas analyzer inputs
 ---------------------------------------
 The gradient system has (2) differential analog input (0-5V) terminals 
-reserved for input from a slow-response trace gas analyzer. 
+reserved for input from a slow-response trace gas analyzer. Channel 1 ("ch1")
+is differential input #1 on the datalogger and channel 2 ("ch2") is 
+differential input #2. 
+
+In future versions, differential inputs #3 & #4 may also be available for use
+as analog input channels. 
+
+Refer to wiring diagram for wiring I/O locations.
 
 Thermistor inputs
 -----------------
-A set of aspirated thermistors is used to measure the gradient of temperature.
-When combined with eddy-covariance measurements of sensible heat flux, an 
-eddy diffusivity constant (k) may be estimated.
+A pair of aspirated thermistors (CS107; Campbell Scientific) is used to measure
+the gradient of temperature. When combined with eddy-covariance measurements of
+vertical wind speed and temperature, an eddy diffusivity constant (K_h) may be 
+estimated. 
+
+Refer to wiring diagram for wiring I/O locations.
 
 Closed-path CO2/H2O analyzer inputs
 -----------------------------------
 A closed-path CO2/H2O analyzer is plumbed in parallel with the slow-response
-trace gas analyzer so that a gradient of CO2 concentrations is measured. When
-coupled with eddy-covariance measurements of CO2 flux, an eddy diffusivity 
-constant (k) may be estimated.
+trace gas analyzer so that a gradient of CO2 concentrations is measured (see
+block diagram). When coupled with eddy-covariance measurements of CO2 flux, 
+an eddy diffusivity constant (K_co2) may be estimated. 
+
+Refer to wiring diagram for wiring I/O locations. Refer to block diagram for
+tubing plumbing configuration.
+
+Heated sample lines
+-------------------
+In some cases the gradient sampling lines must be heated to discourage 
+adsorption of a chemical of interest (such as ammonia). In this event, 
+commercial heated sampling lines with independent temperature controllers are
+the recommended method. Tubing beyond the 3-way valve should also be heated
+as well for maximum desorptive effect such as with self-regulating heat tape.
+
+    #### TODO - verify limits of input gas temperature on Picarro NH3 analyer
 
 Datalogger program
 ==================
 
-Upon receiving power, the datalogger will turn on and compile the program. Once
-running the user can make changes to settings and monitor measurements. 
+Upon receiving power, the datalogger will turn on and compile the program. The
+program is named "default.cr1" so it is loaded in preference to any other 
+programs in the logger's memory. Once running the user can make changes to 
+settings and monitor measurements. 
 
-Sensor settings
----------------
+Settings are retained across power cycles but changes must be explicitly saved
+to take effect. 
+
+Gradient setup
+--------------
+All settings related to the gradient sampler are located under the submenu 
+"Gradient setup" of the main menu. Changes are not retained until the user
+confirms via "Gradient setup > Save changes > Save Now? > Yes". When changes
+are made, the new settings are also saved to the "info" data table.
+
+Gas gradient
+````````````
+This menu affects the sampling behavior of gradient components.
+
+Dwell time, min ::
+
+    Set the duration of sampling, in minutes, at a given level before switching
+    to the next ("dwell time"). Available options are displayed to choose from.
+    Default value is 5 minutes.
+
+# levels ::
+
+    **The gradient sampler is not yet configured to handle 3 inlets so the
+    only available option is "2".**
+
+    #### add third level
+
+Top inlet H, cm / Btm inlet H, cm ::
+
+    Specify the heights, in centimeters, of the top and bottom gradient inlets
+    for use in calculation of gradients. Correct units must be used for proper
+    units resolution of output statistics. If the default value (0) is not 
+    changed or either value is negative or the top height does not exceed the
+    bottom height, the calculated gradient will be NAN.
+
+Analog input
+````````````
+These settings relate to the slow-response trace gas analyzer connected to
+channels 1 & 2. 
+
+Chan 1 recording / Chan 2 recording ::
+
+    If set to `Enable` the corresponding differential analog input is measured
+    and the value is recorded/used in downstream calculations. If set to 
+    `Disable` (Default) the corresponding channel will contain NAN values.
+
+Chan 1 mult / Chan 2 mult & Chan 1 offset / Chan 2 offset ::
+
+    Values from channel 1 & 2 are scaled by the corresponding multipler 
+    (units/mV) and offset (units @ 0mV) before being recorded to a data table
+    or used in later calculations. Default multiplier/offset are 1.0/0, 
+    respectively, for both channels.
 
 Thermistors
 ```````````
 The thermistors may be set in three different 'modes' of operation: normal,
-calibrating or disabled. When turned on, the default mode is "normal" but the
-mode may be changed by navigating the menu 'Sensor setup' > 'Thermistors' >
-'Set mode'. When in calibration mode, the thermistor data is recorded to a
-separate data table; it is not included in generated statistics. When disabled,
-thermistor data is not saved in the statistics or calibration tables.
-Regardless of mode, the thermistor data is saved in the time-series table. A 
-pair of boolean values in the time-series table indicates the operating mode
-of the thermistors at a given time.
+calibrating or disabled. The mode determines whether the sensors are queried
+and which data table values are recorded in. 
 
+Recording ::
+
+    When set to `Enable` thermistors are queried and data is handled according
+    to mode. When set to `Disable` (Default) values are set to NAN and sensors 
+    are not queried.
+
+Set mode ::
+
+    When intitially activated, mode will be `Standby` (Default) indicating data
+    is being saved to the "tsdata" table but is not being used in either 
+    statistics or calibration data tables. 
+
+    Set to `Calibrating` to record 1-minute averages of sensor values in the
+    "tmpr_cal" data table. Values are not used in statistics data table. When
+    in calibration mode, the sensors should be at the same elevation with as
+    little lateral seperation as possible. It is useful to put the sensors in
+    standby mode when switching from deployment to calibration positioning.
+
+    Set to `Normal` to include measured values in statistics data table.
+
+    If the 'Recording' setting is enabled, then thermistor data and a state 
+    flag will be saved in the time-series table "tsdata" regardless of the 
+    mode setting. The Recording setting may be changed without affecting 
+    the mode setting.
+
+Top height, cm / Btm height, cm ::
+
+    Specify the heights, in centimeters, of the top and bottom thermistors
+    for use in calculation of gradients. Correct units must be used for proper
+    units resolution of output statistics. If the default value (0) is not 
+    changed or either value is negative or the top height does not exceed the
+    bottom height, the calculated gradient will be NAN.
+
+Top-btm offset, degC ::
+
+    This value represents the calibration offset of the top thermistor relative
+    to the bottom thermistor (mean value of top minus bottom). It is used to
+    correct thermistor statistics but is not used in calibration mode. 
+
+    The default value is 0 degC. Operate with thermistors in calibration mode 
+    then review data in "tmpr_cal" data table to determine an appropriate 
+    offset value. 
+
+Closed-path IRGA
+````````````````
+These settings affect incorporation of analog measurements of the closed-path
+infrared gas analyzer for CO2 & H2O. 
+
+CO2 recording / H2O recording ::
+
+    When set to `Enable` the corresponding differential input channels for CO2 
+    and H2O are measured and values are incorporated into calculations and
+    statistics data table. When set to `Disable` (Default) the corresponding 
+    channel is not measured and values are reported as NAN.
+
+CO2 mult / H2O mult & CO2 offset / H2O offset ::
+
+    Specify correct multiplier (units/mV) and offset (units @ 0mV) for the
+    corresponding CO2 and H2O channels. These are applied before data is 
+    saved to a data table or calculations are performed. Default 
+    multiplier/offset are 1.0/0, respectively, for both channels.
+
+    **No preferred unit has been selected but this will be necessary before
+    online evaluation of eddy diffusivity from CO2 gradient can be done.**
+    
+    #### Shouldn't it be mass units to match open-path IRGA? mg/m^3 
+
+Other
+`````
+This menu collects miscellaneous parameters used in online calculations.
+
+Sonic azimuth, deg TN ::
+
+    Set this value to the azimuth of the sonic anemometer. Entered values will
+    be adjusted to lie in the range 0 <= X < 360.  Default: 0
+    
+    **This setting has no effect on anything but in the future will be used
+    used to render proper wind direction statistics**
+
+Gradient type ::
+
+    Choose whether 2-level gradients are calculated using a logarithmic or
+    linear profile. The logarithmic (Default) is typically used but a linear
+    profile might be more appropriate for highly stable conditions. In general
+    the same profile is used regardless of conditions and logarithmic is 
+    preferred.
+
+    **Online gradient calculations are still in development**
+
+Operations
+==========
+
+This chapter review various procedures necessary for routine operation of the
+gradient system.
+
+Data retrieval
+``````````````
+Data is stored to a CompactFlash(TM) memory card so the simplest retrieval
+method is to simply remove the CF card and replace it a blank one. The module
+housing the memory card is located on the far right side of the data logger.
+
+    To remove: completely loosen the retaining thumb screw, open the module 
+    cover, then press the large white button labeled "Removal button". When 
+    lit green, press the small lever to eject the card. 
+
+    To install: align the CF correctly as indicated by the key groove. Press
+    firmly to insert completely. Close and secure the module cover flap. 
+
+    #### TODO pictures
+
+Alternately, data tables can be retrieved from the datalogger via its RS-232 
+serial port or its network interface and compatible software such as LoggerNet
+or PC400. The freely available software PC200W can retrieve via serial port
+only. For more information, refer to the corresponding software's user guide.
+
+    #### TODO links
 
 Data products
--------------
+=============
+
+The several data files produced by the datalogger are described in this 
+section.
 
 gradient_tsdata
 ```````````````
-Table with 1Hz measurement values
+Table with 1Hz measurement values and state flags. 
+
+    **This table may need to become 10hz for future incorporation of sonic
+    anemometer data or more likely its name will change and an additional 
+    table will be added**
+
++------------------+---------+------------------------------------------------+
+| Column name      | Units   | Description                                    |
++------------------+---------+------------------------------------------------+
+| is_sampling_top  |         | Current gradient sampling level:               |
+|                  |         |   top (-1) or bottom (0)                       |
+| ch1_value        |    *    | Grab sample of channel 1 value                 |
+| ch2_value        |    *    | Grab sample of channel 2 value                 |
+| cp_CO2_value     |    *    | Grab sample of closed-path IRGA CO2 channel    |
+| cp_H2O_value     |    *    | Grab sample of closed-path IRGA H2O channel    |
+| tmpr_state       |         | Current mode of thermistors:                   |
+|                  |         |   normal (-1) / standby (0) / calibrating (1)  |
+| tmpr_btm         | degC    | Grab sample of lower thermistor value          |
+| tmpr_top         | degC    | Grab sample of higher thermistor value         |
++------------------+---------+------------------------------------------------+
+
+    * units depend on multiplier/offset settings; if mult/offset are still
+      the default 1.0/0 then units are in mV
 
 gradient_stats
 ``````````````
-Table with statistics computed for a given interval. Default interval = 30min
+Table with statistics computed for each 30 minute interval.
+
++---------------------+---------+---------------------------------------------+
+| Column name         | Units   | Description                                 |
++---------------------+---------+---------------------------------------------+
+| ch1_btm_Avg         |    *    | Mean chan1 value when sampling bottom inlet |
+| ch1_top_Avg         |    *    | Mean chan1 value when sampling top inlet    |
+| ch2_btm_Avg         |    *    | Mean chan2 value when sampling bottom inlet |
+| ch2_top_Avg         |    *    | Mean chan2 value when sampling top inlet    |
+| cp_CO2_btm_Avg      |    *    | Mean CP-IRGA CO2 when sampling bottom inlet |
+| cp_CO2_top_Avg      |    *    | Mean CP-IRGA CO2 when sampling top inlet    |
+| cp_H2O_btm_Avg      |    *    | Mean CP-IRGA H2O when sampling bottom inlet |
+| cp_H2O_top_Avg      |    *    | Mean CP-IRGA H2O when sampling top inlet    |
+| tmpr_btm_Avg        | degC    | Mean temp. at top thermistor level**        |
+| tmpr_top_Avg        | degC    | Mean temp. at btm thermistor level**        |
+| ...
+| logger_voltage      | volts   | Mean input voltage to datalogger            |
+| logger_temp         | degC    | Mean panel temp. of datalogger              |
++---------------------+---------+---------------------------------------------+
+
+    * units depend on multiplier/offset settings; if mult/offset are still
+      the default 1.0/0 then units are in mV
+    ** calibration offset of thermistors is not included these values
 
 tmpr_cal
 ````````
-Table with avg/stdev of thermistors. Output interval is 1min (default). Because
-of how the calibration table is triggered, the first interval only may be of
-partial length; all other intervals will represent data collected over the 
-entire interval. 
+Thermistor data averaged each minute. Because of how the calibration table is 
+triggered, the first (and only first interval) may be of partial length; all 
+other intervals will represent data collected over the entire interval. 
+
+By looking at the `diff_top_less_btm` column, it is possible to determine a
+calibration offset between the two sensors. With well-calibrated sensors, this
+value may not be more than 0.1 degC. Once known, the static calibration offset
+of the two sensors may be specified in the program settings and it will be 
+incorporated into gradient calculations.
+
+    Setting: "Gradient setup > Thermistors > Top-btm offset, degC"
+
++---------------------+---------+---------------------------------------------+
+| Column name         | Units   | Description                                 |
++---------------------+---------+---------------------------------------------+
+| tmpr_btm_Avg        | degC    | Mean temp. reported by "lower" thermistor   |
+| tmpr_top_Avg        | degC    | Mean temp. reported by "upper" thermistor   |
+| diff_top_less_btm   | degC    | Mean difference as <top> minus <btm>        |
++---------------------+---------+---------------------------------------------+
+
+gradient_info
+`````````````
+This table keeps track of changes to settings. It is triggered whenever the
+user makes changes via the settings menu. Up to 50 records will be retained in
+the built-in datalogger memory; up to 1000 records will be retained on a CF
+memory card.
+
++---------------------+---------+---------------------------------------------+
+| Column name         | Units   | Description                                 |
++---------------------+---------+---------------------------------------------+
+| sonic_azimuth       | deg TN  | Bearing of anemometer w.r.t True North      |
+| toggle_time         | min     | Duration gradient level is sampled before   |
+|                     |         |   switching to next inlet                   |
+| btm_inlet_H         | cm      | Height from ground of lower gradient inlet  |
+| top_inlet_H         | cm      | Height from ground of higher gradient inlet |
+| gas_gradient_H      | cm      | Effective height of calculated gas          |
+|                     |         |   gradient; will vary depending on gradient |
+|                     |         |   type setting (log vs. linear)             |
+| ch1_enabled         |         | State of input to differential channel 1:   |
+|                     |         |   measure/record (-1) or ignore (0)         |
+| ch1_mult            |         | Multiplier used to scale raw chan1 values   |
+| ch1_offset          |         | Offset added to scaled chan1 values         |
+| ch2_enabled         |         | State of input to differential channel 2:   |
+|                     |         |   measure/record (-1) or ignore (0)         |
+| ch1_mult            |         | Multiplier used to scale raw chan2 values   |
+| ch1_offset          |         | Offset added to scaled chan2 values         |
+| tmpr_enabled        |         | State of thermistor input:                  |
+|                     |         |   measure/record (-1) or ignore (0)         |
+| tmpr_normal         |         | *Thermistor mode: normal if -1              |
+| tmpr_calibrating    |         | *Thermistor mode: calibrating if -1         |
+| tmpr_top_less_btm   | degC    | Offset of higher thermistor relative to     |
+|                     |         |   lower thermistor (= top - btm)            |
+| tmpr_btm_H          | cm      | Height from ground of lower thermistor      |
+| tmpr_top_H          | cm      | Height from ground of higher thermistor     |
+| tmpr_gradient_H     | cm      | Effective height of calculated temperature  |
+|                     |         |   gradient; will vary depending on gradient |
+|                     |         |   type setting (log vs. linear)             |
+| cp_co2_enabled      |         | State of closed-path IRGA analog CO2 input: |
+|                     |         |   measure/record (-1) or ignore (0)         |
+| cp_co2_mult         |         | Multiplier used to scale raw CO2 values     |
+| cp_co2_offset       |         | Offset added to scaled CO2 values           |
+| cp_h2o_enabled      |         | State of closed-path IRGA analog H2O input: |
+|                     |         |   measure/record (-1) or ignore (0)         |
+| cp_h2o_mult         |         | Multiplier used to scale raw H2O values     |
+| cp_h2o_offset       |         | Offset added to scaled H2O values           |
+| grad_type           |         | Type of gradient calculation:               |
+|                     |         |   linear (-1) or logarithmic (0)            |
++---------------------+---------+---------------------------------------------+
+
+    * If thermistors are enabled but not in normal or calibrating mode, they
+      must be in standby mode.
 
 
