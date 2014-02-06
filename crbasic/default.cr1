@@ -335,6 +335,7 @@ DataTable(gradient_stats,True,-1)
   Sample(1,tmpr_btm_Avg,FP2)
   Sample(1,tmpr_top_Avg,FP2)
   
+  Sample(1,tmpr_gradient,IEEE4)
   'TODO add gradient, flux stats
   
   Average(1,logger_voltage,FP2,logger_voltage=NAN)
@@ -357,8 +358,10 @@ Sub save_current_choices()
   sonic_azimuth = sonic_azimuth MOD 360
   
   'Update dependent states
-  If (inlet_top_H > 0 AND inlet_btm_H > 0) Then
-    If (grad_type = Logarithmic) Then
+  If (inlet_btm_H > 0 AND inlet_top_H > 0) Then
+    If (inlet_btm_H <= inlet_top_H) Then
+      gas_gradient_H = 0
+    ElseIf (grad_type = Logarithmic) Then
       gas_gradient_H = SQR(inlet_top_H * inlet_btm_H)
     ElseIf (grad_type = Linear) Then
       gas_gradient_H = (inlet_top_H + inlet_btm_H)/2
@@ -368,8 +371,10 @@ Sub save_current_choices()
   Else
     gas_gradient_H = 0
   EndIf
-  If (tmpr_top_H > 0 AND tmpr_btm_H > 0) Then
-    If (grad_type = Logarithmic) Then
+  If (tmpr_btm_H > 0 AND tmpr_top_H > 0) Then
+    If (tmpr_btm_H <= tmpr_top_H) Then
+      tmpr_gradient_H = 0
+    ElseIf (grad_type = Logarithmic) Then
       tmpr_gradient_H = SQR(tmpr_top_H * tmpr_btm_H)
     ElseIf (grad_type = Linear) Then
       tmpr_gradient_H = (tmpr_top_H + tmpr_btm_H)/2
@@ -538,9 +543,21 @@ BeginProg
 		CallTable work_stats		
     If ( work_stats.Output(1,1) ) Then
       GetRecord(stats_out(1),work_stats,1)
-      ' TODO gradient calculations
-      ' 
-      ' XXX account for height=0, set gradient=NAN
+      
+      If (NOT tmpr_gradient_H > 0) Then
+        tmpr_gradient = NAN
+      ElseIf (grad_type = Logarithmic) Then
+        tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
+        tmpr_gradient /= (LN(tmpr_top_H/tmpr_btm_H)*tmpr_gradient_H)
+        tmpr_gradient *= 100 'scale degC/cm => degC/m
+      ElseIf (grad_type = Linear) Then
+        tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
+        tmpr_gradient /= (tmpr_top_H - tmpr_btm_H)
+        tmpr_gradient *= 100 'scale degC/cm => degC/m
+      Else
+        tmpr_gradient = NAN
+      EndIf
+      
       CallTable gradient_stats
     EndIf
 		
