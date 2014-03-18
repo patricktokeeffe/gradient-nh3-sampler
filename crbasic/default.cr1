@@ -21,6 +21,8 @@ EndConstTable
 'trace gas analyzer analog input
 Const CH1_IO = 1 'DF
 Const CH2_IO = 2 'DF
+Const CH3_IO = 3 'DF
+Const CH4_IO = 4 'DF
 
 'closed-path CO2/H2O analyzer
 Const CP_CO2_IO = 5 'DF
@@ -62,19 +64,27 @@ Const BOTTOM = "bottom"
 Const Enable = True
 Const Disable = False
 
-'measurements from DF1, DF2
-Public raw_conc(2)
+'measurements from DF1-4
+Public raw_conc(4)
 Alias raw_conc(1) = ch1_value
 Alias raw_conc(2) = ch2_value
+Alias raw_conc(3) = ch3_value
+Alias raw_conc(4) = ch4_value
 
-'level-partitioned readings of DF1, DF2
-Public conc(6)
-Alias conc(1) = ch1_btm
-Alias conc(2) = ch1_mid
-Alias conc(3) = ch1_top
-Alias conc(4) = ch2_btm
-Alias conc(5) = ch2_mid
-Alias conc(6) = ch2_top
+'level-partitioned readings of DF1-4
+Public conc(12)
+Alias conc(1)  = ch1_btm
+Alias conc(2)  = ch1_mid
+Alias conc(3)  = ch1_top
+Alias conc(4)  = ch2_btm
+Alias conc(5)  = ch2_mid
+Alias conc(6)  = ch2_top
+Alias conc(7)  = ch3_btm
+Alias conc(8)  = ch3_mid
+Alias conc(9)  = ch3_top
+Alias conc(10) = ch4_btm
+Alias conc(11) = ch4_mid
+Alias conc(12) = ch4_top
 
 'measurements from closed-path CO2/H2O analyzer
 Public raw_cp_irga(2)
@@ -105,17 +115,21 @@ Units logger_temp = degC
 Units logger_voltage = volts
 
 'for post-statistics manipulation
-Public stats_out(10) 'match length of work_stats table
+Public stats_out(14) 'match length of work_stats table
 Alias stats_out(1)  = ch1_btm_Avg
 Alias stats_out(2)  = ch1_top_Avg
 Alias stats_out(3)  = ch2_btm_Avg
 Alias stats_out(4)  = ch2_top_Avg
-Alias stats_out(5)  = cp_CO2_btm_Avg
-Alias stats_out(6)  = cp_CO2_top_Avg
-Alias stats_out(7)  = cp_H2O_btm_Avg
-Alias stats_out(8)  = cp_H2O_top_Avg
-Alias stats_out(9)  = tmpr_btm_Avg
-Alias stats_out(10) = tmpr_top_Avg
+Alias stats_out(5)  = ch3_btm_Avg
+Alias stats_out(6)  = ch3_top_Avg
+Alias stats_out(7)  = ch4_btm_Avg
+Alias stats_out(8)  = ch4_top_Avg
+Alias stats_out(9)  = cp_CO2_btm_Avg
+Alias stats_out(10) = cp_CO2_top_Avg
+Alias stats_out(11) = cp_H2O_btm_Avg
+Alias stats_out(12) = cp_H2O_top_Avg
+Alias stats_out(13) = tmpr_btm_Avg
+Alias stats_out(14) = tmpr_top_Avg
 
 'gradient & flux calculation variables
 Public tmpr_gradient
@@ -147,7 +161,7 @@ Const Standby = 0 'False
 ''''''''''''''' SETTINGS RETENTION ''''''''''''''
 Dim filehandle as Long
 Const SETTINGS_FILE = "CPU:grad_settings.dat"
-Const NUM_SETTINGS = {22}
+Const NUM_SETTINGS = {28}
 Const WRITEFILE = 0
 Const READFILE = 1
 
@@ -165,22 +179,28 @@ Alias settings(3)  = ch1_offset
 Alias settings(4)  = ch2_enabled
 Alias settings(5)  = ch2_mult
 Alias settings(6)  = ch2_offset
-Alias settings(7)  = cp_co2_enabled
-Alias settings(8)  = cp_co2_mult
-Alias settings(9)  = cp_co2_offset
-Alias settings(10) = cp_h2o_enabled
-Alias settings(11) = cp_h2o_mult
-Alias settings(12) = cp_h2o_offset
-Alias settings(13) = tmpr_enabled
-Alias settings(14) = tmpr_state
-Alias settings(15) = tmpr_top_btm 'cal. offset
-Alias settings(16) = sonic_azimuth
-Alias settings(17) = toggle_time
-Alias settings(18) = inlet_top_H
-Alias settings(19) = inlet_btm_H
-Alias settings(20) = tmpr_top_H
-Alias settings(21) = tmpr_btm_H
-Alias settings(22) = grad_type
+Alias settings(7)  = ch3_enabled
+Alias settings(8)  = ch3_mult
+Alias settings(9)  = ch3_offset
+Alias settings(10) = ch4_enabled
+Alias settings(11) = ch4_mult
+Alias settings(12) = ch4_offset
+Alias settings(13) = cp_co2_enabled
+Alias settings(14) = cp_co2_mult
+Alias settings(15) = cp_co2_offset
+Alias settings(16) = cp_h2o_enabled
+Alias settings(17) = cp_h2o_mult
+Alias settings(18) = cp_h2o_offset
+Alias settings(19) = tmpr_enabled
+Alias settings(20) = tmpr_state
+Alias settings(21) = tmpr_top_btm 'cal. offset
+Alias settings(22) = sonic_azimuth
+Alias settings(23) = toggle_time
+Alias settings(24) = inlet_top_H
+Alias settings(25) = inlet_btm_H
+Alias settings(26) = tmpr_top_H
+Alias settings(27) = tmpr_btm_H
+Alias settings(28) = grad_type
 Units tmpr_top_btm = degC
 Units sonic_azimuth = deg TN
 Units toggle_time = min
@@ -196,22 +216,28 @@ Alias choice(3)  = ch_ch1_offset
 Alias choice(4)  = ch_ch2_enabled
 Alias choice(5)  = ch_ch2_mult
 Alias choice(6)  = ch_ch2_offset
-Alias choice(7)  = ch_cp_co2_enabled
-Alias choice(8)  = ch_cp_co2_mult
-Alias choice(9)  = ch_cp_co2_offset
-Alias choice(10) = ch_cp_h2o_enabled
-Alias choice(11) = ch_cp_h2o_mult
-Alias choice(12) = ch_cp_h2o_offset
-Alias choice(13) = ch_tmpr_enabled
-Alias choice(14) = ch_tmpr_state
-Alias choice(15) = ch_tmpr_top_btm
-Alias choice(16) = ch_sonic_azimuth
-Alias choice(17) = ch_toggle_time
-Alias choice(18) = ch_inlet_top_H
-Alias choice(19) = ch_inlet_btm_H
-Alias choice(20) = ch_tmpr_top_H
-Alias choice(21) = ch_tmpr_btm_H
-Alias choice(22) = ch_grad_type
+Alias choice(7)  = ch_ch3_enabled
+Alias choice(8)  = ch_ch3_mult
+Alias choice(9)  = ch_ch3_offset
+Alias choice(10) = ch_ch4_enabled
+Alias choice(11) = ch_ch4_mult
+Alias choice(12) = ch_ch4_offset
+Alias choice(13) = ch_cp_co2_enabled
+Alias choice(14) = ch_cp_co2_mult
+Alias choice(15) = ch_cp_co2_offset
+Alias choice(16) = ch_cp_h2o_enabled
+Alias choice(17) = ch_cp_h2o_mult
+Alias choice(18) = ch_cp_h2o_offset
+Alias choice(19) = ch_tmpr_enabled
+Alias choice(20) = ch_tmpr_state
+Alias choice(21) = ch_tmpr_top_btm
+Alias choice(22) = ch_sonic_azimuth
+Alias choice(23) = ch_toggle_time
+Alias choice(24) = ch_inlet_top_H
+Alias choice(25) = ch_inlet_btm_H
+Alias choice(26) = ch_tmpr_top_H
+Alias choice(27) = ch_tmpr_btm_H
+Alias choice(28) = ch_grad_type
 
 Sub set_default_choices()
   ch_ch1_enabled    = Disable
@@ -220,6 +246,12 @@ Sub set_default_choices()
   ch_ch2_enabled    = Disable
   ch_ch2_mult       = 1.0
   ch_ch2_offset     = 0
+  ch_ch3_enabled    = Disable
+  ch_ch3_mult       = 1.0
+  ch_ch3_offset     = 0
+  ch_ch4_enabled    = Disable
+  ch_ch4_mult       = 1.0
+  ch_ch4_offset     = 0
   ch_cp_co2_enabled = Disable
   ch_cp_co2_mult    = 1.0
   ch_cp_co2_offset  = 0
@@ -252,6 +284,12 @@ DataTable(gradient_info,True,50)
   Sample(1,ch2_enabled,Boolean)
   Sample(1,ch2_mult,FP2)
   Sample(1,ch2_offset,FP2)
+  Sample(1,ch3_enabled,Boolean)
+  Sample(1,ch3_mult,FP2)
+  Sample(1,ch3_offset,FP2)
+  Sample(1,ch4_enabled,Boolean)
+  Sample(1,ch4_mult,FP2)
+  Sample(1,ch4_offset,FP2)
   Sample(1,tmpr_enabled,Boolean)
   Sample(1,(tmpr_state=Normal),Boolean)
     FieldNames("tmpr_normal")
@@ -280,6 +318,8 @@ DataTable (gradient_tsdata,True,-1)
 
   Sample(1,ch1_value,IEEE4)
   Sample(1,ch2_value,IEEE4)
+  Sample(1,ch3_value,IEEE4)
+  Sample(1,ch4_value,IEEE4)
   
   Sample(1,cp_CO2_value,IEEE4)
   Sample(1,cp_H2O_value,IEEE4)
@@ -308,6 +348,10 @@ DataTable(work_stats,True,10)
   Average(1,ch1_top,IEEE4,ch1_top=NAN)
   Average(1,ch2_btm,IEEE4,ch2_btm=NAN)
   Average(1,ch2_top,IEEE4,ch2_top=NAN)
+  Average(1,ch3_btm,IEEE4,ch3_btm=NAN)
+  Average(1,ch3_top,IEEE4,ch3_top=NAN)
+  Average(1,ch4_btm,IEEE4,ch4_btm=NAN)
+  Average(1,ch4_top,IEEE4,ch4_top=NAN)
 
   Average(1,cp_CO2_btm,IEEE4,cp_CO2_btm=NAN)
   Average(1,cp_CO2_top,IEEE4,cp_CO2_top=NAN)
@@ -326,6 +370,10 @@ DataTable(gradient_stats,True,-1)
   Sample(1,ch1_top_Avg,FP2)
   Sample(1,ch2_btm_Avg,FP2)
   Sample(1,ch2_top_Avg,FP2)
+  Sample(1,ch3_btm_Avg,FP2)
+  Sample(1,ch3_top_Avg,FP2)
+  Sample(1,ch4_btm_Avg,FP2)
+  Sample(1,ch4_top_Avg,FP2)
   
   Sample(1,cp_CO2_btm_Avg,FP2)
   Sample(1,cp_CO2_top_Avg,FP2)
@@ -386,6 +434,8 @@ Sub save_current_choices()
   EndIf
   If (NOT ch1_enabled) Then ch1_value = NAN
   If (NOT ch2_enabled) Then ch2_value = NAN
+  If (NOT ch3_enabled) Then ch3_value = NAN
+  If (NOT ch4_enabled) Then ch4_value = NAN
   If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
   If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
   If (NOT tmpr_enabled) Then Move(tmpr(1),3,NAN,1)
@@ -416,6 +466,14 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
       MenuPick(Disable, Enable)
     MenuItem("Chan 2 mult", ch_ch2_mult)
     MenuItem("Chan 2 offset", ch_ch2_mult)
+    MenuItem("Chan 3 recording", ch_ch3_enabled)
+      MenuPick(Disable, Enable)
+    MenuItem("Chan 3 mult.", ch_ch3_mult)
+    MenuItem("Chan 3 offst", ch_ch3_offset)
+    MenuItem("Chan 4 recording", ch_ch4_enabled)
+      MenuPick(Disable, Enable)
+    MenuItem("Chan 4 mult.", ch_ch4_mult)
+    MenuItem("Chan 4 offset", ch_ch4_offset)
   EndSubMenu
   SubMenu("Thermistors")
     MenuItem("Recording", ch_tmpr_enabled)
@@ -474,6 +532,13 @@ BeginProg
     If (ch2_enabled) Then
       VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG,ch2_mult,ch2_offset)
     EndIf
+    If (ch3_enabled) Then
+      VoltDiff(ch3_value,1,mv5000,CH3_IO,1,0,INTEG, ch3_mult,ch3_offset)
+    EndIf
+    If (ch4_enabled) Then
+      VoltDiff(ch4_value,1,mv5000,CH4_IO,1,0,INTEG, ch4_mult,ch4_offset)
+    EndIf
+    
     If (cp_co2_enabled) Then
       VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG,cp_co2_mult,cp_co2_offset)
     EndIf
@@ -514,7 +579,7 @@ BeginProg
       
       PortSet(VALVE_1_CTRL, is_sampling_top)
       PortSet(VALVE_2_CTRL, is_sampling_mid)
-      Move(conc(1),6,NAN,1)
+      Move(conc(1),12,NAN,1)
       Move(cp_irga(1),6,NAN,1)
     EndIf
 
@@ -523,16 +588,22 @@ BeginProg
     If (is_sampling_mid) Then
       ch1_mid = ch1_value
       ch2_mid = ch2_value
+      ch3_mid = ch3_value
+      ch4_mid = ch4_value
       cp_CO2_mid = cp_CO2_value
       cp_H2O_mid = cp_H2O_value
     ElseIf (is_sampling_top) Then
       ch1_top = ch1_value
       ch2_top = ch2_value
+      ch3_top = ch3_value
+      ch4_top = ch4_value
       cp_CO2_top = cp_CO2_value
       cp_H2O_top = cp_H2O_value
     Else
       ch1_btm = ch1_value
       ch2_btm = ch2_value
+      ch3_btm = ch3_value
+      ch4_btm = ch4_value
       cp_CO2_btm = cp_CO2_value
       cp_H2O_btm = cp_H2O_value
     EndIf
