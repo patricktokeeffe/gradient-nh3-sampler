@@ -253,6 +253,8 @@ Const Standby = 0 'False
 
 '============================ SETTINGS RETENTION ==============================
 Dim filehandle as Long
+Dim save_changes
+Dim set_to_defaults
 Const SETTINGS_FILE = "CPU:grad_settings.dat"
 Const NUM_SETTINGS = {28}
 Const WRITEFILE = 0
@@ -264,7 +266,6 @@ Const Linear = -1
 'needed to retain whole # equivalent of toggle_time for use in TimeIntoInterval
 Dim toggle_intv 'seconds
 
-Dim save_changes As Boolean
 Dim settings(NUM_SETTINGS)
 Alias settings(1)  = ch1_enabled
 Alias settings(2)  = ch1_mult
@@ -375,7 +376,7 @@ DataTable(work_slow,True,10)
 EndTable
 
 '----- FINAL OUTPUTS -----
-DataTable(gradient_info,True,50)
+DataTable(info,True,50)
   CardOut(0,1000)
   Sample(1,toggle_time,FP2)
   Sample(1,inlet_btm_H,FP2)
@@ -505,6 +506,8 @@ Const Enable = True
 Const Disable = False
 Const Yes = True
 Const Cancel = False
+Const Discard = 1001
+Const Save = 1002
 Dim recompile As Boolean
 DisplayMenu("Gradient setup", 0) 'as submenu to main
   SubMenu("Gas gradient")
@@ -561,8 +564,9 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
   EndSubMenu
   SubMenu("Save changes")
     MenuItem("Save now?", save_changes)
-    MenuPick(Cancel,Yes) ' TODO add "Discard" here
-    ' TODO add a set default here
+      MenuPick(Cancel,Discard,Save)
+    MenuItem("Set all default?", set_to_defaults)
+      MenuPick(Cancel,Yes)
   EndSubMenu
   SubMenu("Internals")
     MenuItem("Sonic/Open-path IRGA", DATA_SRCS)
@@ -661,11 +665,10 @@ Sub save_current_choices()
   If (NOT tmpr_enabled) Then Move(tmpr(1),3,NAN,1)
 
   Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,WRITEFILE)
-  CallTable(gradient_info)
+  CallTable(info)
 EndSub
 
-'========================== MAIN PROGRAM ======================================
-BeginProg
+Sub setup()
   filehandle = FileOpen(SETTINGS_FILE,"rb",0)
   FileClose(filehandle)
   If (filehandle = 0) Then 'file was not found
@@ -679,7 +682,16 @@ BeginProg
   is_sampling_top = False
   is_sampling_mid = False
   'no need for bottom state indicator; both top/mid false implies bottom=true
-  
+EndSub
+
+Sub reset_settings()
+  FileManage(SETTINGS_FILE,8) 'delete settings file
+  setup()
+EndSub
+
+'========================== MAIN PROGRAM ======================================
+BeginProg
+  Call setup()
 	Scan (FAST_INTV,mSec,0,0)
 	  #If (DATA_SRCS=SDM_CSAT3A_EC150) Then
 	    EC100(ec100_raw(1),EC100_ADDR,1)
@@ -806,9 +818,17 @@ BeginProg
 
     If (work_fast.Output(1,1) AND work_slow.Output(1,1)) Then CallTable stats
 		
-    If (save_changes) Then
-      save_changes = False
+    If (save_changes = Discard) Then
+      populate_choices()
+      save_changes = Cancel
+    ElseIf (save_changes = Save) Then
       save_current_choices()  
+      save_changes = Cancel
+      CallTable info
+    EndIf
+    If (set_to_defaults = Yes) Then
+      Call reset_settings()
+      set_to_defaults = Cancel
     EndIf
 	NextScan 
 EndProg
