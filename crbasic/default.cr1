@@ -1,15 +1,13 @@
-    'CR1000 Series Datalogger
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' Aerodynamic Gradient Method Flux Measurement System
 '
-'date: 04 April 2013
-'program author: Sarah Waldo
-' This program is designed for the auxiliary CR1000 datalogger to run the solenoid valves, in 
-' order to prevent corruption of the LI6262 CO2 signal by electronic noise. This program simply 
-' uses "PortSet" to turn the solenoids off and on. The interval can be easily switched if 
-' needed, for example to integrate taking measurements off of a chamber. 
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+' Laboratory for Atmospheric Research
+' Department of Civil & Environmental Engineering
+' Washington State University
+'
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-
-''''''''''''''' SETTINGS ''''''''''''''''
+'============================ CONST SETTINGS ==================================
 Const SDM_CSAT3_LI7500 = 1003 'aliases for menu
 Const SDM_CSAT3A_EC150 = 1004
 Const RS232_CSAT3_LI7500 = 1005
@@ -30,7 +28,7 @@ ConstTable
 EndConstTable
 
 
-''''''''''''''' WIRING '''''''''''''''
+'================================= WIRING =====================================
 'trace gas analyzer analog input
 Const CH1_IO = 1 'DF
 Const CH2_IO = 2 'DF
@@ -49,23 +47,24 @@ Const TMPR_VX_IO = Vx3
 
 'level-selection valves
 Const VALVE_1_CTRL = 7   'C7
-' Valve 1 controls selection of bottom- or top-level sampling lines
+' Control selection of bottom- or top-level sampling lines
 '   Normally Open ---------- Bottom level (closest to ground) inlet
 '   Normally Closed -------- Top level (farthest from fround) inlet
 '   Common ----------------- EITHER (a) to analyzer delivery 
 '                                   (b) Valve #2 NO
 Const VALVE_2_CTRL = 8   'C8
-' Valve 2 controls selection of mid-level sampling line or other valve (top/btm lines)
+' Control selection of mid-level sampling line or other valve (top/btm lines)
 '   Normally Open ---------- Valve #1 Common 
 '   Normally Closed -------- Middle level (between bottom, top) inlet
 '   Common ----------------- To analyzer delivery
 
 
-''''''''''''''' CONSTANTS ''''''''''''''''
+'============================ CONSTANTS =======================================
 '----- PHYSICAL -----
 Const MW_co2 = 44.010    'molecular weight of carbon dioxide, g/mol
 Const MW_h2o = 18.01528  'molecular weight of water vapor, g/mol
 
+'----- PROGRAM OPERATION ------
 Const INTEG = 250
 
 '------ SDM DEVICES -----
@@ -74,18 +73,21 @@ Const CSAT3_OPT = INT(1000/FAST_INTV) 'calc Hz from interval
 Const LI7500_CMD = 6 'get CO2, H2O, press, diagnostic
 Const EC100_CMD = 1 'get 3D wind, temp, CO2, H2O, press, (2) diagnostic
 
+'------ STATIC ANALOG SCALING -----
+'TODO closed-path IRGA
+
 Const TMPR_MULT = 1  'use Celcius for thermistors
 Const TMPR_OFF = 0
 
 
-''''''''''''''' VARIABLES ''''''''''''''''
+'============================= VARIABLES =====================================
+
+'----- SENSORS -----
 'public view of valve status
 Public valve_state As String * 8
 Const TOP = "top"
 Const MIDDLE = "middle"
 Const BOTTOM = "bottom"
-Const Enable = True
-Const Disable = False
 
 'measurements from DF1-4
 Public raw_conc(4)
@@ -235,11 +237,8 @@ Units tmpr_gradient_H = cm
 Public gas_gradient_H
 Units gas_gradient_H = cm
 
-' TODO !!!! need sonic integration for online evaluation of eddy diffusivity of
-' heat
-' 
+' TODO !!!! need sonic integration for online evaluation of eddy diffusivity
 ' specifically, need cov_w_Ts 
-
 
 'level-selection valve control
 Dim num_levels = {2} '2 or 3, determines if mid level is sampled
@@ -252,7 +251,7 @@ Const Normal = -1 'True
 Const Calibrating = 1 'True * -1
 Const Standby = 0 'False
 
-''''''''''''''' SETTINGS RETENTION ''''''''''''''
+'============================ SETTINGS RETENTION ==============================
 Dim filehandle as Long
 Const SETTINGS_FILE = "CPU:grad_settings.dat"
 Const NUM_SETTINGS = {28}
@@ -262,7 +261,7 @@ Const READFILE = 1
 Const Logarithmic = 0
 Const Linear = -1
 
-'necessary to retain whole # equivalent of toggle_time for use in TimeIntoInterval
+'needed to retain whole # equivalent of toggle_time for use in TimeIntoInterval
 Dim toggle_intv 'seconds
 
 Dim save_changes As Boolean
@@ -333,36 +332,6 @@ Alias choice(26) = ch_tmpr_top_H
 Alias choice(27) = ch_tmpr_btm_H
 Alias choice(28) = ch_grad_type
 
-Sub set_default_choices()
-  ch_ch1_enabled    = Disable
-  ch_ch1_mult       = 1.0
-  ch_ch1_offset     = 0
-  ch_ch2_enabled    = Disable
-  ch_ch2_mult       = 1.0
-  ch_ch2_offset     = 0
-  ch_ch3_enabled    = Disable
-  ch_ch3_mult       = 1.0
-  ch_ch3_offset     = 0
-  ch_ch4_enabled    = Disable
-  ch_ch4_mult       = 1.0
-  ch_ch4_offset     = 0
-  ch_cp_co2_enabled = Disable
-  ch_cp_co2_mult    = 1.0
-  ch_cp_co2_offset  = 0
-  ch_cp_h2o_enabled = Disable
-  ch_cp_h2o_mult    = 1.0
-  ch_cp_h2o_offset  = 0
-  ch_tmpr_enabled   = Disable
-  ch_tmpr_state     = Standby
-  ch_tmpr_top_btm   = 0.0
-  ch_sonic_azimuth  = 0
-  ch_toggle_time    = 5 'in minutes
-  ch_inlet_top_H    = 0
-  ch_inlet_btm_H    = 0
-  ch_tmpr_top_H     = 0
-  ch_tmpr_btm_H     = 0
-  ch_grad_type      = Logarithmic
-EndSub
 '=========================== DATA TABLES ====================================
 
 '----- WORKING TABLES -----
@@ -467,15 +436,12 @@ DataTable(ts_slow,True,-1)
   CardOut(1,-1) 'XXX fixed size ?
 	Sample(1,is_sampling_top,Boolean)
 '	Sample(1,is_sampling_mid,Boolean)
-
   Sample(1,ch1_value,IEEE4)
   Sample(1,ch2_value,IEEE4)
   Sample(1,ch3_value,IEEE4)
   Sample(1,ch4_value,IEEE4)
-  
   Sample(1,cp_CO2_value,IEEE4)
   Sample(1,cp_H2O_value,IEEE4)
-  
   Sample(1,tmpr_state,FP2)
   Sample(1,tmpr_btm,IEEE4)
 '  Sample(1,tmpr_mid,IEEE4)
@@ -533,61 +499,10 @@ DataTable(stats,True,-1)
   Average(1,logger_temp,FP2,logger_temp=NAN)
 EndTable
 
-'''''''''''' SUBROUTINES ''''''''''''''''
-Sub populate_choices()
-  Move(choice(1),NUM_SETTINGS,settings(1),NUM_SETTINGS)
-EndSub
 
-Sub save_current_choices()
-  Move(settings(1),NUM_SETTINGS,choice(1),NUM_SETTINGS)
-
-  'Input validation
-  toggle_intv = toggle_time * 60
-  While (sonic_azimuth < 0)
-    sonic_azimuth = (sonic_azimuth+360)
-  Wend
-  sonic_azimuth = sonic_azimuth MOD 360
-  
-  'Update dependent states
-  If (inlet_btm_H > 0 AND inlet_top_H > 0) Then
-    If (inlet_btm_H <= inlet_top_H) Then
-      gas_gradient_H = 0
-    ElseIf (grad_type = Logarithmic) Then
-      gas_gradient_H = SQR(inlet_top_H * inlet_btm_H)
-    ElseIf (grad_type = Linear) Then
-      gas_gradient_H = (inlet_top_H + inlet_btm_H)/2
-    Else
-      gas_gradient_H = 0
-    EndIf
-  Else
-    gas_gradient_H = 0
-  EndIf
-  If (tmpr_btm_H > 0 AND tmpr_top_H > 0) Then
-    If (tmpr_btm_H <= tmpr_top_H) Then
-      tmpr_gradient_H = 0
-    ElseIf (grad_type = Logarithmic) Then
-      tmpr_gradient_H = SQR(tmpr_top_H * tmpr_btm_H)
-    ElseIf (grad_type = Linear) Then
-      tmpr_gradient_H = (tmpr_top_H + tmpr_btm_H)/2
-    Else
-      tmpr_gradient_H = 0
-    EndIf
-  Else
-    tmpr_gradient_H = 0
-  EndIf
-  If (NOT ch1_enabled) Then ch1_value = NAN
-  If (NOT ch2_enabled) Then ch2_value = NAN
-  If (NOT ch3_enabled) Then ch3_value = NAN
-  If (NOT ch4_enabled) Then ch4_value = NAN
-  If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
-  If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
-  If (NOT tmpr_enabled) Then Move(tmpr(1),3,NAN,1)
-
-  Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,WRITEFILE)
-  CallTable(gradient_info)
-EndSub
-
-''''''''''''''' MENU '''''''''''''''
+'=============================== MENU =========================================
+Const Enable = True
+Const Disable = False
 Const Yes = True
 Const Cancel = False
 Dim recompile As Boolean
@@ -604,11 +519,11 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
   SubMenu("Analog input")
     MenuItem("Chan 1 recording", ch_ch1_enabled)
       MenuPick(Disable, Enable)
-    MenuItem("Chan 1 mult)", ch_ch1_mult)
+    MenuItem("Chan 1 mult.", ch_ch1_mult)
     MenuItem("Chan 1 offset", ch_ch1_offset)
     MenuItem("Chan 2 recording", ch_ch2_enabled)
       MenuPick(Disable, Enable)
-    MenuItem("Chan 2 mult", ch_ch2_mult)
+    MenuItem("Chan 2 mult.", ch_ch2_mult)
     MenuItem("Chan 2 offset", ch_ch2_mult)
     MenuItem("Chan 3 recording", ch_ch3_enabled)
       MenuPick(Disable, Enable)
@@ -651,7 +566,7 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
   EndSubMenu
   SubMenu("Internals")
     MenuItem("Sonic/Open-path IRGA", DATA_SRCS)
-      MenuPick(DATA_SRCS, SDM_CSAT3A_EC150, SDM_CSAT3_LI7500, RS232_CSAT3_LI7500)
+      MenuPick(DATA_SRCS,SDM_CSAT3A_EC150,SDM_CSAT3_LI7500, RS232_CSAT3_LI7500)
     MenuItem("SDM speed", SDM_SPEED)
     MenuItem("SDM addr: CSAT3", CSAT3_ADDR)
       MenuPick(CSAT3_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
@@ -664,8 +579,92 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
   EndSubMenu
 EndMenu
 
+'============================== SUBROUTINES ===================================
+Sub set_default_choices()
+  ch_ch1_enabled    = Disable
+  ch_ch1_mult       = 1.0
+  ch_ch1_offset     = 0
+  ch_ch2_enabled    = Disable
+  ch_ch2_mult       = 1.0
+  ch_ch2_offset     = 0
+  ch_ch3_enabled    = Disable
+  ch_ch3_mult       = 1.0
+  ch_ch3_offset     = 0
+  ch_ch4_enabled    = Disable
+  ch_ch4_mult       = 1.0
+  ch_ch4_offset     = 0
+  ch_cp_co2_enabled = Disable
+  ch_cp_co2_mult    = 1.0
+  ch_cp_co2_offset  = 0
+  ch_cp_h2o_enabled = Disable
+  ch_cp_h2o_mult    = 1.0
+  ch_cp_h2o_offset  = 0
+  ch_tmpr_enabled   = Disable
+  ch_tmpr_state     = Standby
+  ch_tmpr_top_btm   = 0.0
+  ch_sonic_azimuth  = 0
+  ch_toggle_time    = 5 'in minutes
+  ch_inlet_top_H    = 0
+  ch_inlet_btm_H    = 0
+  ch_tmpr_top_H     = 0
+  ch_tmpr_btm_H     = 0
+  ch_grad_type      = Logarithmic
+EndSub
 
-''''''''''''''' MAIN PROGRAM '''''''''''''''
+Sub populate_choices()
+  Move(choice(1),NUM_SETTINGS,settings(1),NUM_SETTINGS)
+EndSub
+
+Sub save_current_choices()
+  Move(settings(1),NUM_SETTINGS,choice(1),NUM_SETTINGS)
+
+  'Input validation
+  toggle_intv = toggle_time * 60
+  While (sonic_azimuth < 0)
+    sonic_azimuth += 360 
+  Wend
+  sonic_azimuth = sonic_azimuth MOD 360
+  
+  'Update dependent states
+  If (inlet_btm_H > 0 AND inlet_top_H > 0) Then
+    If (inlet_btm_H <= inlet_top_H) Then
+      gas_gradient_H = 0
+    ElseIf (grad_type = Logarithmic) Then
+      gas_gradient_H = SQR(inlet_top_H * inlet_btm_H)
+    ElseIf (grad_type = Linear) Then
+      gas_gradient_H = (inlet_top_H + inlet_btm_H)/2
+    Else
+      gas_gradient_H = 0
+    EndIf
+  Else
+    gas_gradient_H = 0
+  EndIf
+  If (tmpr_btm_H > 0 AND tmpr_top_H > 0) Then
+    If (tmpr_btm_H <= tmpr_top_H) Then
+      tmpr_gradient_H = 0
+    ElseIf (grad_type = Logarithmic) Then
+      tmpr_gradient_H = SQR(tmpr_top_H * tmpr_btm_H)
+    ElseIf (grad_type = Linear) Then
+      tmpr_gradient_H = (tmpr_top_H + tmpr_btm_H)/2
+    Else
+      tmpr_gradient_H = 0
+    EndIf
+  Else
+    tmpr_gradient_H = 0
+  EndIf
+  If (NOT ch1_enabled) Then ch1_value = NAN
+  If (NOT ch2_enabled) Then ch2_value = NAN
+  If (NOT ch3_enabled) Then ch3_value = NAN
+  If (NOT ch4_enabled) Then ch4_value = NAN
+  If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
+  If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
+  If (NOT tmpr_enabled) Then Move(tmpr(1),3,NAN,1)
+
+  Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,WRITEFILE)
+  CallTable(gradient_info)
+EndSub
+
+'========================== MAIN PROGRAM ======================================
 BeginProg
   filehandle = FileOpen(SETTINGS_FILE,"rb",0)
   FileClose(filehandle)
@@ -770,7 +769,7 @@ BeginProg
         EndIf
       Else 'FOR ONLY TWO LEVELS
         is_sampling_top = NOT is_sampling_top
-        is_sampling_mid = False 'catch case of switch 3->2 levels while sampling mid
+        is_sampling_mid = False 'catch switch 3->2 levels while sampling mid
         valve_state = IIF(is_sampling_top, TOP, BOTTOM)
       EndIf
       
@@ -813,5 +812,4 @@ BeginProg
     EndIf
 	NextScan 
 EndProg
-
 
