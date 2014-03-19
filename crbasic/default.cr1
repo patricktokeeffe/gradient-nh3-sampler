@@ -10,10 +10,23 @@
 
 
 ''''''''''''''' SETTINGS ''''''''''''''''
+Const SDM_CSAT3_LI7500 = 1003 'aliases for menu
+Const SDM_CSAT3A_EC150 = 1004
+Const RS232_CSAT3_LI7500 = 1005
 ConstTable
-  Const SCAN_INTV = 1         'scan frequency, seconds
-  Const STATS_INTV = 30*60    'time interval of statistics output, seconds
-  Const CAL_INTV = 60         'time interval of output to themistor calibration table, seconds
+  'things which MUST be constants and therefore cannot be in settings file
+  ' XXX WHAT HAPPENS IF LOGGER IS RESET? POWER LOSS? ARE PREVIOUS CONST
+  '     VALUES RETAINED?!
+  Const DATA_SRCS = SDM_CSAT3A_EC150
+  Const SDM_SPEED = 30   'default: 30 usec, specify 8 - 3000 (8 us - 3 ms)
+  Const CSAT3_ADDR = 3    'CSAT3 SDM address, default: 3
+  Const LI7500_ADDR = 7  'LI7500 SDM address, default: 7
+  Const EC100_ADDR = 1   'EC100/EC150/CSAT3A SDM address, default: 1
+
+  Const FAST_INTV = 100     'eddy cov. scan frequency, ms
+  Const SLOW_INTV = 1       'gradient scan frequency, sec
+  Const STATS_INTV = 30     'interval of statistics output, min
+  Const CAL_INTV = 60       'interval of themistor cal. stats output, sec
 EndConstTable
 
 
@@ -49,7 +62,17 @@ Const VALVE_2_CTRL = 8   'C8
 
 
 ''''''''''''''' CONSTANTS ''''''''''''''''
+'----- PHYSICAL -----
+Const MW_co2 = 44.010    'molecular weight of carbon dioxide, g/mol
+Const MW_h2o = 18.01528  'molecular weight of water vapor, g/mol
+
 Const INTEG = 250
+
+'------ SDM DEVICES -----
+Const CSAT3_CMD = 91 'trigger + get 3D wind, temp, diagnostic
+Const CSAT3_OPT = INT(1000/FAST_INTV) 'calc Hz from interval
+Const LI7500_CMD = 6 'get CO2, H2O, press, diagnostic
+Const EC100_CMD = 1 'get 3D wind, temp, CO2, H2O, press, (2) diagnostic
 
 Const TMPR_MULT = 1  'use Celcius for thermistors
 Const TMPR_OFF = 0
@@ -86,6 +109,34 @@ Alias conc(10) = ch4_btm
 Alias conc(11) = ch4_mid
 Alias conc(12) = ch4_top
 
+'measurements from sonic anemometer & open-path CO2/H2O analyer
+Dim ec100_raw(12) 'Campbellsci EC100/EC150/CSAT3A
+'EC150 reports in mass density, not molar density!
+
+'TODO add text variable for RS-232 input
+Public sonic(5)
+Alias sonic(1) = sonic_Ux
+Alias sonic(2) = sonic_Uy
+Alias sonic(3) = sonic_Uz
+Alias sonic(4) = sonic_Ts
+Alias sonic(5) = sonic_diag
+Units sonic = m/s
+Units sonic_Ts = degC
+Units sonic_diag = bitmap
+
+'TODO add text variable for RS-232 input
+Public op_irga(5)
+Alias op_irga(1) = op_CO2
+Alias op_irga(2) = op_H2O
+Alias op_irga(3) = op_press
+'XXX add ambient temp?
+Alias op_irga(4) = op_diag
+Alias op_irga(5) = op_signal 'TODO retain AGC or CO2/H2O signal strength?
+Units op_irga = mmol/m^3
+Units op_press = kPa
+Units op_diag = bitmap
+Units op_signal = ratio 'XXX
+
 'measurements from closed-path CO2/H2O analyzer
 Public raw_cp_irga(2)
 Alias raw_cp_irga(1) = cp_CO2_value
@@ -114,22 +165,65 @@ Public logger_temp, logger_voltage
 Units logger_temp = degC
 Units logger_voltage = volts
 
+'----- PROCESSING -----
+
+Public disable_sonic As Boolean 'diagnostic flag handling
+Public disable_op As Boolean
+
+'TODO 
+'Dim lagged(10)
+'Public aligned(10)
+'Alias aligned(1)  = lag_Ux
+'Alias aligned(2)  = lag_Uy
+'Alias aligned(3)  = lag_Uz
+'Alias aligned(4)  = lag_Ts
+'Alias aligned(5)  = lag_sonic_diag
+'Alias aligned(6)  = lag_op_CO2
+'Alias aligned(7)  = lag_op_H2O
+'Alias aligned(8)  = lag_op_press
+'XXX ambient temp?
+'Alias aligned(9)  = lag_op_diag
+'Alias aligned(10) = lag_op_signal
+'Units lag_Ux = m/s
+'Units lag_Uy = m/s
+'Units lag_Uz = m/s
+'Units lag_Ts = degC
+'Units lag_sonic_diag = bitmap
+'Units lag_op_CO2 = mmol/m^3
+'Units lag_op_H2O = mmol/m^3
+'Units lag_op_press = kPa
+'Units lag_op_diag = bitmap
+'Units lag_op_signal = ratio
+
 'for post-statistics manipulation
-Public stats_out(14) 'match length of work_stats table
-Alias stats_out(1)  = ch1_btm_Avg
-Alias stats_out(2)  = ch1_top_Avg
-Alias stats_out(3)  = ch2_btm_Avg
-Alias stats_out(4)  = ch2_top_Avg
-Alias stats_out(5)  = ch3_btm_Avg
-Alias stats_out(6)  = ch3_top_Avg
-Alias stats_out(7)  = ch4_btm_Avg
-Alias stats_out(8)  = ch4_top_Avg
-Alias stats_out(9)  = cp_CO2_btm_Avg
-Alias stats_out(10) = cp_CO2_top_Avg
-Alias stats_out(11) = cp_H2O_btm_Avg
-Alias stats_out(12) = cp_H2O_top_Avg
-Alias stats_out(13) = tmpr_btm_Avg
-Alias stats_out(14) = tmpr_top_Avg
+Public fast_out(11) 'match length of work_fast table
+Alias fast_out(1)  = sonic_Ts_Avg
+Alias fast_out(2)  = WS_sclr_Avg
+Alias fast_out(3)  = WD_unit_Avg
+Alias fast_out(4)  = WD_unit_Std
+'Alias fast_out(5)  = duplicate
+Alias fast_out(6)  = WS_rslt_Avg
+Alias fast_out(7)  = WD_rslt_Avg
+Alias fast_out(8)  = WD_rslt_Std
+Alias fast_out(9)  = op_CO2_Avg
+Alias fast_out(10) = op_H2O_Avg
+Alias fast_out(11) = op_press_Avg
+
+Public slow_out(14) 'match length of work_slow table
+Alias slow_out(1)  = ch1_btm_Avg
+Alias slow_out(2)  = ch1_top_Avg
+Alias slow_out(3)  = ch2_btm_Avg
+Alias slow_out(4)  = ch2_top_Avg
+Alias slow_out(5)  = ch3_btm_Avg
+Alias slow_out(6)  = ch3_top_Avg
+Alias slow_out(7)  = ch4_btm_Avg
+Alias slow_out(8)  = ch4_top_Avg
+Alias slow_out(9)  = cp_CO2_btm_Avg
+Alias slow_out(10) = cp_CO2_top_Avg
+Alias slow_out(11) = cp_H2O_btm_Avg
+Alias slow_out(12) = cp_H2O_top_Avg
+Alias slow_out(13) = tmpr_btm_Avg
+Alias slow_out(14) = tmpr_top_Avg
 
 'gradient & flux calculation variables
 Public tmpr_gradient
@@ -269,11 +363,51 @@ Sub set_default_choices()
   ch_tmpr_btm_H     = 0
   ch_grad_type      = Logarithmic
 EndSub
+'=========================== DATA TABLES ====================================
 
-''''''''''''''' DATA TABLES ''''''''''''''''
+'----- WORKING TABLES -----
+DataTable(work_fast,True,10)
+  DataInterval(0,STATS_INTV,Min,10)
+  Average(1,sonic_Ts,IEEE4,sonic_Ts=NAN)
+  'TODO std dev? --> comes with cov()
+  'TODO covariance?
+  'TODO use aligned sonic/op IRGA data
+  WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,1) 
+  'Opt1: mean horiz WS, unit vctr mean WD, and std WD using Yamartino eqn
+  WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,2)
+  'Opt2: mean horiz WS, rslt mean WS, rslt mean WD, WS-weighted WD sdev CSI eqn
+  'TODO sonic_uptime
+  
+  Average(1,op_CO2,IEEE4,disable_op)
+  Average(1,op_H2O,IEEE4,disable_op)
+  Average(1,op_press,IEEE4,disable_op)
+  'TODO std dev? --> comes with cov()
+  'TODO covariance?
+EndTable
+  
+DataTable(work_slow,True,10)
+  DataInterval(0,STATS_INTV,Min,10)
+  Average(1,ch1_btm,IEEE4,ch1_btm=NAN)
+  Average(1,ch1_top,IEEE4,ch1_top=NAN)
+  Average(1,ch2_btm,IEEE4,ch2_btm=NAN)
+  Average(1,ch2_top,IEEE4,ch2_top=NAN)
+  Average(1,ch3_btm,IEEE4,ch3_btm=NAN)
+  Average(1,ch3_top,IEEE4,ch3_top=NAN)
+  Average(1,ch4_btm,IEEE4,ch4_btm=NAN)
+  Average(1,ch4_top,IEEE4,ch4_top=NAN)
+
+  Average(1,cp_CO2_btm,IEEE4,cp_CO2_btm=NAN)
+  Average(1,cp_CO2_top,IEEE4,cp_CO2_top=NAN)
+  Average(1,cp_H2O_btm,IEEE4,cp_H2O_btm=NAN)
+  Average(1,cp_H2O_top,IEEE4,cp_H2O_top=NAN)
+
+  Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR tmpr_state<>Normal)
+  Average(1,tmpr_top,FP2,tmpr_top=NAN OR tmpr_state<>Normal)
+EndTable
+
+'----- FINAL OUTPUTS -----
 DataTable(gradient_info,True,50)
   CardOut(0,1000)
-  Sample(1,sonic_azimuth,FP2)
   Sample(1,toggle_time,FP2)
   Sample(1,inlet_btm_H,FP2)
   Sample(1,inlet_top_H,FP2)
@@ -307,12 +441,30 @@ DataTable(gradient_info,True,50)
   Sample(1,cp_h2o_mult,FP2)
   Sample(1,cp_h2o_offset,FP2)
   Sample(1,grad_type,Boolean)
+'  Sample(1,sonic_azimuth,FP2) 'XXX
+'  Sample(1,sonic_height,FP2) 'XXX
+  Sample(1,DATA_SRCS,FP2)
+    FieldNames("eddycov_sensors")
 EndTable
 
-DataTable (gradient_tsdata,True,-1)
-	DataInterval (0,SCAN_INTV,Sec,1)
-  CardOut(1,-1)
+DataTable(ts_fast,True,-1)
+  DataInterval(0,FAST_INTV,mSec,10)
+  CardOut(1,-1) 'XXX fixed size calc?
+  Sample(1,sonic_Ux,IEEE4)
+  Sample(1,sonic_Uy,IEEE4)
+  Sample(1,sonic_Uz,IEEE4)
+  Sample(1,sonic_Ts,IEEE4)
+  Sample(1,sonic_diag,UINT2)
+  Sample(1,op_CO2,IEEE4)
+  Sample(1,op_H2O,IEEE4)
+  Sample(1,op_press,IEEE4)
+  Sample(1,op_diag,UINT2)
+  Sample(1,op_signal,UINT2)
+EndTable
 
+DataTable(ts_slow,True,-1)
+  DataInterval(0,SLOW_INTV,Sec,10)
+  CardOut(1,-1) 'XXX fixed size ?
 	Sample(1,is_sampling_top,Boolean)
 '	Sample(1,is_sampling_mid,Boolean)
 
@@ -341,31 +493,9 @@ DataTable(tmpr_cal,(tmpr_state=Calibrating),-1)
     Units diff_top_less_btm = degC
 EndTable
 
-DataTable(work_stats,True,10)
-  DataInterval(0,STATS_INTV,Sec,10)
-  
-  Average(1,ch1_btm,IEEE4,ch1_btm=NAN)
-  Average(1,ch1_top,IEEE4,ch1_top=NAN)
-  Average(1,ch2_btm,IEEE4,ch2_btm=NAN)
-  Average(1,ch2_top,IEEE4,ch2_top=NAN)
-  Average(1,ch3_btm,IEEE4,ch3_btm=NAN)
-  Average(1,ch3_top,IEEE4,ch3_top=NAN)
-  Average(1,ch4_btm,IEEE4,ch4_btm=NAN)
-  Average(1,ch4_top,IEEE4,ch4_top=NAN)
-
-  Average(1,cp_CO2_btm,IEEE4,cp_CO2_btm=NAN)
-  Average(1,cp_CO2_top,IEEE4,cp_CO2_top=NAN)
-  Average(1,cp_H2O_btm,IEEE4,cp_H2O_btm=NAN)
-  Average(1,cp_H2O_top,IEEE4,cp_H2O_top=NAN)
-
-  Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR tmpr_state<>Normal)
-  Average(1,tmpr_top,FP2,tmpr_top=NAN OR tmpr_state<>Normal)
-EndTable
-
-DataTable(gradient_stats,True,-1)
-  DataInterval(0,STATS_INTV,Sec,10)
+DataTable(stats,True,-1)
+  DataInterval(0,STATS_INTV,Min,10)
   CardOut(1,-1)
-  
   Sample(1,ch1_btm_Avg,FP2)
   Sample(1,ch1_top_Avg,FP2)
   Sample(1,ch2_btm_Avg,FP2)
@@ -382,9 +512,22 @@ DataTable(gradient_stats,True,-1)
 
   Sample(1,tmpr_btm_Avg,FP2)
   Sample(1,tmpr_top_Avg,FP2)
-  
   Sample(1,tmpr_gradient,IEEE4)
   'TODO add gradient, flux stats
+  
+  Sample(1,sonic_Ts_Avg,FP2)
+  Sample(1,WS_sclr_Avg,FP2) 'XXX clean up / reorder
+  Sample(1,WD_unit_Avg,FP2)
+  Sample(1,WD_unit_Std,FP2)
+  Sample(1,WS_rslt_Avg,FP2)
+  Sample(1,WD_rslt_Avg,FP2)
+  Sample(1,WD_rslt_Std,FP2)
+  Sample(1,op_CO2_Avg,IEEE4) 'XXX make FP2?
+  Sample(1,op_H2O_Avg,IEEE4)
+  Sample(1,op_press_Avg,IEEE4)
+  'XXX ambient temp?
+  'TODO basic fluxes
+  'TODO Cov(Ts,Uz), Cov(CO2,Uz), Cov(H2O,Uz)
   
   Average(1,logger_voltage,FP2,logger_voltage=NAN)
   Average(1,logger_temp,FP2,logger_temp=NAN)
@@ -447,6 +590,7 @@ EndSub
 ''''''''''''''' MENU '''''''''''''''
 Const Yes = True
 Const Cancel = False
+Dim recompile As Boolean
 DisplayMenu("Gradient setup", 0) 'as submenu to main
   SubMenu("Gas gradient")
     MenuItem("Dwell time, min", ch_toggle_time)
@@ -505,6 +649,19 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
     MenuPick(Cancel,Yes) ' TODO add "Discard" here
     ' TODO add a set default here
   EndSubMenu
+  SubMenu("Internals")
+    MenuItem("Sonic/Open-path IRGA", DATA_SRCS)
+      MenuPick(DATA_SRCS, SDM_CSAT3A_EC150, SDM_CSAT3_LI7500, RS232_CSAT3_LI7500)
+    MenuItem("SDM speed", SDM_SPEED)
+    MenuItem("SDM addr: CSAT3", CSAT3_ADDR)
+      MenuPick(CSAT3_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
+    MenuItem("SDM addr: LI7500", LI7500_ADDR)
+      MenuPick(LI7500_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
+    MenuItem("SDM addr: EC100", EC100_ADDR)
+      MenuPick(EC100_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
+    MenuRecompile("Recompile now?", recompile)
+      MenuPick(Cancel,Yes)
+  EndSubMenu
 EndMenu
 
 
@@ -524,39 +681,79 @@ BeginProg
   is_sampling_mid = False
   'no need for bottom state indicator; both top/mid false implies bottom=true
   
-	Scan (SCAN_INTV,Sec,0,0)
-  
-    If (ch1_enabled) Then
-      VoltDiff(ch1_value,1,mv5000,CH1_IO,1,0,INTEG,ch1_mult,ch1_offset)
-    EndIf
-    If (ch2_enabled) Then
-      VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG,ch2_mult,ch2_offset)
-    EndIf
-    If (ch3_enabled) Then
-      VoltDiff(ch3_value,1,mv5000,CH3_IO,1,0,INTEG, ch3_mult,ch3_offset)
-    EndIf
-    If (ch4_enabled) Then
-      VoltDiff(ch4_value,1,mv5000,CH4_IO,1,0,INTEG, ch4_mult,ch4_offset)
-    EndIf
-    
-    If (cp_co2_enabled) Then
-      VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG,cp_co2_mult,cp_co2_offset)
-    EndIf
-    If (cp_h2o_enabled) Then
-      VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG,cp_h2o_mult,cp_h2o_offset)
-    EndIf
-    If (tmpr_state) Then
-      Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-      If (num_levels = 3) Then
-        Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-      EndIf
-      Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-    EndIf
-    
-		PanelTemp (logger_temp,INTEG)
-		Battery (logger_voltage)
+	Scan (FAST_INTV,mSec,0,0)
+	  #If (DATA_SRCS=SDM_CSAT3A_EC150) Then
+	    EC100(ec100_raw(1),EC100_ADDR,1)
+	    Move(sonic(1),5,ec100_raw(1),5)
+	    'convert mass density to molar density for LI7500 compatibility
+	    op_CO2 = ec100_raw(6)/MW_co2 'mg/m^3 -> mmol/m^3
+	    op_H2O = ec100_raw(7)*1000/MW_h2o 'g/m^3 -> mmol/m^3
+	    op_diag = ec100_raw(8)
+	    op_press = ec100_raw(10)
+	    'TODO ambient temp?
+	    'TODO op_signal 
+	  #ElseIf (DATA_SRCS=SDM_CSAT3_LI7500) Then
+	    CS7500(op_CO2,1,LI7500_ADDR,LI7500_CMD)
+	    CSAT3(sonic_Ux,1,CSAT3_ADDR,CSAT3_CMD,CSAT3_OPT)
+	  #ElseIf (DATA_SRCS=RS232_CSAT3_LI7500) Then
+	    'TODO - serial input handling
+	  #EndIf
+	  
+    CallTable ts_fast 
+    'TODO -> alignment table
+    CallTable work_fast
 
-    If ( TimeIntoInterval(0,toggle_intv,Sec)) Then 
+    If (TimeIntoInterval(0,SLOW_INTV,Sec)) Then
+      If (ch1_enabled) Then VoltDiff(ch1_value,1,mv5000,CH1_IO,1,0,INTEG, ch1_mult,ch1_offset)
+      If (ch2_enabled) Then VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG, ch2_mult,ch2_offset)
+      If (ch3_enabled) Then VoltDiff(ch3_value,1,mv5000,CH3_IO,1,0,INTEG, ch3_mult,ch3_offset)
+      If (ch4_enabled) Then VoltDiff(ch4_value,1,mv5000,CH4_IO,1,0,INTEG, ch4_mult,ch4_offset)
+      
+      'record measurements into correct level variable set
+      'other variables are set to NAN during source level transition
+      If (is_sampling_mid) Then
+        ch1_mid = ch1_value
+        ch2_mid = ch2_value
+        ch3_mid = ch3_value
+        ch4_mid = ch4_value
+        cp_CO2_mid = cp_CO2_value
+        cp_H2O_mid = cp_H2O_value
+      ElseIf (is_sampling_top) Then
+        ch1_top = ch1_value
+        ch2_top = ch2_value
+        ch3_top = ch3_value
+        ch4_top = ch4_value
+        cp_CO2_top = cp_CO2_value
+        cp_H2O_top = cp_H2O_value
+      Else
+        ch1_btm = ch1_value
+        ch2_btm = ch2_value
+        ch3_btm = ch3_value
+        ch4_btm = ch4_value
+        cp_CO2_btm = cp_CO2_value
+        cp_H2O_btm = cp_H2O_value
+      EndIf
+      
+      If (cp_co2_enabled) Then
+        VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG, cp_co2_mult,cp_co2_offset)
+      EndIf
+      If (cp_h2o_enabled) Then
+        VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG, cp_h2o_mult,cp_h2o_offset)
+      EndIf
+      
+      If (tmpr_state) Then
+        Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+        If (num_levels = 3) Then
+          Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+        EndIf
+        Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+      EndIf
+      
+  		PanelTemp (logger_temp,INTEG)
+  		Battery (logger_voltage)
+  	EndIf
+
+    If (TimeIntoInterval(0,toggle_intv,Sec)) Then 
       If (num_levels = 3) Then
         If (is_sampling_mid) Then
           is_sampling_top = True
@@ -581,56 +778,34 @@ BeginProg
       PortSet(VALVE_2_CTRL, is_sampling_mid)
       Move(conc(1),12,NAN,1)
       Move(cp_irga(1),6,NAN,1)
+      
+  		CallTable tmpr_cal
+      CallTable ts_slow
+      CallTable work_slow
+      If (work_slow.Output(1,1)) Then
+        GetRecord(slow_out(1),work_slow,1)
+        
+        If (NOT tmpr_gradient_H > 0) Then
+          tmpr_gradient = NAN
+        ElseIf (grad_type = Logarithmic) Then
+          tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
+          tmpr_gradient /= (LN(tmpr_top_H/tmpr_btm_H)*tmpr_gradient_H)
+          tmpr_gradient *= 100 'scale degC/cm => degC/m
+        ElseIf (grad_type = Linear) Then
+          tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
+          tmpr_gradient /= (tmpr_top_H - tmpr_btm_H)
+          tmpr_gradient *= 100 'scale degC/cm => degC/m
+        Else
+          tmpr_gradient = NAN
+        EndIf
+      EndIf
+    EndIf
+		
+    If (work_fast.Output(1,1)) Then
+      'do stuff
     EndIf
 
-    'record measurements into correct level variable set
-    'other variables are set to NAN during source level transition
-    If (is_sampling_mid) Then
-      ch1_mid = ch1_value
-      ch2_mid = ch2_value
-      ch3_mid = ch3_value
-      ch4_mid = ch4_value
-      cp_CO2_mid = cp_CO2_value
-      cp_H2O_mid = cp_H2O_value
-    ElseIf (is_sampling_top) Then
-      ch1_top = ch1_value
-      ch2_top = ch2_value
-      ch3_top = ch3_value
-      ch4_top = ch4_value
-      cp_CO2_top = cp_CO2_value
-      cp_H2O_top = cp_H2O_value
-    Else
-      ch1_btm = ch1_value
-      ch2_btm = ch2_value
-      ch3_btm = ch3_value
-      ch4_btm = ch4_value
-      cp_CO2_btm = cp_CO2_value
-      cp_H2O_btm = cp_H2O_value
-    EndIf
-    
-		CallTable gradient_tsdata
-		CallTable tmpr_cal
-		
-		CallTable work_stats		
-    If ( work_stats.Output(1,1) ) Then
-      GetRecord(stats_out(1),work_stats,1)
-      
-      If (NOT tmpr_gradient_H > 0) Then
-        tmpr_gradient = NAN
-      ElseIf (grad_type = Logarithmic) Then
-        tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
-        tmpr_gradient /= (LN(tmpr_top_H/tmpr_btm_H)*tmpr_gradient_H)
-        tmpr_gradient *= 100 'scale degC/cm => degC/m
-      ElseIf (grad_type = Linear) Then
-        tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
-        tmpr_gradient /= (tmpr_top_H - tmpr_btm_H)
-        tmpr_gradient *= 100 'scale degC/cm => degC/m
-      Else
-        tmpr_gradient = NAN
-      EndIf
-      
-      CallTable gradient_stats
-    EndIf
+    If (work_fast.Output(1,1) AND work_slow.Output(1,1)) Then CallTable stats
 		
     If (save_changes) Then
       save_changes = False
