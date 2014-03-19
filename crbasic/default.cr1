@@ -264,7 +264,7 @@ Const Logarithmic = 0
 Const Linear = -1
 
 'needed to retain whole # equivalent of toggle_time for use in TimeIntoInterval
-Dim toggle_intv 'seconds
+Dim toggle_intv As Long 'seconds
 
 Dim settings(NUM_SETTINGS)
 Alias settings(1)  = ch1_enabled
