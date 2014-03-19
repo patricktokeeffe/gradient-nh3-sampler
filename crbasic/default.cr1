@@ -449,7 +449,7 @@ DataTable(ts_slow,True,-1)
   Sample(1,tmpr_top,IEEE4)
 EndTable
 
-DataTable(tmpr_cal,(tmpr_state=Calibrating),-1)
+DataTable(tmpr_cal,(tmpr_enabled AND tmpr_state=Calibrating),-1)
   DataInterval(0,CAL_INTV,Sec,10)
   CardOut(1,1000)
   Average(1,tmpr_btm,IEEE4,tmpr_btm=NAN)
@@ -631,7 +631,9 @@ Sub save_current_choices()
   
   'Update dependent states
   If (inlet_btm_H > 0 AND inlet_top_H > 0) Then
-    If (inlet_btm_H <= inlet_top_H) Then
+    If (inlet_btm_H >= inlet_top_H) Then
+      inlet_btm_H = 0
+      inlet_top_H = 0
       gas_gradient_H = 0
     ElseIf (grad_type = Logarithmic) Then
       gas_gradient_H = SQR(inlet_top_H * inlet_btm_H)
@@ -641,10 +643,14 @@ Sub save_current_choices()
       gas_gradient_H = 0
     EndIf
   Else
+    inlet_btm_H = 0
+    inlet_top_H = 0
     gas_gradient_H = 0
   EndIf
   If (tmpr_btm_H > 0 AND tmpr_top_H > 0) Then
-    If (tmpr_btm_H <= tmpr_top_H) Then
+    If (tmpr_btm_H >= tmpr_top_H) Then
+      tmpr_btm_H = 0
+      tmpr_top_H = 0
       tmpr_gradient_H = 0
     ElseIf (grad_type = Logarithmic) Then
       tmpr_gradient_H = SQR(tmpr_top_H * tmpr_btm_H)
@@ -654,6 +660,8 @@ Sub save_current_choices()
       tmpr_gradient_H = 0
     EndIf
   Else
+    tmpr_btm_H = 0
+    tmpr_top_H = 0
     tmpr_gradient_H = 0
   EndIf
   If (NOT ch1_enabled) Then ch1_value = NAN
@@ -664,6 +672,8 @@ Sub save_current_choices()
   If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
   If (NOT tmpr_enabled) Then Move(tmpr(1),3,NAN,1)
 
+  'replace choices with validated settings and save to file
+  Move(choice(1),NUM_SETTINGS,settings(1),NUM_SETTINGS)
   Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,WRITEFILE)
   CallTable(info)
 EndSub
@@ -752,7 +762,7 @@ BeginProg
         VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG, cp_h2o_mult,cp_h2o_offset)
       EndIf
       
-      If (tmpr_state) Then
+      If (tmpr_enabled) Then
         Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
         If (num_levels = 3) Then
           Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
@@ -796,7 +806,9 @@ BeginProg
       If (work_slow.Output(1,1)) Then
         GetRecord(slow_out(1),work_slow,1)
         
-        If (NOT tmpr_gradient_H > 0) Then
+        If (NOT tmpr_enabled) Then
+          tmpr_gradient = NAN
+        ElseIf (NOT tmpr_gradient_H > 0) Then
           tmpr_gradient = NAN
         ElseIf (grad_type = Logarithmic) Then
           tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
