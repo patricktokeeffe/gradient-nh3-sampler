@@ -34,6 +34,8 @@
 
 \renewcommand{\nomname}{List of Symbols}
 
+\usepackage{framed}
+
 %% define syntax highlighting for CRBASIC code
 % specify listing option `language=[CR]Basic
 \definecolor{crbNormal}{RGB}{0,0,0}
@@ -134,7 +136,6 @@ logicalmkup
 \papercolumns 1
 \papersides 2
 \paperpagestyle default
-\listings_params "breaklines=true"
 \tracking_changes false
 \output_changes false
 \html_math_output 0
@@ -9164,10 +9165,39 @@ The complete program operated by the datalogger:
 \end_layout
 
 \begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{framed}
+\end_layout
+
+\end_inset
+
+
 \begin_inset CommandInset include
 LatexCommand lstinputlisting
 filename "../crbasic/default.cr1"
-lstparams "breakatwhitespace,breaklines,frame=single,language={[CR]BASIC},numbers=left,numberstyle={\\footnotesize}"
+lstparams "breakatwhitespace=true,breaklines=true,language={[CR]BASIC},numbers=left,numberstyle={\\footnotesize},showlines"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{framed}
+\end_layout
 
 \end_inset
 
