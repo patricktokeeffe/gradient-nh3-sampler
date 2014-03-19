@@ -8,15 +8,15 @@
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 '============================ CONST SETTINGS ==================================
-Const SDM_CSAT3_LI7500 = 1003 'aliases for menu
-Const SDM_CSAT3A_EC150 = 1004
-Const RS232_CSAT3_LI7500 = 1005
+Const SDM_CSAT3A_EC150_1 = 1 'aliases for menu, trailing # is workaround for
+Const SDM_CSAT3_LI7500_2 = 2 '  logical display in custom menu
+Const RS232_CSAT3_LI7500_3 = 3
 ConstTable
   'things which MUST be constants and therefore cannot be in settings file
   ' XXX WHAT HAPPENS IF LOGGER IS RESET? POWER LOSS? ARE PREVIOUS CONST
   '     VALUES RETAINED?!
-  Const DATA_SRCS = SDM_CSAT3A_EC150
   Const SDM_SPEED = 30   'default: 30 usec, specify 8 - 3000 (8 us - 3 ms)
+  Const DATA_SRCS = SDM_CSAT3_LI7500_2
   Const CSAT3_ADDR = 3    'CSAT3 SDM address, default: 3
   Const LI7500_ADDR = 7  'LI7500 SDM address, default: 7
   Const EC100_ADDR = 1   'EC100/EC150/CSAT3A SDM address, default: 1
@@ -252,9 +252,7 @@ Const Calibrating = 1 'True * -1
 Const Standby = 0 'False
 
 '============================ SETTINGS RETENTION ==============================
-Dim filehandle as Long
-Dim save_changes
-Dim set_to_defaults
+Dim filehandle As Long
 Const SETTINGS_FILE = "CPU:grad_settings.dat"
 Const NUM_SETTINGS = {28}
 Const WRITEFILE = 0
@@ -502,108 +500,110 @@ EndTable
 
 
 '=============================== MENU =========================================
-Const Enable = True
-Const Disable = False
 Const Yes = True
+Const No = False
 Const Cancel = False
-Const Discard = 1001
-Const Save = 1002
+Dim save_changes As Boolean
+Dim discard_changes As Boolean
+Dim set_defaults As Boolean
 Dim recompile As Boolean
 DisplayMenu("Gradient setup", 0) 'as submenu to main
   SubMenu("Gas gradient")
-    MenuItem("Dwell time, min", ch_toggle_time)
+    MenuItem("Dwell, min", ch_toggle_time)
       'TODO figure out best-compatible values for future 3rd level addition
-      MenuPick(1, 1.5, 2, 3, 5, 6, 10, 15)
+      MenuPick(0.5, 1, 1.5, 2, 3, 5, 6, 10, 15)
     MenuItem("# levels", num_levels)
       MenuPick(2)',3)
-    MenuItem("Top inlet H, cm", ch_inlet_top_H
-    MenuItem("Btm inlet H, cm", ch_inlet_btm_H
+    MenuItem("Top H, cm", ch_inlet_top_H
+    MenuItem("Btm H, cm", ch_inlet_btm_H
+    MenuItem("Calc. type", ch_grad_type)
+      MenuPick(Logarithmic, Linear)
   EndSubMenu
   SubMenu("Analog input")
-    MenuItem("Chan 1 recording", ch_ch1_enabled)
-      MenuPick(Disable, Enable)
-    MenuItem("Chan 1 mult.", ch_ch1_mult)
-    MenuItem("Chan 1 offset", ch_ch1_offset)
-    MenuItem("Chan 2 recording", ch_ch2_enabled)
-      MenuPick(Disable, Enable)
-    MenuItem("Chan 2 mult.", ch_ch2_mult)
-    MenuItem("Chan 2 offset", ch_ch2_mult)
-    MenuItem("Chan 3 recording", ch_ch3_enabled)
-      MenuPick(Disable, Enable)
-    MenuItem("Chan 3 mult.", ch_ch3_mult)
-    MenuItem("Chan 3 offst", ch_ch3_offset)
-    MenuItem("Chan 4 recording", ch_ch4_enabled)
-      MenuPick(Disable, Enable)
-    MenuItem("Chan 4 mult.", ch_ch4_mult)
-    MenuItem("Chan 4 offset", ch_ch4_offset)
+    MenuItem("Save DF 1?", ch_ch1_enabled)
+      MenuPick(No, Yes)
+    MenuItem("DF 1 mult", ch_ch1_mult)
+    MenuItem("DF 1 offset", ch_ch1_offset)
+    MenuItem("Save DF 2?", ch_ch2_enabled)
+      MenuPick(No, Yes)
+    MenuItem("DF 2 mult.", ch_ch2_mult)
+    MenuItem("DF 2 offset", ch_ch2_offset)
+    MenuItem("Save DF 3?", ch_ch3_enabled)
+      MenuPick(No, Yes)
+    MenuItem("DF 3 mult.", ch_ch3_mult)
+    MenuItem("DF 3 offset", ch_ch3_offset)
+    MenuItem("Save DF 4?", ch_ch4_enabled)
+      MenuPick(No, Yes)
+    MenuItem("DF 4 mult.", ch_ch4_mult)
+    MenuItem("DF 4 offset", ch_ch4_offset)
   EndSubMenu
   SubMenu("Thermistors")
-    MenuItem("Recording", ch_tmpr_enabled)
-      MenuPick(Disable,Enable)
+    MenuItem("Save data?", ch_tmpr_enabled)
+      MenuPick(No, Yes)
     MenuItem("Set mode", ch_tmpr_state)
       MenuPick(Standby, Normal, Calibrating)
-    MenuItem("Top height, cm", ch_tmpr_top_H
-    MenuItem("Btm height, cm", ch_tmpr_btm_H
-    MenuItem("Top-btm offset, degC", ch_tmpr_top_btm)
+    MenuItem("Top H, cm", ch_tmpr_top_H
+    MenuItem("Btm H, cm", ch_tmpr_btm_H
+    MenuItem("T-B offset", ch_tmpr_top_btm)
     ' XXX maybe ability change duration of calibration stats output (from 1min)
   EndSubMenu
   SubMenu("Closed-path IRGA")
-    MenuItem("CO2 recording", ch_cp_co2_enabled)
-      MenuPick(Disable, Enable)
+    MenuItem("Save CO2?", ch_cp_co2_enabled)
+      MenuPick(No, Yes)
     MenuItem("CO2 mult", ch_cp_co2_mult)
     MenuItem("CO2 offset", ch_cp_co2_offset)
-    MenuItem("H2O recording", ch_cp_h2o_enabled)
-      MenuPick(Disable, Enable)
+    MenuItem("Save H2O?", ch_cp_h2o_enabled)
+      MenuPick(No, Yes)
     MenuItem("H2O mult", ch_cp_h2o_mult)
     MenuItem("H2O offset", ch_cp_h2o_offset)
   EndSubMenu
-  SubMenu("Other")
-    MenuItem("Sonic azimuth, deg TN", ch_sonic_azimuth)
-    MenuItem("Gradient type", ch_grad_type)
-      MenuPick(Logarithmic, Linear)
+  SubMenu("Sonic anemometer")
+    MenuItem("Azimuth, deg", ch_sonic_azimuth)
   EndSubMenu
   SubMenu("Save changes")
     MenuItem("Save now?", save_changes)
-      MenuPick(Cancel,Discard,Save)
-    MenuItem("Set all default?", set_to_defaults)
+      MenuPick(Cancel,Yes)
+    MenuItem("Discard?", discard_changes)
+      MenuPick(Cancel,Yes)
+    MenuItem("Set default?", set_defaults)
       MenuPick(Cancel,Yes)
   EndSubMenu
   SubMenu("Internals")
-    MenuItem("Sonic/Open-path IRGA", DATA_SRCS)
-      MenuPick(DATA_SRCS,SDM_CSAT3A_EC150,SDM_CSAT3_LI7500, RS232_CSAT3_LI7500)
+    MenuItem("Sonic/IRGA", DATA_SRCS)
+      MenuPick(DATA_SRCS,SDM_CSAT3A_EC150_1,SDM_CSAT3_LI7500_2, RS232_CSAT3_LI7500_3)
     MenuItem("SDM speed", SDM_SPEED)
-    MenuItem("SDM addr: CSAT3", CSAT3_ADDR)
-      MenuPick(CSAT3_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
-    MenuItem("SDM addr: LI7500", LI7500_ADDR)
-      MenuPick(LI7500_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
-    MenuItem("SDM addr: EC100", EC100_ADDR)
+    MenuItem("EC100 addr", EC100_ADDR)
       MenuPick(EC100_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
-    MenuRecompile("Recompile now?", recompile)
+    MenuItem("CSAT3 addr", CSAT3_ADDR)
+      MenuPick(CSAT3_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
+    MenuItem("LI7500 addr", LI7500_ADDR)
+      MenuPick(LI7500_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
+    MenuRecompile("Recompile?", recompile)
       MenuPick(Cancel,Yes)
   EndSubMenu
 EndMenu
 
 '============================== SUBROUTINES ===================================
 Sub set_default_choices()
-  ch_ch1_enabled    = Disable
+  ch_ch1_enabled    = No
   ch_ch1_mult       = 1.0
   ch_ch1_offset     = 0
-  ch_ch2_enabled    = Disable
+  ch_ch2_enabled    = No
   ch_ch2_mult       = 1.0
   ch_ch2_offset     = 0
-  ch_ch3_enabled    = Disable
+  ch_ch3_enabled    = No
   ch_ch3_mult       = 1.0
   ch_ch3_offset     = 0
-  ch_ch4_enabled    = Disable
+  ch_ch4_enabled    = No
   ch_ch4_mult       = 1.0
   ch_ch4_offset     = 0
-  ch_cp_co2_enabled = Disable
+  ch_cp_co2_enabled = No
   ch_cp_co2_mult    = 1.0
   ch_cp_co2_offset  = 0
-  ch_cp_h2o_enabled = Disable
+  ch_cp_h2o_enabled = No
   ch_cp_h2o_mult    = 1.0
   ch_cp_h2o_offset  = 0
-  ch_tmpr_enabled   = Disable
+  ch_tmpr_enabled   = No
   ch_tmpr_state     = Standby
   ch_tmpr_top_btm   = 0.0
   ch_sonic_azimuth  = 0
@@ -675,7 +675,6 @@ Sub save_current_choices()
   'replace choices with validated settings and save to file
   Move(choice(1),NUM_SETTINGS,settings(1),NUM_SETTINGS)
   Calfile(settings,NUM_SETTINGS,SETTINGS_FILE,WRITEFILE)
-  CallTable(info)
 EndSub
 
 Sub setup()
@@ -702,8 +701,9 @@ EndSub
 '========================== MAIN PROGRAM ======================================
 BeginProg
   Call setup()
+  CallTable info
 	Scan (FAST_INTV,mSec,0,0)
-	  #If (DATA_SRCS=SDM_CSAT3A_EC150) Then
+	  #If (DATA_SRCS=SDM_CSAT3A_EC150_1) Then
 	    EC100(ec100_raw(1),EC100_ADDR,1)
 	    Move(sonic(1),5,ec100_raw(1),5)
 	    'convert mass density to molar density for LI7500 compatibility
@@ -713,10 +713,10 @@ BeginProg
 	    op_press = ec100_raw(10)
 	    'TODO ambient temp?
 	    'TODO op_signal 
-	  #ElseIf (DATA_SRCS=SDM_CSAT3_LI7500) Then
+	  #ElseIf (DATA_SRCS=SDM_CSAT3_LI7500_2) Then
 	    CS7500(op_CO2,1,LI7500_ADDR,LI7500_CMD)
 	    CSAT3(sonic_Ux,1,CSAT3_ADDR,CSAT3_CMD,CSAT3_OPT)
-	  #ElseIf (DATA_SRCS=RS232_CSAT3_LI7500) Then
+	  #ElseIf (DATA_SRCS=RS232_CSAT3_LI7500_3) Then
 	    'TODO - serial input handling
 	  #EndIf
 	  
@@ -830,17 +830,20 @@ BeginProg
 
     If (work_fast.Output(1,1) AND work_slow.Output(1,1)) Then CallTable stats
 		
-    If (save_changes = Discard) Then
-      populate_choices()
-      save_changes = Cancel
-    ElseIf (save_changes = Save) Then
-      save_current_choices()  
+    If (save_changes) Then
+      Call save_current_choices()  
       save_changes = Cancel
       CallTable info
     EndIf
-    If (set_to_defaults = Yes) Then
+    If (discard_changes) Then
+      Call populate_choices()
+      discard_changes = Cancel
+      CallTable info
+    EndIf
+    If (set_defaults) Then
       Call reset_settings()
-      set_to_defaults = Cancel
+      set_defaults = Cancel
+      CallTable info
     EndIf
 	NextScan 
 EndProg
