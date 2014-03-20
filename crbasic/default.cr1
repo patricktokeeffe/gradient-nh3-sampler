@@ -725,53 +725,6 @@ BeginProg
     CallTable work_fast
 
     If (TimeIntoInterval(0,SLOW_INTV,Sec)) Then
-      If (ch1_enabled) Then VoltDiff(ch1_value,1,mv5000,CH1_IO,1,0,INTEG, ch1_mult,ch1_offset)
-      If (ch2_enabled) Then VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG, ch2_mult,ch2_offset)
-      If (ch3_enabled) Then VoltDiff(ch3_value,1,mv5000,CH3_IO,1,0,INTEG, ch3_mult,ch3_offset)
-      If (ch4_enabled) Then VoltDiff(ch4_value,1,mv5000,CH4_IO,1,0,INTEG, ch4_mult,ch4_offset)
-      
-      'record measurements into correct level variable set
-      'other variables are set to NAN during source level transition
-      If (is_sampling_mid) Then
-        ch1_mid = ch1_value
-        ch2_mid = ch2_value
-        ch3_mid = ch3_value
-        ch4_mid = ch4_value
-        cp_CO2_mid = cp_CO2_value
-        cp_H2O_mid = cp_H2O_value
-      ElseIf (is_sampling_top) Then
-        ch1_top = ch1_value
-        ch2_top = ch2_value
-        ch3_top = ch3_value
-        ch4_top = ch4_value
-        cp_CO2_top = cp_CO2_value
-        cp_H2O_top = cp_H2O_value
-      Else
-        ch1_btm = ch1_value
-        ch2_btm = ch2_value
-        ch3_btm = ch3_value
-        ch4_btm = ch4_value
-        cp_CO2_btm = cp_CO2_value
-        cp_H2O_btm = cp_H2O_value
-      EndIf
-      
-      If (cp_co2_enabled) Then
-        VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG, cp_co2_mult,cp_co2_offset)
-      EndIf
-      If (cp_h2o_enabled) Then
-        VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG, cp_h2o_mult,cp_h2o_offset)
-      EndIf
-      
-      If (tmpr_enabled) Then
-        Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
-        If (num_levels = 3) Then
-          Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
-        EndIf
-        Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
-      EndIf
-      
-  		PanelTemp (logger_temp,INTEG)
-  		Battery (logger_voltage)
   	EndIf
 
     If (TimeIntoInterval(0,toggle_intv,Sec)) Then 
@@ -799,36 +752,11 @@ BeginProg
       PortSet(VALVE_2_CTRL, is_sampling_mid)
       Move(conc(1),12,NAN,1)
       Move(cp_irga(1),6,NAN,1)
-      
-  		CallTable tmpr_cal
-      CallTable ts_slow
-      CallTable work_slow
-      If (work_slow.Output(1,1)) Then
-        GetRecord(slow_out(1),work_slow,1)
-        
-        If (NOT tmpr_enabled) Then
-          tmpr_gradient = NAN
-        ElseIf (NOT tmpr_gradient_H > 0) Then
-          tmpr_gradient = NAN
-        ElseIf (grad_type = Logarithmic) Then
-          tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
-          tmpr_gradient /= (LN(tmpr_top_H/tmpr_btm_H)*tmpr_gradient_H)
-          tmpr_gradient *= 100 'scale degC/cm => degC/m
-        ElseIf (grad_type = Linear) Then
-          tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
-          tmpr_gradient /= (tmpr_top_H - tmpr_btm_H)
-          tmpr_gradient *= 100 'scale degC/cm => degC/m
-        Else
-          tmpr_gradient = NAN
-        EndIf
-      EndIf
     EndIf
 		
     If (work_fast.Output(1,1)) Then
       'do stuff
     EndIf
-
-    If (work_fast.Output(1,1) AND work_slow.Output(1,1)) Then CallTable stats
 		
     If (save_changes) Then
       Call save_current_choices()  
@@ -846,5 +774,82 @@ BeginProg
       CallTable info
     EndIf
 	NextScan 
+	
+  SlowSequence
+  Scan(SLOW_INTV,Sec,10,-1)
+    If (ch1_enabled) Then VoltDiff(ch1_value,1,mv5000,CH1_IO,1,0,INTEG, ch1_mult,ch1_offset)
+    If (ch2_enabled) Then VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG, ch2_mult,ch2_offset)
+    If (ch3_enabled) Then VoltDiff(ch3_value,1,mv5000,CH3_IO,1,0,INTEG, ch3_mult,ch3_offset)
+    If (ch4_enabled) Then VoltDiff(ch4_value,1,mv5000,CH4_IO,1,0,INTEG, ch4_mult,ch4_offset)
+    
+    'record measurements into correct level variable set
+    'other variables are set to NAN during source level transition
+    If (is_sampling_mid) Then
+      ch1_mid = ch1_value
+      ch2_mid = ch2_value
+      ch3_mid = ch3_value
+      ch4_mid = ch4_value
+      cp_CO2_mid = cp_CO2_value
+      cp_H2O_mid = cp_H2O_value
+    ElseIf (is_sampling_top) Then
+      ch1_top = ch1_value
+      ch2_top = ch2_value
+      ch3_top = ch3_value
+      ch4_top = ch4_value
+      cp_CO2_top = cp_CO2_value
+      cp_H2O_top = cp_H2O_value
+    Else
+      ch1_btm = ch1_value
+      ch2_btm = ch2_value
+      ch3_btm = ch3_value
+      ch4_btm = ch4_value
+      cp_CO2_btm = cp_CO2_value
+      cp_H2O_btm = cp_H2O_value
+    EndIf
+    
+    If (cp_co2_enabled) Then
+      VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG, cp_co2_mult,cp_co2_offset)
+    EndIf
+    If (cp_h2o_enabled) Then
+      VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG, cp_h2o_mult,cp_h2o_offset)
+    EndIf
+    
+    If (tmpr_enabled) Then
+      Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+      If (num_levels = 3) Then
+        Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+      EndIf
+      Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+    EndIf
+    
+		PanelTemp (logger_temp,INTEG)
+		Battery (logger_voltage)
+
+		CallTable tmpr_cal
+    CallTable ts_slow
+    CallTable work_slow
+    If (work_slow.Output(1,1)) Then
+      GetRecord(slow_out(1),work_slow,1)
+      
+      If (NOT tmpr_enabled) Then
+        tmpr_gradient = NAN
+      ElseIf (NOT tmpr_gradient_H > 0) Then
+        tmpr_gradient = NAN
+      ElseIf (grad_type = Logarithmic) Then
+        tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
+        tmpr_gradient /= (LN(tmpr_top_H/tmpr_btm_H)*tmpr_gradient_H)
+        tmpr_gradient *= 100 'scale degC/cm => degC/m
+      ElseIf (grad_type = Linear) Then
+        tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
+        tmpr_gradient /= (tmpr_top_H - tmpr_btm_H)
+        tmpr_gradient *= 100 'scale degC/cm => degC/m
+      Else
+        tmpr_gradient = NAN
+      EndIf
+    EndIf
+
+    If (work_fast.Output(1,1) AND work_slow.Output(1,1)) Then CallTable stats
+
+  NextScan
 EndProg
 
