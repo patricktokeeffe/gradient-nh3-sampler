@@ -781,6 +781,13 @@ BeginProg
     If (ch2_enabled) Then VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG, ch2_mult,ch2_offset)
     If (ch3_enabled) Then VoltDiff(ch3_value,1,mv5000,CH3_IO,1,0,INTEG, ch3_mult,ch3_offset)
     If (ch4_enabled) Then VoltDiff(ch4_value,1,mv5000,CH4_IO,1,0,INTEG, ch4_mult,ch4_offset)
+    If (cp_co2_enabled) Then VoltDiff(cp_CO2_value, 1,mv5000,CP_CO2_IO,1,0,INTEG, cp_co2_mult,cp_co2_offset)
+    If (cp_h2o_enabled) Then VoltDiff(cp_H2O_value, 1,mv5000,CP_H2O_IO,1,0,INTEG, cp_h2o_mult,cp_h2o_offset)
+    If (tmpr_enabled) Then
+      Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+      If (num_levels = 3) Then Therm107(tmpr_mid, 1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+      Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+    EndIf
 
     'record measurements into correct level variable set
     'other variables are set to NAN during source level transition
@@ -806,27 +813,9 @@ BeginProg
       cp_CO2_btm = cp_CO2_value
       cp_H2O_btm = cp_H2O_value
     EndIf
-
-    If (cp_co2_enabled) Then
-      VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG, cp_co2_mult,cp_co2_offset)
-    EndIf
-    If (cp_h2o_enabled) Then
-      VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG, cp_h2o_mult,cp_h2o_offset)
-    EndIf
-
-    If (tmpr_enabled) Then
-      Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
-      If (num_levels = 3) Then
-        Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
-      EndIf
-      Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
-    EndIf
-
-    PanelTemp (logger_temp,INTEG)
-    Battery (logger_voltage)
-
     CallTable tmpr_cal
     CallTable ts_slow
+
     CallTable work_slow
     If (work_slow.Output(1,1)) Then
       GetRecord(slow_out(1),work_slow,1)
