@@ -413,6 +413,14 @@ DataTable(info,True,50)
 '  Sample(1,sonic_height,FP2) 'XXX
   Sample(1,DATA_SRCS,FP2)
     FieldNames("eddycov_sensors")
+'  Sample(1,Status.CompileResults,String) 'XXX
+'    FieldNames("CompileResults")
+'  Sample(1,Status.CardStatus,String)
+'    FieldNames("CardStatus")
+'  Sample(1,Status.RunSignature,UINT2) 'program information
+'    FieldNames("RunSig")
+'  Sample(1,Status.ProgSignature,UINT2)
+'    FieldNames("ProgSig")
 EndTable
 
 DataTable(ts_fast,True,-1)
@@ -427,7 +435,7 @@ DataTable(ts_fast,True,-1)
   Sample(1,op_H2O,IEEE4)
   Sample(1,op_press,IEEE4)
   Sample(1,op_diag,UINT2)
-  Sample(1,op_signal,UINT2)
+'  Sample(1,op_signal,UINT2)
 EndTable
 
 DataTable(ts_slow,True,-1)
@@ -723,9 +731,6 @@ BeginProg
     CallTable ts_fast
     'TODO -> alignment table
     CallTable work_fast
-
-    If (TimeIntoInterval(0,SLOW_INTV,Sec)) Then
-  	EndIf
 
     If (TimeIntoInterval(0,toggle_intv,Sec)) Then 
       If (num_levels = 3) Then
