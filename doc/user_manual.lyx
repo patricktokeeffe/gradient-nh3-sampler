@@ -917,15 +917,87 @@ Principle of Operation
 \end_layout
 
 \begin_layout Standard
-?
-\end_layout
-
-\begin_layout Subsection
-Aerodynamic Gradient 
+Two sampling lines are installed at strategic heights on a small tower.
+ A diaphragm pump is used to draw air continuously through both sampling
+ lines at a relatively high volumetric flow rate.
+ A second diaphragm pump draws air through a three-way solenoid valve from
+ one of the two sampling lines, alternating at a specified time interval
+ of seconds to minutes.
+ Closed-path trace gas analyzers draw air samples off the flow path between
+ the solenoid valve and second diaphragm pump.
+ Both pumps exhaust air to the atmosphere.
+ 
 \end_layout
 
 \begin_layout Standard
-?
+A data logging device tracks the state of the solenoid valve, records analog
+ output signals from the trace gas analyzers at moderate frequency (1 Hz)
+ and partitions those signals accordingly to generate mean gas concentrations
+ at each sampling height.
+ These mean values are combined with sampling heights to calculate gas gradients
+ for each output interval.
+ The data logging device records precision temperature measurements at two
+ strategic heights as well and uses mean temperature at those two heights
+ to generate a temperature gradient for each output interval.
+ 
+\end_layout
+
+\begin_layout Standard
+A three-dimensional sonic anemometer and open-path CO
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+/H
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+O infrared gas analyzer (IRGA) are monitored by the data logging device
+ at high-frequency (10 Hz).
+ For each output interval, the covariances of CO
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+ and sonic temperature
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+sonic temperature closely approximates virtual temperature within the typical
+ range of atmospheric conditions
+\end_layout
+
+\end_inset
+
+ with vertical wind speed are calculated.
+ These values are compared to the calculated gradients of CO
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+ and temperature, respectively, to estimate an eddy diffusivity value for
+ each output interval.
+ Eddy diffusivity values are used in conjunction with the other gas gradients
+ to estimate fluxes of those gases for each output interval.
+ 
 \end_layout
 
 \begin_layout Standard
