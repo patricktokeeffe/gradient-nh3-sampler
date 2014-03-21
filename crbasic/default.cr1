@@ -50,11 +50,11 @@ Const VALVE_1_CTRL = 7   'C7
 ' Control selection of bottom- or top-level sampling lines
 '   Normally Open ---------- Bottom level (closest to ground) inlet
 '   Normally Closed -------- Top level (farthest from fround) inlet
-'   Common ----------------- EITHER (a) to analyzer delivery 
+'   Common ----------------- EITHER (a) to analyzer delivery
 '                                   (b) Valve #2 NO
 Const VALVE_2_CTRL = 8   'C8
 ' Control selection of mid-level sampling line or other valve (top/btm lines)
-'   Normally Open ---------- Valve #1 Common 
+'   Normally Open ---------- Valve #1 Common
 '   Normally Closed -------- Middle level (between bottom, top) inlet
 '   Common ----------------- To analyzer delivery
 
@@ -172,7 +172,7 @@ Units logger_voltage = volts
 Public disable_sonic As Boolean 'diagnostic flag handling
 Public disable_op As Boolean
 
-'TODO 
+'TODO
 'Dim lagged(10)
 'Public aligned(10)
 'Alias aligned(1)  = lag_Ux
@@ -238,7 +238,7 @@ Public gas_gradient_H
 Units gas_gradient_H = cm
 
 ' TODO !!!! need sonic integration for online evaluation of eddy diffusivity
-' specifically, need cov_w_Ts 
+' specifically, need cov_w_Ts
 
 'level-selection valve control
 Dim num_levels = {2} '2 or 3, determines if mid level is sampled
@@ -340,19 +340,19 @@ DataTable(work_fast,True,10)
   'TODO std dev? --> comes with cov()
   'TODO covariance?
   'TODO use aligned sonic/op IRGA data
-  WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,1) 
+  WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,1)
   'Opt1: mean horiz WS, unit vctr mean WD, and std WD using Yamartino eqn
   WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,2)
   'Opt2: mean horiz WS, rslt mean WS, rslt mean WD, WS-weighted WD sdev CSI eqn
   'TODO sonic_uptime
-  
+
   Average(1,op_CO2,IEEE4,disable_op)
   Average(1,op_H2O,IEEE4,disable_op)
   Average(1,op_press,IEEE4,disable_op)
   'TODO std dev? --> comes with cov()
   'TODO covariance?
 EndTable
-  
+
 DataTable(work_slow,True,10)
   DataInterval(0,STATS_INTV,Min,10)
   Average(1,ch1_btm,IEEE4,ch1_btm=NAN)
@@ -433,8 +433,8 @@ EndTable
 DataTable(ts_slow,True,-1)
   DataInterval(0,SLOW_INTV,Sec,10)
   CardOut(1,-1) 'XXX fixed size ?
-	Sample(1,is_sampling_top,Boolean)
-'	Sample(1,is_sampling_mid,Boolean)
+  Sample(1,is_sampling_top,Boolean)
+'  Sample(1,is_sampling_mid,Boolean)
   Sample(1,ch1_value,IEEE4)
   Sample(1,ch2_value,IEEE4)
   Sample(1,ch3_value,IEEE4)
@@ -469,7 +469,7 @@ DataTable(stats,True,-1)
   Sample(1,ch3_top_Avg,FP2)
   Sample(1,ch4_btm_Avg,FP2)
   Sample(1,ch4_top_Avg,FP2)
-  
+
   Sample(1,cp_CO2_btm_Avg,FP2)
   Sample(1,cp_CO2_top_Avg,FP2)
   Sample(1,cp_H2O_btm_Avg,FP2)
@@ -479,7 +479,7 @@ DataTable(stats,True,-1)
   Sample(1,tmpr_top_Avg,FP2)
   Sample(1,tmpr_gradient,IEEE4)
   'TODO add gradient, flux stats
-  
+
   Sample(1,sonic_Ts_Avg,FP2)
   Sample(1,WS_sclr_Avg,FP2) 'XXX clean up / reorder
   Sample(1,WD_unit_Avg,FP2)
@@ -493,7 +493,7 @@ DataTable(stats,True,-1)
   'XXX ambient temp?
   'TODO basic fluxes
   'TODO Cov(Ts,Uz), Cov(CO2,Uz), Cov(H2O,Uz)
-  
+
   Average(1,logger_voltage,FP2,logger_voltage=NAN)
   Average(1,logger_temp,FP2,logger_temp=NAN)
 EndTable
@@ -625,10 +625,10 @@ Sub save_current_choices()
   'Input validation
   toggle_intv = toggle_time * 60
   While (sonic_azimuth < 0)
-    sonic_azimuth += 360 
+    sonic_azimuth += 360
   Wend
   sonic_azimuth = sonic_azimuth MOD 360
-  
+
   'Update dependent states
   If (inlet_btm_H > 0 AND inlet_top_H > 0) Then
     If (inlet_btm_H >= inlet_top_H) Then
@@ -702,25 +702,25 @@ EndSub
 BeginProg
   Call setup()
   CallTable info
-	Scan (FAST_INTV,mSec,0,0)
-	  #If (DATA_SRCS=SDM_CSAT3A_EC150_1) Then
-	    EC100(ec100_raw(1),EC100_ADDR,1)
-	    Move(sonic(1),5,ec100_raw(1),5)
-	    'convert mass density to molar density for LI7500 compatibility
-	    op_CO2 = ec100_raw(6)/MW_co2 'mg/m^3 -> mmol/m^3
-	    op_H2O = ec100_raw(7)*1000/MW_h2o 'g/m^3 -> mmol/m^3
-	    op_diag = ec100_raw(8)
-	    op_press = ec100_raw(10)
-	    'TODO ambient temp?
-	    'TODO op_signal 
-	  #ElseIf (DATA_SRCS=SDM_CSAT3_LI7500_2) Then
-	    CS7500(op_CO2,1,LI7500_ADDR,LI7500_CMD)
-	    CSAT3(sonic_Ux,1,CSAT3_ADDR,CSAT3_CMD,CSAT3_OPT)
-	  #ElseIf (DATA_SRCS=RS232_CSAT3_LI7500_3) Then
-	    'TODO - serial input handling
-	  #EndIf
-	  
-    CallTable ts_fast 
+  Scan (FAST_INTV,mSec,0,0)
+    #If (DATA_SRCS=SDM_CSAT3A_EC150_1) Then
+      EC100(ec100_raw(1),EC100_ADDR,1)
+      Move(sonic(1),5,ec100_raw(1),5)
+      'convert mass density to molar density for LI7500 compatibility
+      op_CO2 = ec100_raw(6)/MW_co2 'mg/m^3 -> mmol/m^3
+      op_H2O = ec100_raw(7)*1000/MW_h2o 'g/m^3 -> mmol/m^3
+      op_diag = ec100_raw(8)
+      op_press = ec100_raw(10)
+      'TODO ambient temp?
+      'TODO op_signal
+    #ElseIf (DATA_SRCS=SDM_CSAT3_LI7500_2) Then
+      CS7500(op_CO2,1,LI7500_ADDR,LI7500_CMD)
+      CSAT3(sonic_Ux,1,CSAT3_ADDR,CSAT3_CMD,CSAT3_OPT)
+    #ElseIf (DATA_SRCS=RS232_CSAT3_LI7500_3) Then
+      'TODO - serial input handling
+    #EndIf
+
+    CallTable ts_fast
     'TODO -> alignment table
     CallTable work_fast
 
@@ -781,7 +781,7 @@ BeginProg
     If (ch2_enabled) Then VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG, ch2_mult,ch2_offset)
     If (ch3_enabled) Then VoltDiff(ch3_value,1,mv5000,CH3_IO,1,0,INTEG, ch3_mult,ch3_offset)
     If (ch4_enabled) Then VoltDiff(ch4_value,1,mv5000,CH4_IO,1,0,INTEG, ch4_mult,ch4_offset)
-    
+
     'record measurements into correct level variable set
     'other variables are set to NAN during source level transition
     If (is_sampling_mid) Then
@@ -806,14 +806,14 @@ BeginProg
       cp_CO2_btm = cp_CO2_value
       cp_H2O_btm = cp_H2O_value
     EndIf
-    
+
     If (cp_co2_enabled) Then
       VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG, cp_co2_mult,cp_co2_offset)
     EndIf
     If (cp_h2o_enabled) Then
       VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG, cp_h2o_mult,cp_h2o_offset)
     EndIf
-    
+
     If (tmpr_enabled) Then
       Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
       If (num_levels = 3) Then
@@ -821,16 +821,16 @@ BeginProg
       EndIf
       Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
     EndIf
-    
-		PanelTemp (logger_temp,INTEG)
-		Battery (logger_voltage)
 
-		CallTable tmpr_cal
+    PanelTemp (logger_temp,INTEG)
+    Battery (logger_voltage)
+
+    CallTable tmpr_cal
     CallTable ts_slow
     CallTable work_slow
     If (work_slow.Output(1,1)) Then
       GetRecord(slow_out(1),work_slow,1)
-      
+
       If (NOT tmpr_enabled) Then
         tmpr_gradient = NAN
       ElseIf (NOT tmpr_gradient_H > 0) Then
