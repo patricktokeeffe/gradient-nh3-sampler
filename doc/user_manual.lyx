@@ -11718,5 +11718,94 @@ end{framed}
 
 \end_layout
 
+\begin_layout Section
+Notes to Developers
+\end_layout
+
+\begin_layout Subsection
+Multiple scan frequencies
+\end_layout
+
+\begin_layout Standard
+While the eddy covariance sensors operate at a high-frequency (10 Hz) the
+ majority of the sensors/analyzers do not.
+ It is necessary for the datalogger's primary scan to be a 100ms interval
+ and there are two options for achieving an additional 1s interval scan:
+ 
+\end_layout
+
+\begin_layout Enumerate
+Use an 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+IfTime(\SpecialChar \ldots{}
+)
+\end_layout
+
+\end_inset
+
+ or 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+If(TimeIntoInterval(\SpecialChar \ldots{}
+))
+\end_layout
+
+\end_inset
+
+ statement to test for 1-second boundaries, then conditionally measure the
+ analog sensors.
+\end_layout
+
+\begin_layout Enumerate
+Use the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+SlowSequence
+\end_layout
+
+\end_inset
+
+ statement with a secondary scan loop having a 1-second interval.
+\end_layout
+
+\begin_layout Standard
+Laboratory tests indicate the latter (#2) is highly preferred as it results
+ in dramatically faster measurement times (0.2ms vs.
+ 19ms).
+ Processing times are likewise improved, though only marginally (~16-25ms
+ vs ~16-30ms).
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100line%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Insert screen shots
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \end_body
 \end_document
