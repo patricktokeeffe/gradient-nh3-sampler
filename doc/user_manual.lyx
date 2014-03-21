@@ -9629,40 +9629,15 @@ ProgSig
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Data reduction
-\end_layout
-
-\begin_layout Subsection
-Denuder Assay
-\end_layout
-
-\begin_layout Itemize
-supplies/equipment list
-\end_layout
-
-\begin_layout Itemize
-choice of coating solutions
-\end_layout
-
-\begin_layout Itemize
-preparing the denuder
-\end_layout
-
-\begin_layout Itemize
-storage precautions for before/after use
-\end_layout
-
-\begin_layout Itemize
-extracting species from denuder
-\end_layout
-
-\begin_layout Itemize
-analysis procedure for extraction
-\end_layout
-
-\begin_layout Itemize
-long-term storage of samples
 \end_layout
 
 \begin_layout Subsection
@@ -9670,36 +9645,19 @@ EC Flux
 \end_layout
 
 \begin_layout Standard
-This is required for in order to determine a beta coefficient.
- Calculate:
-\end_layout
-
-\begin_layout Enumerate
-CO2 flux
-\end_layout
-
-\begin_layout Enumerate
-H2O flux / latent heat
-\end_layout
-
-\begin_layout Enumerate
-Temp / sensible heat
+In order to determine an eddy diffusivity value, the covariances of vertical
+ wind speed with ambient temperature, carbon dioxide, and water vapor are
+ necessary.
+ These covariances are very nearly fluxes.
 \end_layout
 
 \begin_layout Subsection
-REA Flux
+Gradient Flux
 \end_layout
 
 \begin_layout Standard
-What datums do we need from datalogger? 
-\end_layout
-
-\begin_layout Enumerate
-Mean flow through UP/DN lines
-\end_layout
-
-\begin_layout Enumerate
-Standard deviation of vertical wind
+The gradient flux is determined simply as the gas gradient times an eddy
+ diffusivity value.
 \end_layout
 
 \begin_layout Standard
