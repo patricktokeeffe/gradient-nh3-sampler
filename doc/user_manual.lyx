@@ -237,7 +237,7 @@ Notes
 \begin_inset Text
 
 \begin_layout Plain Layout
-2014-02-13
+2014-03-20
 \end_layout
 
 \end_inset
@@ -256,7 +256,7 @@ P.
 \begin_inset Text
 
 \begin_layout Plain Layout
-Initial draft
+Pre-release draft
 \end_layout
 
 \end_inset
@@ -5769,8 +5769,27 @@ Real-time calculations
 \end_layout
 
 \begin_layout Standard
-This section describes calculations which occur in real-time (e.g.
- at 10 Hz).
+\begin_inset Box Shaded
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+This section has not yet been updated to reflect current program operation.
+ Only subsection 5.1 is applicable!
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -5939,15 +5958,27 @@ Statistics calculations
 \end_layout
 
 \begin_layout Standard
-This section describes the 
-\begin_inset Quotes eld
+\begin_inset Box Shaded
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+This section has not yet been updated to reflect current program operation!
+ None of the following subsections apply!
+\end_layout
+
 \end_inset
 
-statistics
-\begin_inset Quotes erd
-\end_inset
 
- generated every output interval (half-hour).
 \end_layout
 
 \begin_layout Subsubsection
