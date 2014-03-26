@@ -533,8 +533,10 @@ sideways false
 status open
 
 \begin_layout Plain Layout
+\noindent
+\align center
 \begin_inset Graphics
-	filename export.emf
+	filename images/block_diagram_2levels.emf
 	lyxscale 33
 	width 100line%
 
