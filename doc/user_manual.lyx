@@ -11729,11 +11729,15 @@ Multiple scan frequencies
 \end_layout
 
 \begin_layout Standard
-While the eddy covariance sensors operate at a high-frequency (10 Hz) the
- majority of the sensors/analyzers do not.
- It is necessary for the datalogger's primary scan to be a 100ms interval
- and there are two options for achieving an additional 1s interval scan:
- 
+The eddy covariance sensors (sonic anemometer and open-path IRGA) must operate
+ at a high-frequency (10 Hz) but there is no benefit to polling the other
+ sensors at such a high rate.
+ Indeed, doing so results in much more data than is reasonable and may even
+ produce misleading results for some slow-response trace gas analyzers.
+ So, while it is necessary for the datalogger's primary scan interval to
+ be 100ms to accomodate the high-frequency sensors, a majority of the measuremen
+ts will occur at 1sec intervals instead.
+ There are two options for achieving this secondary scan rate: 
 \end_layout
 
 \begin_layout Enumerate
@@ -11761,6 +11765,8 @@ If(TimeIntoInterval(\SpecialChar \ldots{}
 
  statement to test for 1-second boundaries, then conditionally measure the
  analog sensors.
+ Note, however, measurement instructions cannot be placed in conditional
+ statements when the datalogger is operating in pipeline mode.
 \end_layout
 
 \begin_layout Enumerate
@@ -11778,35 +11784,12 @@ SlowSequence
 \end_layout
 
 \begin_layout Standard
-Laboratory tests indicate the latter (#2) is highly preferred as it results
- in dramatically faster measurement times (0.2ms vs.
+Laboratory tests indicate the latter option (SlowSequence) is highly preferred
+ as it results in dramatically faster measurement times (0.2ms vs.
  19ms).
  Processing times are likewise improved, though only marginally (~16-25ms
  vs ~16-30ms).
  
-\end_layout
-
-\begin_layout Standard
-\begin_inset Box Shadowbox
-position "t"
-hor_pos "c"
-has_inner_box 1
-inner_pos "t"
-use_parbox 0
-use_makebox 0
-width "100line%"
-special "none"
-height "1in"
-height_special "totalheight"
-status open
-
-\begin_layout Plain Layout
-Insert screen shots
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \end_body
