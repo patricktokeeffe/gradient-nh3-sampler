@@ -14,8 +14,12 @@ Const RS232_CSAT3_LI7500_3 = 3
 ConstTable
   'things which MUST be constants and therefore cannot be in settings file
   'these settings are retained across power cycles like "soft" settings
-  Const SDM_SPEED = 30   'default: 30 usec, specify 8 - 3000 (8 us - 3 ms)
+  Const UTC_OFFSET = -8  'default: Pacific Standard Time
+
+  Const ENABLE_GPS = True
   Const DATA_SRCS = RS232_CSAT3_LI7500_3
+
+  Const SDM_SPEED = 30   'default: 30 usec, specify 8 - 3000 (8 us - 3 ms)
   Const CSAT3_ADDR = 3   'CSAT3 SDM address, default: 3
   Const LI7500_ADDR = 7  'LI7500 SDM address, default: 7
   Const EC100_ADDR = 1   'EC100/EC150/CSAT3A SDM address, default: 1
@@ -78,6 +82,10 @@ Const EC100_CMD = 1 'get 3D wind, temp, CO2, H2O, press, (2) diagnostic
 '----- RS-232 DEVICES -----
 Const CSAT3_COM = Com1
 Const LI7500_COM = Com2
+
+Const GPS_COM = Com3
+Const MAX_DIFF = -1 'XXX
+Const DAILY_MEDNUM = 480
 
 '----- STATIC ANALOG SCALING -----
 'TODO closed-path IRGA
@@ -176,6 +184,41 @@ Alias tmpr(1) = tmpr_btm
 Alias tmpr(2) = tmpr_mid
 Alias tmpr(3) = tmpr_top
 Units tmpr = degC
+
+'GPS receiver
+#If (ENABLE_GPS) Then
+  Dim nmea_str As String * 90
+  Public gps16x(15)
+  Alias gps16x(1)  = lat_deg        '(+)=North, (-)=South
+  Alias gps16x(2)  = lat_min
+  Alias gps16x(3)  = long_deg       '(+)=East, (-)=West
+  Alias gps16x(4)  = long_min
+  Alias gps16x(5)  = speed
+  Alias gps16x(6)  = course
+  Alias gps16x(7)  = mag_var        '(+)=East, (-)=West
+  Alias gps16x(8)  = fix_quality
+  Alias gps16x(9)  = num_sat
+  Alias gps16x(10) = altitude
+  Alias gps16x(11) = since_pps
+  Alias gps16x(12) = since_gprmc
+  Alias gps16x(13) = gps_ready
+  Alias gps16x(14) = max_clock_change
+  Alias gps16x(15) = num_clock_change
+  Units lat_deg = degreesN
+  Units lat_min = minutesN
+  Units long_deg = degreesN
+  Units long_min = minutesN
+  Units speed = m/s
+  Units course = degreesEofN
+  Units mag_var = degreesEofN
+  Units fix_quality = unitless
+  Units num_sat = count
+  Units altitude = m
+  Units since_pps = ms
+  Units since_gprmc = s
+  Units max_clock_change = ms
+  Units num_clock_change = occurrences
+#EndIf
 
 'data logger built-in sensors
 Public logger_temp, logger_voltage
@@ -422,6 +465,9 @@ DataTable(info,True,50)
   Sample(1,grad_type,Boolean)
 '  Sample(1,sonic_azimuth,FP2) 'XXX
 '  Sample(1,sonic_height,FP2) 'XXX
+  Sample(1,UTC_OFFSET,FP2)
+    FieldNames("UTC_offset")
+    Units UTC_OFFSET = hours
   Sample(1,DATA_SRCS,FP2)
     FieldNames("eddycov_sensors")
 '  Sample(1,Status.CompileResults,String) 'XXX
@@ -517,6 +563,26 @@ DataTable(stats,True,-1)
   Average(1,logger_temp,FP2,logger_temp=NAN)
 EndTable
 
+#If (ENABLE_GPS) Then
+  DataTable (gps_daily,TRUE,-1)
+    DataInterval (0,1,Day,10)
+    CardOut(0,60)
+    Median(1,(lat_deg + lat_min/60),DAILY_MEDNUM,IEEE4,(lat_deg=NAN OR lat_min=NAN))
+      FieldNames("latitude_Med")
+      Units latitude_Med = degreesN
+    Median(1,(long_deg + long_min/60),DAILY_MEDNUM,IEEE4,(long_deg=NAN OR long_min=NAN))
+      FieldNames("longitude_Med")
+      Units longitude_Med = degreesE
+    Median(1,mag_var,DAILY_MEDNUM,FP2,mag_var=NAN)
+    Average(1,num_sat,FP2,num_sat=NAN)
+    Median(1,altitude,DAILY_MEDNUM,IEEE4,altitude=NAN)
+    Average(1,altitude,IEEE4,altitude=NAN)
+    Minimum(1,gps_ready,FP2,gps_ready=NAN,0)
+    Sample(1,max_clock_change,UINT2)
+    Sample(1,num_clock_change,UINT2)
+  EndTable
+#EndIf
+
 
 '=============================== MENU =========================================
 Const Yes = True
@@ -588,6 +654,10 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
       MenuPick(Cancel,Yes)
   EndSubMenu
   SubMenu("Internals")
+    MenuItem("Time zone", UTC_OFFSET)
+      MenuPick(UTC_OFFSET, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+    MenuItem("Enable GPS?", ENABLE_GPS)
+      MenuPick(ENABLE_GPS, No, Yes)
     MenuItem("Sonic/IRGA", DATA_SRCS)
       MenuPick(DATA_SRCS,SDM_CSAT3A_EC150_1,SDM_CSAT3_LI7500_2, RS232_CSAT3_LI7500_3)
     MenuItem("SDM speed", SDM_SPEED)
@@ -848,6 +918,11 @@ BeginProg
     Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
 '    If (num_levels = 3) Then Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
     Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+
+    #If (ENABLE_GPS) Then
+      GPS(gps16x(1),GPS_COM,UTC_OFFSET*3600,MAX_DIFF,nmea_str(1))
+      CallTable(gps_daily)
+    #EndIf
 
     If (NOT ch1_enabled) Then ch1_value = NAN
     If (NOT ch2_enabled) Then ch2_value = NAN
