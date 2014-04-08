@@ -13184,7 +13184,7 @@ status open
 \noindent
 \align center
 \begin_inset Graphics
-	filename images/LI7500_setup_outputs.png
+	filename images/li7500_setup_outputs.png
 	width 80line%
 
 \end_inset
@@ -13226,7 +13226,7 @@ status open
 \noindent
 \align center
 \begin_inset Graphics
-	filename images/LI7500_setup_rs232.png
+	filename images/li7500_setup_rs232.png
 	width 80line%
 
 \end_inset
@@ -13303,7 +13303,7 @@ status open
 \noindent
 \align center
 \begin_inset Graphics
-	filename images/LI7500_cts-rts_loopback.jpg
+	filename images/li7500_cts-rts_loopback.jpg
 
 \end_inset
 
@@ -16458,7 +16458,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename images/LI7500_record_nominal.png
+	filename images/li7500_record_nominal.png
 	lyxscale 50
 	width 100line%
 
@@ -18134,7 +18134,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename images/LI7500_splitstr_opt0.png
+	filename images/li7500_splitstr_opt0.png
 	lyxscale 50
 	width 75line%
 
@@ -18196,7 +18196,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename images/LI7500_splitstr_opt5.png
+	filename images/li7500_splitstr_opt5.png
 	lyxscale 50
 	width 75line%
 
