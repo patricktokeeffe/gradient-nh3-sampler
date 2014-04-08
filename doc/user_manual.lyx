@@ -34,7 +34,15 @@
 
 \renewcommand{\nomname}{List of Symbols}
 
-\usepackage{framed}
+\usepackage{framed} % for framing multi-page code listings
+
+% number listings by section like figure/table/eqns
+% http://www.latex-community.org/forum/viewtopic.php?f=5&p=10165#p10168
+\AtBeginDocument{\numberwithin{lstlisting}{section}}
+
+% including "Listing" in formatted reference for listings
+% http://tex.stackexchange.com/a/65704/48287
+\newref{lis}{name=listing~,Name=Listing~,names=listings~,Names=Listings~}
 
 %% define syntax highlighting for CRBASIC code
 % specify listing option `language=[CR]Basic
@@ -47,20 +55,28 @@
 \definecolor{crbBookmarks}{RGB}{0,255,255}
 \definecolor{crbVariables}{RGB}{0,0,128}
 \definecolor{crbLocalVars}{RGB}{0,128,0}
-\lstdefinelanguage[CR]{BASIC}{%
+\lstdefinelanguage[CR]{Basic}{%
   basicstyle={\ttfamily\footnotesize},%
   sensitive=false,%
   upquote=true,%
-  comment={[l]{'}},%
-  commentstyle={\color{crbComments}\ttfamily\itshape},%
-  string=[bd]{"},% TODO check how delimiters are escaped
-  stringstyle={\color{crbStrings}},%
+  string=[bd][\color{crbStrings}]{"},% TODO check how delimiters are escaped
   showstringspaces=false,%
-  keywords=[1]{Const, Public, Dim, Alias, Units, ConstTable, EndConstTable, DataTable, EndTable, DataInterval, CardOut, Average, Covariance, WindVector, Sample, FieldNames, Totalize, DisplayMenu, SubMenu, EndSubMenu, MenuItem, MenuPick, MenuRecompile, EndMenu, Sub, EndSub, Function, Return, EndFunction, If, Then, ElseIf, Else, EndIf, While, Wend, Move, OR, AND, XOR, SDMSpeed, CallTable, WriteIO, BeginProg, Scan, SlowSequence, NextScan, EndProg},% TODO !
+  morekeywords=[1]{Const, Public, Dim, Alias, Units, ConstTable, EndConstTable, DataTable, EndTable, DataInterval, CardOut, Average, Covariance, WindVector, Sample, FieldNames, Totalize, DisplayMenu, SubMenu, EndSubMenu, MenuItem, MenuPick, MenuRecompile, EndMenu, Sub, EndSub, Function, Return, EndFunction, If, Then, ElseIf, Else, EndIf, While, Wend, Move, OR, AND, XOR, SDMSpeed, CallTable, WriteIO, BeginProg, Scan, SlowSequence, NextScan, EndProg, SerialOpen, SerialInRecord, As, For, Next, MoveBytes, To, EC100, CSAT3, CS7500, PipeLineMode, Call, CHR, Float, String, Long, ASCII, SplitStr, VoltDiff, Therm107, NOT, GetRecord},% TODO !
   keywordstyle={[1]{\color{crbKeywords}}},%
-  keywords=[2]{\+, \-, \*, \/},%
-  keywordstyle={[2]{\color{crbOperators}}}%
+  otherkeywords={=, /, *, +, -, *=, /=, +=, -=, <<, >>},%
+  morekeywords=[2]{=, /, *, +, -, *=, /=, +=, -=, <<, >>},%
+  keywordstyle={[2]{\color{crbOperators}}},%
+  morecomment={[l][\color{crbComments}\ttfamily\itshape]{'}},%
 }
+
+% insist on not indenting shadow boxes
+\let\oldshadowbox\shadowbox
+\renewcommand{\shadowbox}[1]{%
+  \noindent \oldshadowbox{#1}}
+
+% use consistent name for list of listings
+% http://stackoverflow.com/a/9480618/2946116
+\renewcommand*{\lstlistlistingname}{List of Program Listings}
 \end_preamble
 \options intoc
 \use_default_options true
@@ -90,8 +106,7 @@ logicalmkup
 \output_sync 0
 \bibtex_command default
 \index_command default
-\float_placement ph
-\paperfontsize 12
+\paperfontsize default
 \spacing single
 \use_hyperref true
 \pdf_title "Aerodynamic Gradient Trace Gas Sampler Operator's Manual"
@@ -136,6 +151,7 @@ logicalmkup
 \papercolumns 1
 \papersides 2
 \paperpagestyle default
+\listings_params "breakatwhitespace=true,breaklines=true,frame=single,numbers=left,numberstyle={\footnotesize},showlines=true"
 \tracking_changes false
 \output_changes false
 \html_math_output 0
@@ -478,6 +494,22 @@ height "1pt"
 
 \begin_layout Standard
 \begin_inset FloatList table
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+lstlistoflistings
+\end_layout
 
 \end_inset
 
@@ -1326,7 +1358,7 @@ Sonic anemometer (CSAT3)
 \begin_inset Text
 
 \begin_layout Plain Layout
-Infrared gas analyzer (LI7500)
+Infrared gas analyzer (LI-7500)
 \end_layout
 
 \end_inset
@@ -1553,7 +1585,7 @@ Setup
 \end_layout
 
 \begin_layout Standard
-This section covers the physical setup and initial configuration of the
+This chapter covers the physical setup and initial configuration of the
  gradient system.
 \end_layout
 
@@ -1561,39 +1593,68 @@ This section covers the physical setup and initial configuration of the
 Deployment Mode
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Standard
+The gradient system can be setup in several different 
+\begin_inset Quotes eld
+\end_inset
+
+deployment modes
+\begin_inset Quotes erd
+\end_inset
+
+ depending on the needs of the researcher.
+ A few of the available options are described in this section.
+ 
+\end_layout
+
+\begin_layout Subsubsection
 Standalone deployment
 \end_layout
 
 \begin_layout Standard
-In a typical deployment, the gradient system is setup in a self-contained
- fashion.
+Typically, the gradient system is setup in a self-contained fashion.
  It may be in the vincinity of additional sampling systems but there is
- no direct collaboration with those systems.
- That is, data collected by the gradient system is not available to other
- systems.
+ no collaboration: data collected by the gradient system is not simulataneously
+ available to any other system.
+ 
 \end_layout
 
-\begin_layout Paragraph
-Co-deploy with denuder-REA sampler
+\begin_layout Subsubsection
+Co-deployment with denuder-REA sampler
 \end_layout
 
 \begin_layout Standard
-The gradient system can be deployed in conjunction with a denuder-based
- trace gas sampling system (denuder-REA).
- In this arrangement, the denuder-REA acts as the controlling datalogger
- and the gradient sampler datalogger passively listens to data output by
- the sonic anemometer and infrared gas analyzer.
+The gradient system can be deployed in conjunction with the WSU Denuder-based
+ Trace Gas Sampling System (denuder-REA).
+ In this arrangement, the denuder-REA acts as the datalogger controlling
+ the sonic anemometer and IRGA while the gradient sampler datalogger passively
+ listens to their RS-232 data streams.
  
 \end_layout
 
 \begin_layout Standard
-The combination anemometer/IRGA (EC150) cannot be used for co-deployment
- because it does not provide a secondary data output to provide the gradient
- sampler datalogger.
- The Campbell Scientific CSAT3 and LI-COR Biosciences LI7500 must be used
- instead because they both can simultaneously output data via SDM (Campbellsci
- proprietary) and serial (RS-232) protocols.
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+The combination anemometer/IRGA (EC150) cannot (yet) be used in co-deployment
+ situations.
+ Use the Campbell Scientific CSAT3 and LI-COR Biosciences LI-7500 instead.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -1601,602 +1662,18 @@ Sensor Configuration
 \end_layout
 
 \begin_layout Standard
-The following sections cover the initial configuration of devices & instruments
- associated with the denuder-REA system.
- Generally, it is not necessary to re-configure sensors after initial setup.
-\end_layout
-
-\begin_layout Subsubsection
-Combined sonic anemometer/IRGA (EC100/EC150/CSAT3A)
-\end_layout
-
-\begin_layout Paragraph
-Standalone
-\end_layout
-
-\begin_layout Standard
-There is no need to modify the factory-default configuration of any of these
- components.
-\end_layout
-
-\begin_layout Subsubsection
-Sonic anemometer (CSAT3)
-\end_layout
-
-\begin_layout Paragraph
-Standalone 
-\end_layout
-
-\begin_layout Standard
-There is no need to modify the factory-default configuration of the CSAT3,
- shown in 
+The initial configuration of instruments, specifically the sonic anemometer
+ and open-path infrared gas analyzer, is covered in appendix 
 \begin_inset CommandInset ref
-LatexCommand formatted
-reference "tab:Factory-default-CSAT3"
-
-\end_inset
-
-, for standalone operation of the denuder-REA system.
- The only setting which must be factory default for correct operation is
- 
-\emph on
-SDM Address
-\emph default
-.
- 
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float table
-placement H
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:Factory-default-CSAT3"
-
-\end_inset
-
-Factory default CSAT3 configuration 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "manual-csat3"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Tabular
-<lyxtabular version="3" rows="7" columns="2">
-<features tabularvalignment="middle">
-<column alignment="left" valignment="top" width="0">
-<column alignment="left" valignment="top" width="0">
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Analog Outputs
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Off
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Execution Parameter
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-10 Hz
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Trigger Source
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Internal Clock
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-SDM Address
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-3
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-RS-232 baud rate
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-9600 bps (
-\family typewriter
-RS=0
-\family default
-)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Software RTS
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Off (
-\family typewriter
-RI=0
-\family default
-)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Unprompted Output
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Off (
-\family typewriter
-&=0
-\family default
-)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Paragraph
-Gradient co-deployment
-\end_layout
-
-\begin_layout Standard
-The sonic anemometer must be configured to output data unprompted via its
- serial interface in order to integrate with the gradient sampler datalogger.
- Settings modified from factory defaults are shown in 
-\begin_inset CommandInset ref
-LatexCommand formatted
-reference "tab:Gradient-co-deployment-CSAT3"
+LatexCommand vref
+reference "sec:Initial-Sensor-Configuration"
 
 \end_inset
 
 .
-\end_layout
-
-\begin_layout Standard
-Refer to Appendix B of the 
-\emph on
-CSAT3 Three Dimensional Sonic Anemometer Instruction Manual
-\emph default
- in conjunction with this section 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "manual-csat3"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float table
-placement H
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Caption
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:Gradient-co-deployment-CSAT3"
-
-\end_inset
-
-Gradient co-deployment CSAT3 configuration
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Tabular
-<lyxtabular version="3" rows="4" columns="2">
-<features tabularvalignment="middle">
-<column alignment="left" valignment="top" width="0">
-<column alignment="left" valignment="top" width="0">
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-RS-232 baud rate
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-?? 
-\emph on
-9600 may not be fast enough for 10hz
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Software RTS
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-On (
-\family typewriter
-RI=1
-\family default
-)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Unprompted Output
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-On (
-\family typewriter
-&=1
-\family default
-)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Serial output record sync code
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-On (
-\family typewriter
-RS=1
-\family default
-)
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Paragraph
-Some notes:
-\end_layout
-
-\begin_layout Itemize
-Serial (RS-232) output is enabled when the CSAT3 detects the RTS (request
- to send) line is being asserted.
- Since the gradient datalogger cannot assert this signal
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-The CR1000 datalogger has transmit (Tx) and receive (Rx) signals only, no
- handshaking lines (e.g.
- RTS, CTS, ...)
-\end_layout
-
-\end_inset
-
-, a 'software RTS' flag is enabled in the CSAT3 software.
-\end_layout
-
-\begin_layout Itemize
-(?) The baud rate cannot be changed when the 'software RTS' signal is enabled
- so it must be updated first.
-\end_layout
-
-\begin_layout Itemize
-Manually triggering unprompted output (by sending commands through a serial
- terminal) was not successfully accomplished during lab tests.
- Instead, a third-party program is used to enable unprompted output mode.
+ Generally, there is no need to reconfigure instruments unless settings
+ have been reset to factory default values.
  
-\end_layout
-
-\begin_layout Paragraph
-To modify the baud rate:
-\end_layout
-
-\begin_layout Enumerate
-Once I've actually done it, some content will be here.
-\end_layout
-
-\begin_layout Paragraph
-To enable software RTS:
-\end_layout
-
-\begin_layout Enumerate
-I'm pretty sure this was set using a serial terminal & manual command codes,
- then saved to non-volatile memory when we were gearing up for the Tainjin,
- CN study (which was post-poned last second, then moved to Xian)
-\end_layout
-
-\begin_layout Paragraph
-To enable sync code output:
-\end_layout
-
-\begin_layout Enumerate
-Again, I'm pretty sure this setting was activated during the DAQ development
- for Tainjin
-\end_layout
-
-\begin_layout Paragraph
-To start unprompted output mode:
-\end_layout
-
-\begin_layout Standard
-For these steps, a third-party program is required.
- Download it from 
-\begin_inset Flex URL
-status collapsed
-
-\begin_layout Plain Layout
-
-http://campbellsci.com/19_2_68
-\end_layout
-
-\end_inset
-
- or look under 
-\emph on
-Support > Downloads
-\emph default
- on the sensor's home page 
-\begin_inset Flex URL
-status collapsed
-
-\begin_layout Plain Layout
-
-http://campbellsci.com/csat3
-\end_layout
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Enumerate
-Connect computer to sonic anemometer RS-232 interface.
- Other interfaces (e.g.
- SDM) should remain inactive but power (+12Vdc, Gnd) must be provided.
- 
-\end_layout
-
-\begin_layout Enumerate
-Start CSAT32 (
-\family typewriter
-csat32.exe
-\family default
-) and disregard warning dialogs.
- 
-\end_layout
-
-\begin_layout Enumerate
-Select appropriate COM port and baud rate under 
-\emph on
-Settings > Communications
-\emph default
-.
- Wait for communications with the anemometer to be established.
- 
-\end_layout
-
-\begin_layout Enumerate
-Select 
-\emph on
-Settings > UP mode on exit 
-\emph default
-to enable the unprompted output trigger.
- 
-\end_layout
-
-\begin_layout Enumerate
-Press 
-\emph on
-Start
-\emph default
- to begin data collection, then after a few moments, press 
-\emph on
-Stop
-\emph default
- and exit the program.
-\end_layout
-
-\begin_layout Subsubsection
-Infrared gas analyzer (LI7500)
-\end_layout
-
-\begin_layout Standard
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-Be sure to set 
-\family typewriter
-DelayStep=2
-\family default
- so the total delay is 199ms on SDM/RS232 outputs and # delays is ~2 scans
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Paragraph
-Standalone
-\end_layout
-
-\begin_layout Standard
-It's not n
-\end_layout
-
-\begin_layout Paragraph
-Gradient co-deployment
-\end_layout
-
-\begin_layout Standard
-If
 \end_layout
 
 \begin_layout Subsection
@@ -2206,6 +1683,15 @@ Installation
 \begin_layout Standard
 Procedures and guidance on the physical installation of equipment is provided
  in the following sections.
+ The following instructions are not comprehensive; the user is advised to
+ reference appropriate user manuals for sensors and equipment used 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-cr1000,manual-csat3,manual-ec100,manual-li7500"
+
+\end_inset
+
+.
  
 \end_layout
 
@@ -2540,7 +2026,7 @@ Connect the dual gray cables from the data logger field box to the +12V
 \end_layout
 
 \begin_layout Subsubsection
-Infrared gas analyzer (LI7500)
+Infrared gas analyzer (LI-7500)
 \end_layout
 
 \begin_layout Enumerate
@@ -4629,7 +4115,6 @@ Yes
 \end_layout
 
 \begin_layout Standard
-\noindent
 \begin_inset Box Shadowbox
 position "t"
 hor_pos "c"
@@ -5641,7 +5126,7 @@ SDM_CSAT3_LI7500_2
 \end_inset
 
  for Campbell Scientific sonic anemometer (CSAT3) and LI-COR open-path IRGA
- (LI7500) using proprietary 
+ (LI-7500) using proprietary 
 \begin_inset Quotes eld
 \end_inset
 
@@ -5654,7 +5139,7 @@ SDM
 
 \begin_layout Itemize
 RS232_CSAT3_LI7500_3 for Campbell Scientific sonic anemometer (CSAT3) and
- LI-COR open-path IRGA (LI7500) using serial (RS-232) interface.
+ LI-COR open-path IRGA (LI-7500) using serial (RS-232) interface.
  
 \begin_inset VSpace defskip
 \end_inset
@@ -5726,7 +5211,7 @@ LI7500
 \begin_inset space \space{}
 \end_inset
 
-addr SDM address of the open-path infrared gas analyzer (LI7500)
+addr SDM address of the open-path infrared gas analyzer (LI-7500)
 \end_layout
 
 \begin_layout Description
@@ -5831,7 +5316,7 @@ H_{2}O & = & \left(1000\:\unitfrac{mmol}{mol}\right)(H_{2}O)_{i}/MW_{H_{2}O}\\
 
 \begin_layout Standard
 These conversions only apply to the integrated sonic/IRGA: the independent
- IRGA (LI7500) reports measurements in molar density (
+ IRGA (LI-7500) reports measurements in molar density (
 \begin_inset Formula $\unitfrac{mmol}{m^{3}}$
 \end_inset
 
@@ -11366,11 +10851,11 @@ eddycov_sensors
 \begin_inset Newline newline
 \end_inset
 
-2: CSAT3 & LI7500 via SDM
+2: CSAT3 & LI-7500 via SDM
 \begin_inset Newline newline
 \end_inset
 
-3: CSAT3 & LI7500 via RS-232
+3: CSAT3 & LI-7500 via RS-232
 \end_layout
 
 \end_inset
@@ -11617,6 +11102,40 @@ The gradient flux is determined simply as the gas gradient times an eddy
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
+key "book-arya-1999"
+
+\end_inset
+
+Arya.
+ S.
+ Pal.
+ Air pollution meteorology and dispersion.
+ 1999.
+ Oxford University Press, Inc.
+ ISBN: 0-19-507398-3.
+ 
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "manual-cr1000"
+
+\end_inset
+
+Campbell Scientific Inc.
+ 
+\emph on
+CR1000 Measurement and Control System Operator's Manual.
+
+\emph default
+ Rev 5/10.
+ Online: http://s.campbellsci.com/documents/us/manuals/cr1000.pdf
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
 key "manual-csat3"
 
 \end_inset
@@ -11624,11 +11143,105 @@ key "manual-csat3"
 Campbell Scientific Inc.
  
 \emph on
-CSAT3 Three Dimensional Sonic Anemometer.
+CSAT3 Three Dimensional Sonic Anemometer Instruction Manual.
 
 \emph default
  Rev 11/07.
- Online: http://campbellsci.com/manuals
+ Online: http://s.campbellsci.com/documents/us/manuals/csat3.pdf
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "software-csat3"
+
+\end_inset
+
+Campbell Scientific Inc.
+ 
+\emph on
+CSAT32
+\emph default
+.
+ Version 2.0 (1998-03-24).
+ Online: http://campbellsci.com/19_2_68 
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "manual-ec100"
+
+\end_inset
+
+Campbell Scientific Inc.
+ 
+\emph on
+EC150 CO2 and H2O Open-Path Gas Analyzer and EC100 Electronics with Optional
+ CSAT3A 3D Sonic Anemometer Instruction Manual.
+
+\emph default
+ Rev 3/11.
+ Online: http://s.campbellsci.com/documents/us/manuals/ec150.pdf
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "helpfile-movebytes"
+
+\end_inset
+
+Campbell Scientific Inc.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+MoveBytes.
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\emph on
+CRBasic Program Reference.
+
+\emph default
+ Version CR100.Std.27.
+ 2013-10-10.
+ 
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "appnote-csi-serial"
+
+\end_inset
+
+Campbell Scientific Inc.
+ 
+\emph on
+Serial Sensors: Interfacing with Campbell Scientific Dataloggers.
+
+\emph default
+ Rev 10/09.
+ App.
+ Note Code: 2MI-V.
+ Online: http://campbellsci.com/app-notes
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "forum-binary-serial"
+
+\end_inset
+
+GTProdMgr [Campbell Scientific Inc.].
+ (2013-10-10).
+ RE: How to receive Binary or Hex data? [Online forum].
+ Retrieved 2014-03-27 from http://campbellsci.com/forum/messages.cfm?threadid=8A4B
+A2C6-E916-4AED-1BAAD18506413E14 [archived at web.archive.org].
 \end_layout
 
 \begin_layout Bibliography
@@ -11650,7 +11263,2071 @@ Henderson-Sellers, B.
 \begin_layout Bibliography
 \begin_inset CommandInset bibitem
 LatexCommand bibitem
-key "key-3"
+key "software-li7500"
+
+\end_inset
+
+LI-COR Biosciences, Inc.
+ 
+\emph on
+LI7500 Open Path Analyzer
+\emph default
+.
+ Version 3.0.2.
+ Online: ftp://ftp.licor.com/perm/env/LI-7500/Software/LI7500_win-3.0.2.exe
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "manual-li7500"
+
+\end_inset
+
+LI-COR Biosciences, Inc.
+ 
+\emph on
+Open Path CO
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+/H
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+O Analyzer Instruction Manual.
+
+\emph default
+ Rev 4 - January 2004.
+ Online: ftp://ftp.licor.com/perm/env/LI-7500/Manual/LI-7500Manual_V4.pdf
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "wiki-2s-complement"
+
+\end_inset
+
+Wikipedia contributors.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Two's complement.
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\emph on
+Wikipedia, The Free Encyclopedia
+\emph default
+.
+ March 23, 2014, 11:00 UTC.
+ Online: http://en.wikipedia.org/w/index.php?title=Two%27s_complement&oldid=6008601
+82.
+ Accessed March 27, 2014.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+\start_of_appendix
+Initial Sensor Configuration
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Initial-Sensor-Configuration"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The following sections cover the initial configuration of devices & instruments
+ associated with the denuder-REA system.
+ Generally, it is not necessary to re-configure sensors after initial setup.
+\end_layout
+
+\begin_layout Subsection
+Combined sonic anemometer/IRGA (EC100/EC150/CSAT3A)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Refer to the 
+\emph on
+EC150 CO2 and H2O Open-Path Gas Analyzer and EC100 Electronics with Optional
+ CSAT3A 3D Sonic Anemometer Instruction Manual
+\emph default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-ec100"
+
+\end_inset
+
+ in conjunction with this section.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Standalone
+\end_layout
+
+\begin_layout Standard
+There is no need to modify the factory-default configuration (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:factory-config-ec100-ec150"
+
+\end_inset
+
+) of any of the components of this sensor.
+ If the SDM address of the control unit (EC100) has been modified, the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+EC100_ADDR
+\end_layout
+
+\end_inset
+
+ setting must be updated accordingly via the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Gradient
+\begin_inset space \space{}
+\end_inset
+
+setup
+\end_layout
+
+\end_inset
+
+\SpecialChar \menuseparator
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Internals
+\end_layout
+
+\end_inset
+
+ menu.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Factory default EC100/EC150 configuration
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:factory-config-ec100-ec150"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="10" columns="2">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0">
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+SDM address
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Bandwidth
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+20 Hz
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Unprompted output
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+disabled
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+RS-485 baud rate
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+115200 bps
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Unprompted output rate
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+10 Hz
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Analog output
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+disabled
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+ECMon update rate
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+10 Hz
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Temperature sensor
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Auto-select (EC150 temp.
+ probe)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Pressure sensor
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Basic or Enhanced (purchase option)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Differential pressure
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+Disabled for EC150
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Co-deployment
+\end_layout
+
+\begin_layout Standard
+The gradient system has not yet been designed to support co-deployment using
+ this sensor.
+ Use a CSAT3 and LI7500 instead.
+\end_layout
+
+\begin_layout Subsection
+Sonic anemometer (CSAT3)
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:csat3-initial-config"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Refer to the 
+\emph on
+CSAT3 Three Dimensional Sonic Anemometer Instruction Manual
+\emph default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-csat3"
+
+\end_inset
+
+ in conjunction with this section, especially chapter 3 (Initial Setup),
+ chapter 12 (Select Backdoor Commands), and appendix B (Serial Communications
+ with the CSAT3).
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Standalone 
+\end_layout
+
+\begin_layout Standard
+There is no need to modify the factory-default configuration of the CSAT3,
+ shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:factory-config-csat3"
+
+\end_inset
+
+, for standalone operation.
+ If the SDM address of the sensor has been modified, the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+CSAT3_ADDR
+\end_layout
+
+\end_inset
+
+ setting must be updated accordingly via the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Gradient
+\begin_inset space \space{}
+\end_inset
+
+setup
+\end_layout
+
+\end_inset
+
+\SpecialChar \menuseparator
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Internals
+\end_layout
+
+\end_inset
+
+ menu.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Factory default CSAT3 configuration
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:factory-config-csat3"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="8" columns="2">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0">
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Analog Outputs
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Off
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Execution Parameter
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+10 Hz
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Trigger Source
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Internal Clock
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+SDM Address
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+RS-232 baud rate
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9600 bps (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+BR=0
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Sync code output
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Off (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+RS=0
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Software RTS
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Off (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+RI=0
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Unprompted Output
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Off (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+&=0
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Denuder-REA co-deployment
+\end_layout
+
+\begin_layout Standard
+The sonic anemometer must be configured to output data unprompted via its
+ serial interface in order to integrate with the gradient sampler datalogger.
+ Settings modified from factory defaults are shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:codeploy-config-csat3"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Co-deployment CSAT3 configuration
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:codeploy-config-csat3"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="2">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Sync code output
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+On (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+RS=1
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Software RTS
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+On (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+RI=1
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Unprompted Output
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+On (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+&=1
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Some notes
+\end_layout
+
+\begin_layout Itemize
+Configuration is performed over the RS-232 interface; the SDM interface
+ must be disconnected while configuration takes place.
+\end_layout
+
+\begin_layout Itemize
+RS-232 output is only enabled when the CSAT3 detects the RTS (request to
+ send) line is being asserted.
+ The gradient datalogger cannot assert this signal
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+The CR1000 datalogger has transmit (Tx) and receive (Rx) signals only, no
+ handshaking lines (e.g.
+ RTS, CTS, ...)
+\end_layout
+
+\end_inset
+
+ so a 
+\begin_inset Quotes eld
+\end_inset
+
+software RTS
+\begin_inset Quotes erd
+\end_inset
+
+ flag is enabled.
+\end_layout
+
+\begin_layout Itemize
+Bench tests indicate the only reliable method of enabling unprompted output
+ mode is through the use of the third-party program, 
+\emph on
+CSAT32
+\emph default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "software-csat3"
+
+\end_inset
+
+.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+
+\series bold
+This may not be true...
+ the Xian DAQ system explorered ways to trigger unprompted output at program
+ startup.
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Itemize
+In order to make these configuration settings persist across power cycles,
+ the changes must be saved to non-volatile EEPROM using the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+sr2718
+\end_layout
+
+\end_inset
+
+ backdoor command.
+\end_layout
+
+\begin_layout Paragraph
+To modify settings
+\end_layout
+
+\begin_layout Standard
+The author is fairly confident the RS-232 settings shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:codeploy-config-csat3"
+
+\end_inset
+
+ were modified by sending terminal commands as described in 
+\emph on
+Chapter 12 Select Backdoor Commands
+\emph default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-csat3"
+
+\end_inset
+
+ while preparing for the Tiajin urban flux study in 2010.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+The following steps could use some verification:
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Enumerate
+Change the hardware jumper in the electronics box from 
+\begin_inset Quotes eld
+\end_inset
+
+Normal
+\begin_inset Quotes erd
+\end_inset
+
+ to 
+\begin_inset Quotes eld
+\end_inset
+
+Save to EEPROM
+\begin_inset Quotes erd
+\end_inset
+
+ mode.
+\end_layout
+
+\begin_layout Enumerate
+Power on the sensor, connect to its RS-232 interface and enter the sensors
+ terminal mode.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Enable output of the sync code by sending 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+rs 1
+\end_layout
+
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Enable software assertion of the RTS signal by sending 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+ri 1
+\end_layout
+
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Permanently save the new configuration by sending 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+sr2718
+\end_layout
+
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Power off the sensor and revert the hardware jumper in the electronics box
+ back to 
+\begin_inset Quotes eld
+\end_inset
+
+Normal.
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+To start unprompted output mode
+\end_layout
+
+\begin_layout Standard
+For these steps, manufacturer-provided support software, 
+\emph on
+CSAT32
+\emph default
+, is required.
+ Download it from 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://campbellsci.com/19_2_68
+\end_layout
+
+\end_inset
+
+ or look under 
+\emph on
+Support\SpecialChar \menuseparator
+Downloads
+\emph default
+ on the sensor's home page 
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+http://campbellsci.com/csat3
+\end_layout
+
+\end_inset
+
+ .
+\end_layout
+
+\begin_layout Enumerate
+Connect computer to sonic anemometer RS-232 interface.
+ The SDM interface must be disconnected and power (+12Vdc, Gnd) provided.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Start 
+\emph on
+CSAT32
+\emph default
+ (
+\family typewriter
+csat32.exe
+\family default
+) and disregard any warning dialogs.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Select appropriate COM port and baud rate under 
+\family sans
+Settings
+\family default
+\SpecialChar \menuseparator
+
+\family sans
+Communications
+\family default
+.
+ Wait for communications with the anemometer to be established.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Select 
+\family sans
+Settings\SpecialChar \menuseparator
+UP mode on exit
+\family default
+\emph on
+ 
+\emph default
+to enable the unprompted output trigger.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Press 
+\family sans
+Start
+\family default
+ to begin data collection, then after a few moments, press 
+\family sans
+Stop
+\family default
+\emph on
+ 
+\emph default
+and exit the program.
+\end_layout
+
+\begin_layout Subsection
+Infrared gas analyzer (LI-7500)
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:li7500-initial-config"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Refer to 
+\emph on
+Open Path CO
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+/H
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+O Analyzer Instruction Manual
+\emph default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-li7500"
+
+\end_inset
+
+ in conjunction with this section.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Standalone
+\end_layout
+
+\begin_layout Standard
+Few, if any settings, need to be modified for standalone gradient system
+ operation with the LI-7500.
+ Expected settings for relevant options are summarized in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:factory-config-li7500"
+
+\end_inset
+
+.
+ If the SDM address of the sensor different than indicated in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:factory-config-li7500"
+
+\end_inset
+
+, the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+LI7500_ADDR
+\end_layout
+
+\end_inset
+
+ setting must be updated accordingly via the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Gradient
+\begin_inset space \space{}
+\end_inset
+
+setup
+\end_layout
+
+\end_inset
+
+\SpecialChar \menuseparator
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Internals
+\end_layout
+
+\end_inset
+
+ menu.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Standalone LI-7500 configuration
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:factory-config-li7500"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="3">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell multirow="3" alignment="left" valignment="middle" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Outputs
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Delay Time (ms)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Bandwidth
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5 Hz
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+SDM Address
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Denuder-REA co-deployment
+\end_layout
+
+\begin_layout Standard
+The IRGA must be configured to output data unprompted via its serial interface
+ for co-deployment with another compatible EC system.
+ Settings modified from factory defaults, shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:codeploy-config-li7500"
+
+\end_inset
+
+, are changed using manufacturer-provided support software: 
+\emph on
+LI7500 Open Path Analyzer
+\emph default
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "software-li7500"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+
+\emph on
+An important note regarding RS-232 communication: 
+\end_layout
+
+\begin_layout Quote
+\begin_inset Quotes eld
+\end_inset
+
+The RS-232 hardware and software trigger does not tap directly into the
+ same data stream that is output to the DAC's and the SDM.
+ The trigger actually sends a request to the data router task in the DSP
+ to output a single data rercord over the RS-232 port.
+ The processing that is incurred to do this is relatively lengthy.
+ The RS-232 task is also a low priority, so considerable latency could occur.
+ If you want output data that is tightly syncronized to an input stimulus
+ you should use the SDM output or sample a DAC output based on your trigger;
+ don't use RS-232.
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-li7500"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Quote
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Co-deployment LI-7500 configuration
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:codeploy-config-li7500"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="8" columns="3">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="0">
+<column alignment="left" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<row>
+<cell multirow="3" alignment="left" valignment="middle" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Outputs
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Delay Intervals
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Bandwidth
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5 Hz
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="3" alignment="left" valignment="middle" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+RS-232
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Configure\SpecialChar \ldots{}
+from the PC
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+Selected
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Baud Rate
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+38400
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Outputs
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Pressure, CO2 mmol/m3, H2O mmol/m3, Diag
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Use Labels in Data Records
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+Not selected
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Output Diagnostic Messages
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+Not selected
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell multirow="4" alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+End of Line
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Line Feed (0A)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/LI7500_setup_outputs.png
+	width 80line%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Co-deployment LI-7500 Output settings
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:LI7500-Output-settings"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/LI7500_setup_rs232.png
+	width 80line%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Co-deployment LI-7500 RS232 settings
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:LI7500-RS232-settings"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Hardware
+\begin_inset space \space{}
+\end_inset
+
+handshaking
+\end_layout
+
+\begin_layout Standard
+The LI-7500 implements hardware polling on its Clear to Send (CTS) pin 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-li7500"
+
+\end_inset
+
+.
+ The datalogger, however, only supports transmit (Tx) and receive (Rx) signals
+ so it is necessary to implement a CTS/RTS loopback on the IRGA's serial
+ port.
+ 
+\end_layout
+
+\begin_layout Standard
+In practice, this is accomplished by shorting the RTS pin of the LI-7500
+ to its CTS pin with a small length of wire as shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:LI7500-CTS/RTS-loopback"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Graphics
+	filename images/LI7500_cts-rts_loopback.jpg
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+LI-7500 CTS/RTS loopback
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:LI7500-CTS/RTS-loopback"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
 
 \end_inset
 
@@ -11665,63 +13342,51 @@ key "key-3"
 \end_layout
 
 \begin_layout Section
-\start_of_appendix
-Program Listing
-\begin_inset CommandInset label
-LatexCommand label
-name "sec:Program-Listing"
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-The complete program operated by the datalogger:
-\end_layout
-
-\begin_layout Standard
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-begin{framed}
-\end_layout
-
-\end_inset
-
-
-\begin_inset CommandInset include
-LatexCommand lstinputlisting
-filename "../crbasic/default.cr1"
-lstparams "breakatwhitespace=true,breaklines=true,language={[CR]BASIC},numbers=left,numberstyle={\\footnotesize},showlines"
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-end{framed}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section
 Notes to Developers
+\end_layout
+
+\begin_layout Standard
+This appendix discusses select technical aspects of the datalogger program.
+ Some findings may be applicable to any CRBasic program but focus will be
+ within the context of this gradient measurement system.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+For a complete listing of the program source code, refer to Appendix 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sec:Program-Listing"
+
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -11766,7 +13431,25 @@ If(TimeIntoInterval(\SpecialChar \ldots{}
  statement to test for 1-second boundaries, then conditionally measure the
  analog sensors.
  Note, however, measurement instructions cannot be placed in conditional
- statements when the datalogger is operating in pipeline mode.
+ statements when the datalogger is operating in pipeline mode (see 
+\emph on
+
+\begin_inset CommandInset ref
+LatexCommand nameref
+reference "par:csat3-receiving-records"
+
+\end_inset
+
+
+\emph default
+ 
+\begin_inset CommandInset ref
+LatexCommand vpageref
+reference "par:csat3-receiving-records"
+
+\end_inset
+
+).
 \end_layout
 
 \begin_layout Enumerate
@@ -11790,6 +13473,5057 @@ Laboratory tests indicate the latter option (SlowSequence) is highly preferred
  Processing times are likewise improved, though only marginally (~16-25ms
  vs ~16-30ms).
  
+\end_layout
+
+\begin_layout Subsection
+Serial data handling
+\end_layout
+
+\begin_layout Standard
+If co-deployed with another compatible system, the gradient system relies
+ on unprompted serial (RS-232) data from both the sonic anemometer and infrared
+ gas analyzer (IRGA).
+ Messages from each device must be handled in a specific manner.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+CSAT3 sonic anemometer
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Refer to listing 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "lis:csat3-rs232-code"
+
+\end_inset
+
+ in conjunction with this section.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+When configured as described in section 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sub:csat3-initial-config"
+
+\end_inset
+
+, the CSAT3 sends a 12-byte record composed of (6) 2-byte words for each
+ set of measurements performed (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:csat3-record-format"
+
+\end_inset
+
+).
+ Words 0 through 3 are 16-bit signed integers representing encoded measurement
+ values; word 4 is a 16-bit unsigned integer representing diagnostic flags,
+ measurement encoding schemes, and an incremental counter; and the sixth
+ word is a fixed value (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0xAA55
+\end_layout
+
+\end_inset
+
+) to aid in synchronization 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-csat3"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Words are transmitted in sequential order as shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:csat3-record-nominal"
+
+\end_inset
+
+.
+ Within each word, the Least Significant Byte is transmitted first; within
+ each byte, the Most Significant Bit is transmitted first.
+ This has two practical consequences: 
+\end_layout
+
+\begin_layout Enumerate
+the byte pattern used to detect the end of a record is actually 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x55AA
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+bytes must be individually manipulated when converting to decimal values
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+As of O/S v27, the CR1000 has no native facilities for manipulating multi-byte
+ binary data.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The byte ordering is somewhat easier to deduce when examining data records
+ collected while the anemometer's transducers were blocked to simulate a
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Not available
+\begin_inset Quotes erd
+\end_inset
+
+ condition (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:csat3-record-blocked"
+
+\end_inset
+
+).
+ In this event, as indicated in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:csat3-error-codes"
+
+\end_inset
+
+, words 0 through 3 are 0x8000 (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+10000000 00000000
+\end_layout
+
+\end_inset
+
+) and word 4 is 0xF03F (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+11110000 00111111
+\end_layout
+
+\end_inset
+
+).
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+CSAT3 RS-232 Record Format 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-csat3"
+
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:csat3-record-format"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\noindent
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="9">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 3
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 4
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b15-b0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b15-b0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b15-b0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b15-b0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b15-b12
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b11 b10
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b09 b08
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b07 b06
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b05-b0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+U
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+x
+\end_layout
+
+\end_inset
+
+ wind
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+U
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+y
+\end_layout
+
+\end_inset
+
+ wind
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+U
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+z
+\end_layout
+
+\end_inset
+
+ wind
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+c
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+diagnostic
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+u
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+x
+\end_layout
+
+\end_inset
+
+ range
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+u
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+y
+\end_layout
+
+\end_inset
+
+ range
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+u
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+z
+\end_layout
+
+\end_inset
+
+ range
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+counter
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+CSAT3 RS-232 Error Cases 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-csat3"
+
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:csat3-error-codes"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="6">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Error condition
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 4
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Not available
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x8000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x8000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x8000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x8000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xF03F (61503
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+10
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Lost trigger
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x8000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x8000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x8000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0x8000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xF000 (61440
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+10
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+SDM connection error
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+presumably the same (e.g.
+ all 0x8000)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xF001 (61441
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+10
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Embedded software issue
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+presumably the same (e.g.
+ all 0x8000)
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0xF002 (61442
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+10
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename images/csat3_record_nominal.png
+	lyxscale 50
+	width 100line%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Typical CSAT3 RS-232 Data
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:csat3-record-nominal"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename images/csat3_record_blocked.png
+	lyxscale 50
+	width 100line%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+CSAT3 RS-232 Data While Transducers Are Blocked
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:csat3-record-blocked"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Establishing communication 
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+SerialOpen
+\end_layout
+
+\end_inset
+
+ instruction is used to open communications with the CSAT3.
+ This instruction is called at the end of the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+setup()
+\end_layout
+
+\end_inset
+
+ subroutine for logical consistency but it could be called anywhere between
+ 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+BeginProg
+\end_layout
+
+\end_inset
+
+ and 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Scan
+\end_layout
+
+\end_inset
+
+ since all parameters are constants or hardcoded values.
+\end_layout
+
+\begin_layout Description
+SerialOpen(ComPort,
+\begin_inset space \space{}
+\end_inset
+
+BaudRate,
+\begin_inset space \space{}
+\end_inset
+
+Format,
+\begin_inset space \space{}
+\end_inset
+
+TXDelay,
+\begin_inset space \space{}
+\end_inset
+
+BufferSize)
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+ComPort The appropriate value (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Com1
+\end_layout
+
+\end_inset
+
+) is provided as the constant 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+CSAT3_COM
+\end_layout
+
+\end_inset
+
+ since it is used in other instructions.
+\end_layout
+
+\begin_layout Description
+BaudRate This parameter is supplied as the constant 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+CSAT3_BAUD
+\end_layout
+
+\end_inset
+
+.
+ It is the only parameter which can be changed without modifying the source
+ code; use the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Internals
+\end_layout
+
+\end_inset
+
+\SpecialChar \menuseparator
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+CSAT3
+\begin_inset space ~
+\end_inset
+
+baud
+\end_layout
+
+\end_inset
+
+ menu option to set to either supported value: 9600 or 19200.
+ 
+\end_layout
+
+\begin_layout Description
+Format Required port settings are 8 data bits, no parity and 1 stop bit
+ (8/N/1) at RS-232 logic levels.
+ This parameter is hardcoded as value 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+
+ to represent this combination and to indicate incoming data is treated
+ as binary
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Ensures the null character (0) and characters above 127 are not ignored
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+TXDelay No data is transmitted to the CSAT3 so this parameter is given the
+ literal value 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+BufferSize A 25-byte buffer (
+\begin_inset Formula $2*12+1$
+\end_inset
+
+) is allocated to allow for two complete records to remain in buffer while
+ still permitting detection of newly received data
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "appnote-csi-serial"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Paragraph
+Receiving records 
+\begin_inset CommandInset label
+LatexCommand label
+name "par:csat3-receiving-records"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+SerialInRecord
+\end_layout
+
+\end_inset
+
+ instruction is used to read any available data records.
+ This is the only serial input instruction which can be scheduled as a measureme
+nt task (e.g.
+ in real-time) but doing so requires (A) the datalogger operate in pipeline
+ mode and (B) the 
+\family sans
+ComPort
+\family default
+ parameter be specified as a constant.
+ To ensure the program is compiled in pipeline mode, the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+PipeLineMode
+\end_layout
+
+\end_inset
+
+ instruction is included immediately before the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+BeginProg
+\end_layout
+
+\end_inset
+
+ statement.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Measurement instructions cannot be placed into conditional statements while
+ operating in pipeline mode.
+ Consequently, all input channels are measured regardless of whether enabled
+ in the program settings.
+ After measurements occur, if a particular sensor is not enabled, its measured
+ value is set to NAN.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+SerialInRecord
+\end_layout
+
+\end_inset
+
+ instruction parses data messages exclusive with respect to 
+\family sans
+BeginWord
+\family default
+ and 
+\family sans
+EndWord
+\family default
+ parameters.
+ As such, the 12-byte data record is recognized as 10 bytes of data and
+ a 2-byte delimiter.
+ 
+\end_layout
+
+\begin_layout Description
+SerialInRecord(ComPort,
+\begin_inset space \thinspace{}
+\end_inset
+
+Dest,
+\begin_inset space \thinspace{}
+\end_inset
+
+BeginWord,
+\begin_inset space \thinspace{}
+\end_inset
+
+NBytes,
+\begin_inset space \thinspace{}
+\end_inset
+
+EndWord,
+\begin_inset space \thinspace{}
+\end_inset
+
+NBytesReturned,
+\begin_inset space \thinspace{}
+\end_inset
+
+SerialInRecOption) 
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+ComPort Specified by the constant 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+CSAT3_COM
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+Dest A string variable 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+csat3_record
+\end_layout
+
+\end_inset
+
+ (length 10) for receiving data bytes is provided to this parameter.
+\end_layout
+
+\begin_layout Description
+BeginWord There is no beginning sync pattern so the literal value 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+
+ is provided.
+\end_layout
+
+\begin_layout Description
+NBytes The number of data bytes expected is specified as the literal value
+ 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+10
+\end_layout
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Description
+EndWord The sync pattern is specified 
+\emph on
+in the order bytes will be received
+\emph default
+: 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+&h55AA
+\end_layout
+
+\end_inset
+
+.
+ These bytes are discarded, not included in the data saved to
+\family sans
+ Dest
+\family default
+.
+\end_layout
+
+\begin_layout Description
+NBytesReturned A variable 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+bytes
+\end_layout
+
+\end_inset
+
+ is provided to this parameter.
+ 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+bytes
+\end_layout
+
+\end_inset
+
+ is used analogously when receiving LI-7500 data but is otherwise ignored.
+ 
+\end_layout
+
+\begin_layout Description
+SerialInRecOption To prevent skipping buffered records while still permitting
+ detection of a no-new-record condition, this parameter is provided the
+ value 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+11
+\end_layout
+
+\end_inset
+
+ (use oldest, do store NAN).
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Paragraph
+Parsing data words
+\end_layout
+
+\begin_layout Standard
+The difference in binary number representation between the first four words
+ (signed) and fifth word (unsigned) necessitates different methods of converting
+ the binary data to a decimal value.
+ 
+\end_layout
+
+\begin_layout Standard
+The signed words (0-3) are in 
+\emph on
+two's complement representation
+\emph default
+: the weight of each bit is a power of two, except for the most significant
+ bit, whose weight is the negative of the corresponding power of two
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "wiki-2s-complement"
+
+\end_inset
+
+.
+ To convert each word to its signed integer value, the most significant
+ byte of the word is resolved to a numeric value in the range 0..255 using
+ the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+ASCII
+\end_layout
+
+\end_inset
+
+ instruction, then the 7 least significant (e.g.
+ non-sign) bits of this byte are scaled by shifting leftwards 8 bit positions.
+ The least significant byte of the word is also resolved to a numeric value
+ using the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+ASCII
+\end_layout
+
+\end_inset
+
+ instruction and is then added to the result.
+ Finally, the most significant bit of the most significant byte (e.g.
+ the sign bit) is evaluated and, if not zero, the value of the sign bit
+ (
+\begin_inset Formula $-1*2^{15}=-32768$
+\end_inset
+
+) is added to the result.
+ 
+\end_layout
+
+\begin_layout Standard
+The unsigned word is converted by loading the bytes into an integer variable
+ in the correct order and positions.
+ Byte order is big endian on the datalogger 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "helpfile-movebytes"
+
+\end_inset
+
+ but incoming words are little endian so byte order must be reversed.
+ CRBasic only supports long (4-byte) signed integers 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-cr1000"
+
+\end_inset
+
+ and incoming values are short (2-byte) signed integers so variable size
+ must also be accounted for.
+ The conversion is performed by placing the first (least significant) byte
+ of the source word into the fourth
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Offsets in the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+MoveBytes
+\end_layout
+
+\end_inset
+
+ instruction are zero-based rather than one-based 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "helpfile-movebytes"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ (least significant) byte of the destination variable using the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+MoveBytes
+\end_layout
+
+\end_inset
+
+ instruction, then placing the second (most significant) byte into the third
+ (next-least significant) byte position of the destination variable
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "forum-binary-serial"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+The integer value of the fifth word has no instrinsic meaning but converting
+ from the raw data word simplifies extraction of diagnostic flags, range
+ codes, and the counter.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Converting to decimal values
+\end_layout
+
+\begin_layout Standard
+Once the binary data words are resolved to integer values, the proper range
+ scale multipliers can be determined and applied to yield decimal values
+ representing actual measurements.
+ 
+\end_layout
+
+\begin_layout Standard
+The fifth integer value represents the range codes for wind measurements
+ (words 0-2) in bits 06-11 as described in table 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "tab:csat3-record-format"
+
+\end_inset
+
+.
+ A variable array, 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+csat3_rbits
+\end_layout
+
+\end_inset
+
+, contains corresponding bitmasks and shift values for extracting and scaling
+ relevant bits into the numeric range 0..3 (table 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "tab:Extracting-range-scaling"
+
+\end_inset
+
+).
+ The appropriate range scaling value (table 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "tab:Range-scaling-applied"
+
+\end_inset
+
+) is selected from the variable array 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+csat3_ranges
+\end_layout
+
+\end_inset
+
+ by using the resolved range code as the selection index number.
+ 
+\end_layout
+
+\begin_layout Standard
+The scaling for speed-of-sound measurement, always performed in the same
+ manner, is presented in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "eq:scaling-speed-of-sound"
+
+\end_inset
+
+.
+ Output resolution of this data is 1 mm s
+\begin_inset script superscript
+
+\begin_layout Plain Layout
+-1
+\end_layout
+
+\end_inset
+
+ (0.0017 °C @ 25 °C)
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-csat3"
+
+\end_inset
+
+.
+ The sonic temperature is calculated according to 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "eq:c-to-sonic-temp"
+
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-csat3"
+
+\end_inset
+
+ assuming a constant ratio of specific heat capacities at constant pressure
+ versus volume.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+This assumption is valid 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+....but just how valid? TODO
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ In practice, the numerator of 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:c-to-sonic-temp"
+
+\end_inset
+
+ is calculated using the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+*
+\end_layout
+
+\end_inset
+
+ operator to avoid early floating point conversions associated with 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+^
+\end_layout
+
+\end_inset
+
+ in CRBasic.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+c\;(m\; s^{-1})=integer\: value*0.001+340.0\label{eq:scaling-speed-of-sound}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\begin{alignedat}{2}T_{s}\:(\text{º}C)=\frac{c^{2}}{\phi R_{d}}-273.15 & \: where & \phi & \equiv\left(\frac{C_{p}}{C_{v}}\right)_{moist\: air}=1.4\\
+ &  & R_{d} & =287.04\: J\: K^{-1}\: kg^{-1}
+\end{alignedat}
+\label{eq:c-to-sonic-temp}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Within the typical range of atmospheric conditions, the sonic temperature
+ 
+\begin_inset Formula $T_{s}$
+\end_inset
+
+ closely approximates the virtual temperature 
+\begin_inset Formula $T_{v}$
+\end_inset
+
+ as suggested by the following equations based on ambient temperature 
+\begin_inset Formula $T$
+\end_inset
+
+ and specific humidity 
+\begin_inset Formula $q$
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "book-arya-1999,manual-csat3"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{c}
+T_{s}=T(1+0.51q)\\
+T_{v}=T(1+0.61q)
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Extracting range scaling flags from fifth word
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:Extracting-range-scaling"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="6">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Scaling for
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Target bits
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Bitmask
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Shift
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Captured bits
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+U
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+x
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b11 b10
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x0C00
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+10
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0000
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+11
+\end_layout
+
+\end_inset
+
+00 00000000
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+U
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+y
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b09 b08
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x0300
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+000000
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+11
+\end_layout
+
+\end_inset
+
+ 00000000
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Word 2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+U
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+z
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+b07 b06
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x00C0
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+00000000 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+11
+\end_layout
+
+\end_inset
+
+000000
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Range scaling applied to wind measurements
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:Range-scaling-applied"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="3">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Range
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Conversion to U
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+x
+\end_layout
+
+\end_inset
+
+/ U
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+y
+\end_layout
+
+\end_inset
+
+/ U
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+z
+\end_layout
+
+\end_inset
+
+ (m s
+\begin_inset script superscript
+
+\begin_layout Plain Layout
+-1
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Resolution (mm s
+\begin_inset script superscript
+
+\begin_layout Plain Layout
+-1
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $wind=integer\: value*0.0025$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.25
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $wind=integer\: value*0.0050$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.50
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $wind=integer\: value*0.0010$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1.00
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $wind=integer\: value*0.0020$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2.00
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Extracting diagnostic flags
+\end_layout
+
+\begin_layout Standard
+Warning flags indicating specific operating conditions are contained in
+ bits 12-15 of the fifth integer value as described in table 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "tab:csat3-record-format"
+
+\end_inset
+
+.
+ These flags are first extracted by performing a bitwise comparison of the
+ value against the appropriate bitmask (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0xF000
+\end_layout
+
+\end_inset
+
+) using the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+AND
+\end_layout
+
+\end_inset
+
+ instruction, then shifting bits rightwards 12 positions to the least significan
+t position.
+ 
+\end_layout
+
+\begin_layout Standard
+While not strictly necessary to perform these manipulations, doing so results
+ in a diagnostic bitmap which closely resembles that produced by the CSAT3's
+ newer counterpart, the CSAT3A.
+\end_layout
+
+\begin_layout Paragraph
+Extracting incremental counter
+\end_layout
+
+\begin_layout Standard
+An incremental, circular counter is encoded in the 6 least significant bits
+ of the fifth integer word as indicated in table 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "tab:csat3-record-format"
+
+\end_inset
+
+.
+ The value of the counter 
+\emph on
+could 
+\emph default
+be extracted by performing a bitwise comparison of the value against the
+ appropriate bitmask (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x3F
+\end_layout
+
+\end_inset
+
+) using the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+AND
+\end_layout
+
+\end_inset
+
+ instruction.
+ It is, however, not extracted because it is not retained in any data tables
+ nor is it used for quality assurance or in any intermediate processing
+ step.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "language={[CR]Basic},numbers=none"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+RS-232 communication with CSAT3
+\begin_inset CommandInset label
+LatexCommand label
+name "lis:csat3-rs232-code"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Const CSAT3_COM = Com1
+\end_layout
+
+\begin_layout Plain Layout
+
+Const CSAT3_BAUD = 9600
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Public sonic(5)
+\end_layout
+
+\begin_layout Plain Layout
+
+Alias sonic(1) = sonic_Ux   'm/s
+\end_layout
+
+\begin_layout Plain Layout
+
+Alias sonic(2) = sonic_Uy   'm/s
+\end_layout
+
+\begin_layout Plain Layout
+
+Alias sonic(3) = sonic_Uz   'm/s
+\end_layout
+
+\begin_layout Plain Layout
+
+Alias sonic(4) = sonic_Ts   'degC
+\end_layout
+
+\begin_layout Plain Layout
+
+Alias sonic(5) = sonic_diag 'bitmap
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Dim bytes
+\end_layout
+
+\begin_layout Plain Layout
+
+Dim csat3_record As String * 10
+\end_layout
+
+\begin_layout Plain Layout
+
+Dim csat3_rbits(2,3) = {&h0C00, &h0300, &hC0, 10, 8, 6}
+\end_layout
+
+\begin_layout Plain Layout
+
+Dim csat3_ranges(4) = {0.00025, 0.00050, 0.001, 0.002}
+\end_layout
+
+\begin_layout Plain Layout
+
+Dim byte1 As Long, word4 As Long
+\end_layout
+
+\begin_layout Plain Layout
+
+Dim i As Long, ii As Long, rcode As Long
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Sub setup()
+\end_layout
+
+\begin_layout Plain Layout
+
+    ...
+\end_layout
+
+\begin_layout Plain Layout
+
+  SerialOpen(CSAT3_COM,CSAT3_BAUD,3,0,25)
+\end_layout
+
+\begin_layout Plain Layout
+
+EndSub
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Function sonic_temp(speed_of_sound) As Float
+\end_layout
+
+\begin_layout Plain Layout
+
+  Return ((speed_of_sound*speed_of_sound / 401.856) - 273.15)
+\end_layout
+
+\begin_layout Plain Layout
+
+EndFunction
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+PipeLineMode
+\end_layout
+
+\begin_layout Plain Layout
+
+BeginProg
+\end_layout
+
+\begin_layout Plain Layout
+
+  Call setup()
+\end_layout
+
+\begin_layout Plain Layout
+
+  Scan(...)
+\end_layout
+
+\begin_layout Plain Layout
+
+      ...
+\end_layout
+
+\begin_layout Plain Layout
+
+    SerialInRecord(CSAT3_COM,csat3_record, 0,10,&h55AA,bytes,11)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+    For i = 2 To 8 Step 2 'load signed ints (words 0-3)
+\end_layout
+
+\begin_layout Plain Layout
+
+      ii = i >> 1 'fast divide by 2
+\end_layout
+
+\begin_layout Plain Layout
+
+      byte1 = ASCII(csat3_record(1,1,i)) 'grab sign+MSB
+\end_layout
+
+\begin_layout Plain Layout
+
+      sonic(ii) = (byte1 AND &h7F) << 8 'shift MSB into pos
+\end_layout
+
+\begin_layout Plain Layout
+
+      sonic(ii) += ASCII(csat3_record(1,1,i-1)) 'add LSB
+\end_layout
+
+\begin_layout Plain Layout
+
+      If (byte1 AND &h80) Then sonic(ii) -= 32768 'apply sign
+\end_layout
+
+\begin_layout Plain Layout
+
+    Next i
+\end_layout
+
+\begin_layout Plain Layout
+
+    MoveBytes(word4,3,csat3_record,8,1) 'load unsigned int
+\end_layout
+
+\begin_layout Plain Layout
+
+    MoveBytes(word4,2,csat3_record,9,1)
+\end_layout
+
+\begin_layout Plain Layout
+
+    For i = 1 To 3 'apply range scaling
+\end_layout
+
+\begin_layout Plain Layout
+
+      rcode = (word4 AND csat3_rbits(1,i)) >> csat3_rbits(2,i)
+\end_layout
+
+\begin_layout Plain Layout
+
+      sonic(i) *= csat3_ranges(rcode+1)
+\end_layout
+
+\begin_layout Plain Layout
+
+    Next i
+\end_layout
+
+\begin_layout Plain Layout
+
+    sonic_Ts = sonic_temp(sonic(4)*0.001 + 340)
+\end_layout
+
+\begin_layout Plain Layout
+
+    sonic_diag = (word4 AND &hF000) >> 12 'extract diag flags
+\end_layout
+
+\begin_layout Plain Layout
+
+      ...
+\end_layout
+
+\begin_layout Plain Layout
+
+  NextScan
+\end_layout
+
+\begin_layout Plain Layout
+
+EndProg
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+LI-7500 IRGA
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Refer to listing 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "lis:li7500-rs232-code"
+
+\end_inset
+
+ in conjunction with this section.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+When configured as described in section 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "sub:li7500-initial-config"
+
+\end_inset
+
+, the LI-7500 sends a variable-length record composed of four values and
+ a delimiter
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Windows-style end-of-line: <carriage return><line feed>
+\end_layout
+
+\end_inset
+
+ (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x0D0A
+\end_layout
+
+\end_inset
+
+), each separated by a horizontal tab (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x09
+\end_layout
+
+\end_inset
+
+).
+ Data values are transmitted as human-readable floating point numbers, rather
+ than binary words.
+ A typical data stream is shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:li7500-typical-data"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename images/LI7500_record_nominal.png
+	lyxscale 50
+	width 100line%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Typical LI-7500 RS-232 data
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:li7500-typical-data"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Establishing
+\begin_inset space \space{}
+\end_inset
+
+communication
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+SerialOpen
+\end_layout
+
+\end_inset
+
+ instruction is used to open communications with the LI-7500.
+ As with the CSAT3, this instruction is called on the end of the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+setup()
+\end_layout
+
+\end_inset
+
+ routine for logical convenience.
+ 
+\end_layout
+
+\begin_layout Description
+SerialOpen(ComPort,
+\begin_inset space \space{}
+\end_inset
+
+BaudRate,
+\begin_inset space \space{}
+\end_inset
+
+Format,
+\begin_inset space \space{}
+\end_inset
+
+TXDelay,
+\begin_inset space \space{}
+\end_inset
+
+BufferSize) 
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+ComPort The appropriate port (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Com2
+\end_layout
+
+\end_inset
+
+) is provided as the constant 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+LI7500_COM
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+BaudRate The selected baud rate is provided as the constant 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+LI7500_BAUD
+\end_layout
+
+\end_inset
+
+.
+ This is the only parameter which can be changed without modifying the source
+ code (via 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Internals
+\end_layout
+
+\end_inset
+
+\SpecialChar \menuseparator
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+LI7500 baud
+\end_layout
+
+\end_inset
+
+ menu option).
+\end_layout
+
+\begin_layout Description
+Format Required port settings are 8 data bits, no parity, 1 stop bit (8/N/1)
+ at RS-232 logic levels.
+ This combination is represented by the value 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Description
+TXDelay No data is transmitted to the LI-7500 so this parameter is hardcoded
+ to value 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+BufferSize The minimum buffer size is determined by the maximum possible
+ record length.
+ The size of each data value, presented in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:li7500-value-lengths"
+
+\end_inset
+
+, is summed with the delimiters and sync pattern to yield 28 bytes.
+ The minimum buffer size is then 
+\begin_inset Formula $2*28+1=57$
+\end_inset
+
+ bytes
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "appnote-csi-serial"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Possible value lengths in LI-7500 RS-232 records (adapted, 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-li7500"
+
+\end_inset
+
+)
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:li7500-value-lengths"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="7" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Value
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Floating point
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Example
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Max characters (bytes)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Diagnostic word
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+Range of integers: 0..255
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CO
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+ density
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+xx.xxxx
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+16.5915
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+H
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+O density
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+xxx.xxx
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+190.187
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Pressure
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+xxx.x
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+101.5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+Delimiter
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+Horizontal tab: 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+
+\emph on
+0x09
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1 (4 total)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+Sync pattern
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\emph on
+New line: 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+
+\emph on
+0x0D0A
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Receiving
+\begin_inset space \space{}
+\end_inset
+
+records
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+SerialInRecord
+\end_layout
+
+\end_inset
+
+ instruction is used to read any available records.
+ As discussed in 
+\emph on
+
+\begin_inset CommandInset ref
+LatexCommand nameref
+reference "par:csat3-receiving-records"
+
+\end_inset
+
+
+\emph default
+ 
+\begin_inset CommandInset ref
+LatexCommand vpageref
+reference "par:csat3-receiving-records"
+
+\end_inset
+
+, this is the only serial input instruction which can be scheduled as a
+ measurement task (when the logger is operating in pipeline mode).
+ 
+\end_layout
+
+\begin_layout Standard
+Because data records are variable length, some finesse is required when
+ determining the 
+\family sans
+BeginWord
+\family default
+, 
+\family sans
+NBytes
+\family default
+ and 
+\family sans
+EndWord
+\family default
+ parameters.
+ A summary of some combinations tested is presented in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:li7500-parsing-records"
+
+\end_inset
+
+.
+ In the optimal case, the second character of the sync pattern (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x0A
+\end_layout
+
+\end_inset
+
+) is used as the 
+\family sans
+BeginWord
+\family default
+ of each record, the 
+\family sans
+EndWord
+\family default
+ is the fourth delimiter combined with first character of the sync pattern,
+ and 
+\family sans
+NBytes
+\family default
+ is not used.
+ 
+\end_layout
+
+\begin_layout Description
+SerialInRecord(ComPort,
+\begin_inset space \space{}
+\end_inset
+
+Dest,
+\begin_inset space \space{}
+\end_inset
+
+BeginWord,
+\begin_inset space \space{}
+\end_inset
+
+NBytes,
+\begin_inset space \space{}
+\end_inset
+
+EndWord,
+\begin_inset space \space{}
+\end_inset
+
+NBytesReturned,
+\begin_inset space \space{}
+\end_inset
+
+SerialInRecOption) 
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+ComPort Provided as the constant 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+LI7500_COM
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+Dest Provided the string variable 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+li7500_record
+\end_layout
+
+\end_inset
+
+ (length 26).
+\end_layout
+
+\begin_layout Description
+BeginWord The last character of the previous record (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x0A
+\end_layout
+
+\end_inset
+
+) is used as the beginning match point.
+\end_layout
+
+\begin_layout Description
+NBytes The literal value 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+
+ is specified so data is read from 
+\family sans
+BeginWord
+\family default
+ to 
+\family sans
+EndWord
+\family default
+, exclusive.
+\end_layout
+
+\begin_layout Description
+EndWord The ending match is the last delimiter and first character of sync
+ pattern (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x090D
+\end_layout
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Description
+NBytesReturned Provided the variable 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+bytes
+\end_layout
+
+\end_inset
+
+ (as for processing CSAT3 records).
+\end_layout
+
+\begin_layout Description
+SerialInRecOption To prevent skipping buffered records while still permitting
+ detection of a no-new-record condition, this parameter is provided the
+ value 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+11
+\end_layout
+
+\end_inset
+
+ (use oldest, do store NAN).
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+The author suspects this particular method of parsing LI-7500 RS-232 records
+ results in an additional pipeline delay of 1 measurement (100ms).
+ 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+This could be worth studying....
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Comparison of select record parsing methods
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:li7500-parsing-records"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="middle" width="10line%">
+<column alignment="left" valignment="middle" width="66line%">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+BeginWord
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+NBytes
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+EndWord
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Comments
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+26
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x0D0A
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+(or
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x0A
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Attempting to capture more bytes (26) than is typically received (25) causes
+ inadverant inclusion of bytes from adjacent buffered records.
+ This results in the first few characters of the diagnostic word being clipped
+ off in up to 50% of records.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x0D0A
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+(or
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x0A
+\end_layout
+
+\end_inset
+
+)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Relying on the logger to imply record delimiters from timing nearly works
+ as desired.
+ However, after an indeterminate length of time (tens of seconds to several
+ minutes) something changes and incoming records are only one byte long.
+ While flushing the serial buffer does rectify the problem, the extra processing
+ time and occassional null records make this solution suboptimal.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x0A
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0x090D
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+This combination appears to work best.
+ The last sync character of the previous record is used as the beginning
+ for the current record.
+ The tab preceding the first sync character is captured with it rather than
+ stored in the data record.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph
+Parsing
+\begin_inset space \space{}
+\end_inset
+
+data
+\begin_inset space \space{}
+\end_inset
+
+values
+\end_layout
+
+\begin_layout Standard
+\noindent
+Since data values are transmitted as readable text representing floating
+ point values, they are easily converted to decimal values using the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+SplitStr
+\end_layout
+
+\end_inset
+
+ instruction.
+ This instruction is able to intelligently handle delimiters and parse numeric
+ values from the string variable containing the serial record.
+ 
+\end_layout
+
+\begin_layout Standard
+Several combinations of parameter options were evaluated (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:li7500-parsing-values"
+
+\end_inset
+
+) for performance and reliability.
+ Bench tests indicate the 
+\begin_inset Quotes eld
+\end_inset
+
+intelligent numeric extraction
+\begin_inset Quotes erd
+\end_inset
+
+ (
+\family sans
+SplitOption
+\family default
+ = 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+0
+\end_layout
+
+\end_inset
+
+) parsing method had a lower impact on processing time (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:li7500-proctime-splitopt0"
+
+\end_inset
+
+) compared to the 
+\begin_inset Quotes eld
+\end_inset
+
+preceding strings
+\begin_inset Quotes erd
+\end_inset
+
+ (
+\family sans
+SplitOption
+\family default
+ = 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+\noindent
+5
+\end_layout
+
+\end_inset
+
+) method (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:li7500-proctime-splitopt5"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Description
+SplitStr(SplitResult,
+\begin_inset space \space{}
+\end_inset
+
+SearchString,
+\begin_inset space \space{}
+\end_inset
+
+FilterString,
+\begin_inset space \space{}
+\end_inset
+
+NumSplit,
+\begin_inset space \space{}
+\end_inset
+
+SplitOption)
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+SplitResults An array of float variables, 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+li7500_vals
+\end_layout
+
+\end_inset
+
+, dimensioned to the number of incoming values (4).
+ Type conversion to floating point values is performed automatically.
+\end_layout
+
+\begin_layout Description
+SearchString The string variable containing the serial record, 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+li7500_record
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+FilterString This parameter is ignored (see 
+\family sans
+SplitOption
+\family default
+) so an empty string (
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+) is specified.
+\end_layout
+
+\begin_layout Description
+NumSplit The number of incoming data values (4) is specified as a literal
+ value.
+\end_layout
+
+\begin_layout Description
+SplitOption By specifying the literal value 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+
+, numeric values are extracted using any characters not in the set [+-.0123456789
+0E] as delimiters.
+ Non-numeric characters are discarded.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+Once data has been converted to floating point values, the final step is
+ to push those values into the corresponding program variables 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+op_CO2
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+op_H2O
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+op_press
+\end_layout
+
+\end_inset
+
+, and 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+op_diag
+\end_layout
+
+\end_inset
+
+.
+ There is no need to make adjustments for measurement units or diagnostic
+ bitmap representation.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Comparison of select value parsing methods
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:li7500-parsing-values"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="left" valignment="top" width="40line%">
+<column alignment="left" valignment="top" width="25line%">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+FilterString
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+SplitOption
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Method
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Results
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Intelligently extract numeric values, ignoring non-numeric characters
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK: no observable issues
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+CHR(9)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Split along occurences of the entire
+\family sans
+ FilterString
+\family default
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+All values returned NAN
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+CHR(9)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Any string(s) preceding 
+\family sans
+FilterString
+\family default
+ occurence(s)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OK: no observable issues
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename images/LI7500_splitstr_opt0.png
+	lyxscale 50
+	width 75line%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Using 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+SplitStr(\SpecialChar \ldots{}
+,
+\begin_inset Quotes erd
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+,4,0)
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:li7500-proctime-splitopt0"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename images/LI7500_splitstr_opt5.png
+	lyxscale 50
+	width 75line%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Using 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+SplitStr(\SpecialChar \ldots{}
+,CHR(9),4,5)
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:li7500-proctime-splitopt5"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Impact of parsing method on processing time (
+\family sans
+Status.ProcessTime
+\family default
+)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "language={[CR]Basic}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+RS-232 communication with LI-7500
+\begin_inset CommandInset label
+LatexCommand label
+name "lis:li7500-rs232-code"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Const LI7500_COM = Com2
+\end_layout
+
+\begin_layout Plain Layout
+
+Const LI7500_BAUD = 38400
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Public op_irga(4)
+\end_layout
+
+\begin_layout Plain Layout
+
+Alias op_irga(1) = op_CO2   'mmol/m^3
+\end_layout
+
+\begin_layout Plain Layout
+
+Alias op_irga(2) = op_H2O   'mmol/m^3
+\end_layout
+
+\begin_layout Plain Layout
+
+Alias op_irga(3) = op_press 'kPa
+\end_layout
+
+\begin_layout Plain Layout
+
+Alias op_diag(4) = op_diag  'bitmap
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Dim bytes
+\end_layout
+
+\begin_layout Plain Layout
+
+Dim li7500_record As String * 25
+\end_layout
+
+\begin_layout Plain Layout
+
+Dim li7500_vals(4) As Float
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Sub setup()
+\end_layout
+
+\begin_layout Plain Layout
+
+    ...
+\end_layout
+
+\begin_layout Plain Layout
+
+  SerialOpen(LI7500_COM,LI7500_BAUD,0,0,57)
+\end_layout
+
+\begin_layout Plain Layout
+
+EndSub
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+PipeLineMode
+\end_layout
+
+\begin_layout Plain Layout
+
+BeginProg
+\end_layout
+
+\begin_layout Plain Layout
+
+  Call setup()
+\end_layout
+
+\begin_layout Plain Layout
+
+  Scan(...)
+\end_layout
+
+\begin_layout Plain Layout
+
+      ...
+\end_layout
+
+\begin_layout Plain Layout
+
+    SerialInRecord(LI7500_COM,li7500_record,&h0A,0,&h090D,bytes,11)
+\end_layout
+
+\begin_layout Plain Layout
+
+	
+\end_layout
+
+\begin_layout Plain Layout
+
+    SplitStr(li7500_vals,li7500_record,"",4,0)
+\end_layout
+
+\begin_layout Plain Layout
+
+    op_diag = li7500_vals(1)
+\end_layout
+
+\begin_layout Plain Layout
+
+    op_CO2 = li7500_vals(2)
+\end_layout
+
+\begin_layout Plain Layout
+
+    op_H2O = li7500_vals(3)
+\end_layout
+
+\begin_layout Plain Layout
+
+    op_press = li7500_vals(4)
+\end_layout
+
+\begin_layout Plain Layout
+
+      ...
+\end_layout
+
+\begin_layout Plain Layout
+
+  NextScan
+\end_layout
+
+\begin_layout Plain Layout
+
+EndProg
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Program Source Code
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Program-Listing"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The complete source code of the program operated by the datalogger:
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{framed}
+\end_layout
+
+\end_inset
+
+
+\begin_inset CommandInset include
+LatexCommand lstinputlisting
+filename "../crbasic/default.cr1"
+lstparams "caption={[Complete program source code]},frame=none,language={[CR]Basic}"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{framed}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
 \end_layout
 
 \end_body

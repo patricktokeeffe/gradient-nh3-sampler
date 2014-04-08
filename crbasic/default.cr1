@@ -13,13 +13,15 @@ Const SDM_CSAT3_LI7500_2 = 2 '  logical display in custom menu
 Const RS232_CSAT3_LI7500_3 = 3
 ConstTable
   'things which MUST be constants and therefore cannot be in settings file
-  ' XXX WHAT HAPPENS IF LOGGER IS RESET? POWER LOSS? ARE PREVIOUS CONST
-  '     VALUES RETAINED?!
+  'these settings are retained across power cycles like "soft" settings
   Const SDM_SPEED = 30   'default: 30 usec, specify 8 - 3000 (8 us - 3 ms)
-  Const DATA_SRCS = SDM_CSAT3_LI7500_2
-  Const CSAT3_ADDR = 3    'CSAT3 SDM address, default: 3
+  Const DATA_SRCS = RS232_CSAT3_LI7500_3
+  Const CSAT3_ADDR = 3   'CSAT3 SDM address, default: 3
   Const LI7500_ADDR = 7  'LI7500 SDM address, default: 7
   Const EC100_ADDR = 1   'EC100/EC150/CSAT3A SDM address, default: 1
+  
+  Const CSAT3_BAUD = 9600   '9600 or 19200
+  Const LI7500_BAUD = 38400 '19200 or 38400 (9600 is too slow!)
 
   Const FAST_INTV = 100     'eddy cov. scan frequency, ms
   Const SLOW_INTV = 1       'gradient scan frequency, sec
@@ -67,13 +69,17 @@ Const MW_h2o = 18.01528  'molecular weight of water vapor, g/mol
 '----- PROGRAM OPERATION ------
 Const INTEG = 250
 
-'------ SDM DEVICES -----
+'----- SDM DEVICES -----
 Const CSAT3_CMD = 91 'trigger + get 3D wind, temp, diagnostic
 Const CSAT3_OPT = INT(1000/FAST_INTV) 'calc Hz from interval
 Const LI7500_CMD = 6 'get CO2, H2O, press, diagnostic
 Const EC100_CMD = 1 'get 3D wind, temp, CO2, H2O, press, (2) diagnostic
 
-'------ STATIC ANALOG SCALING -----
+'----- RS-232 DEVICES -----
+Const CSAT3_COM = Com1
+Const LI7500_COM = Com2
+
+'----- STATIC ANALOG SCALING -----
 'TODO closed-path IRGA
 
 Const TMPR_MULT = 1  'use Celcius for thermistors
@@ -115,7 +121,6 @@ Alias conc(12) = ch4_top
 Dim ec100_raw(12) 'Campbellsci EC100/EC150/CSAT3A
 'EC150 reports in mass density, not molar density!
 
-'TODO add text variable for RS-232 input
 Public sonic(5)
 Alias sonic(1) = sonic_Ux
 Alias sonic(2) = sonic_Uy
@@ -125,19 +130,29 @@ Alias sonic(5) = sonic_diag
 Units sonic = m/s
 Units sonic_Ts = degC
 Units sonic_diag = bitmap
+Public disable_sonic As Boolean 
 
-'TODO add text variable for RS-232 input
 Public op_irga(5)
 Alias op_irga(1) = op_CO2
 Alias op_irga(2) = op_H2O
 Alias op_irga(3) = op_press
-'XXX add ambient temp?
 Alias op_irga(4) = op_diag
 Alias op_irga(5) = op_signal 'TODO retain AGC or CO2/H2O signal strength?
 Units op_irga = mmol/m^3
 Units op_press = kPa
 Units op_diag = bitmap
 Units op_signal = ratio 'XXX
+Public disable_op As Boolean
+
+'serial input handling for sensors in RS-232 mode
+Dim bytes
+Dim csat3_record As String * 10
+Dim csat3_rbits(2,3) = {&h0C00, &h0300, &hC0, 10, 8, 6}
+Dim csat3_ranges(4) = {0.00025, 0.00050, 0.001, 0.002}
+Dim byte1 As Long, word4 As Long
+Dim i As Long, ii As Long, rcode As Long
+Dim li7500_record As String * 25
+Dim li7500_vals(4) As Float 'diag, CO2 density, H2O density, pressure
 
 'measurements from closed-path CO2/H2O analyzer
 Public raw_cp_irga(2)
@@ -168,10 +183,6 @@ Units logger_temp = degC
 Units logger_voltage = volts
 
 '----- PROCESSING -----
-
-Public disable_sonic As Boolean 'diagnostic flag handling
-Public disable_op As Boolean
-
 'TODO
 'Dim lagged(10)
 'Public aligned(10)
@@ -584,8 +595,12 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
       MenuPick(EC100_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
     MenuItem("CSAT3 addr", CSAT3_ADDR)
       MenuPick(CSAT3_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
+    MenuItem("CSAT3 baud", CSAT3_BAUD)
+      MenuPick(CSAT3_BAUD,9600,19200)
     MenuItem("LI7500 addr", LI7500_ADDR)
       MenuPick(LI7500_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
+    MenuItem("LI7500 baud", LI7500_BAUD)
+      MenuPick(LI7500_BAUD,19200,38400)
     MenuRecompile("Recompile?", recompile)
       MenuPick(Cancel,Yes)
   EndSubMenu
@@ -699,6 +714,11 @@ Sub setup()
   is_sampling_top = False
   is_sampling_mid = False
   'no need for bottom state indicator; both top/mid false implies bottom=true
+
+  #If (DATA_SRCS=RS232_CSAT3_LI7500_3) Then
+    SerialOpen(CSAT3_COM,CSAT3_BAUD,3,0,25)
+    SerialOpen(LI7500_COM,LI7500_BAUD,0,0,57)
+  #EndIf
 EndSub
 
 Sub reset_settings()
@@ -706,7 +726,21 @@ Sub reset_settings()
   setup()
 EndSub
 
+
+'============================= FUNCTIONS ======================================
+Function sonic_temp(speed_of_sound) As Float
+  'see Appendix C. CSAT3 Measurement Theory of the CSAT3 User Manual
+  '  Ts = c^2 / (phi * Rd) - 273.15 
+  '     where phi = 1.4 = ratio of specific heat of moist air at const press
+  '                       to specific heat at const volume
+  '           Rd = 287.04 J / (K kg)
+  Return ((speed_of_sound*speed_of_sound / 401.856) - 273.15)
+  'use x*x to avoid overflows possible with x^2
+EndFunction
+
+
 '========================== MAIN PROGRAM ======================================
+PipeLineMode
 BeginProg
   Call setup()
   CallTable info
@@ -725,7 +759,30 @@ BeginProg
       CS7500(op_CO2,1,LI7500_ADDR,LI7500_CMD)
       CSAT3(sonic_Ux,1,CSAT3_ADDR,CSAT3_CMD,CSAT3_OPT)
     #ElseIf (DATA_SRCS=RS232_CSAT3_LI7500_3) Then
-      'TODO - serial input handling
+      SerialInRecord(CSAT3_COM,csat3_record,0,10,&h55AA,bytes,11)
+      SerialInRecord(LI7500_COM,li7500_record,&h0A,0,&h090D,bytes,11)
+
+      For i = 2 To 8 Step 2 'load signed ints (words 0-3)
+        ii = i >> 1 'fast divide by 2
+        byte1 = ASCII(csat3_record(1,1,i)) 'grab sign+MSB
+        sonic(ii) = (byte1 AND &h7F) << 8 'shift MSB into pos
+        sonic(ii) += ASCII(csat3_record(1,1,i-1)) 'add LSB
+        If (byte1 AND &h80) Then sonic(ii) -= 32768 'apply sign
+      Next i
+      MoveBytes(word4,3,csat3_record,8,1) 'load unsigned int
+      MoveBytes(word4,2,csat3_record,9,1)
+      For i = 1 To 3 'apply range scaling
+        rcode = (word4 AND csat3_rbits(1,i)) >> csat3_rbits(2,i)
+        sonic(i) *= csat3_ranges(rcode+1)
+      Next i
+      sonic_Ts = sonic_temp(sonic(4)*0.001 + 340)
+      sonic_diag = (word4 AND &hF000) >> 12 'extract diag flags
+
+      SplitStr(li7500_vals,li7500_record,"",4,0)
+      op_diag = li7500_vals(1)
+      op_CO2 = li7500_vals(2)
+      op_H2O = li7500_vals(3)
+      op_press = li7500_vals(4)
     #EndIf
 
     CallTable ts_fast
@@ -752,12 +809,12 @@ BeginProg
         is_sampling_mid = False 'catch switch 3->2 levels while sampling mid
         valve_state = IIF(is_sampling_top, TOP, BOTTOM)
       EndIf
-      
-      PortSet(VALVE_1_CTRL, is_sampling_top)
-      PortSet(VALVE_2_CTRL, is_sampling_mid)
-      Move(conc(1),12,NAN,1)
-      Move(cp_irga(1),6,NAN,1)
+
+      Move(conc(1),12,NAN,1) 'clear so inactive levels don't retain
+      Move(cp_irga(1),6,NAN,1) 'last value from when active
     EndIf
+    PortSet(VALVE_1_CTRL,is_sampling_top) 'not allowed in conditional
+    PortSet(VALVE_2_CTRL,is_sampling_mid)
 		
     If (work_fast.Output(1,1)) Then
       'do stuff
@@ -782,16 +839,26 @@ BeginProg
 	
   SlowSequence
   Scan(SLOW_INTV,Sec,10,-1)
-    If (ch1_enabled) Then VoltDiff(ch1_value,1,mv5000,CH1_IO,1,0,INTEG, ch1_mult,ch1_offset)
-    If (ch2_enabled) Then VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG, ch2_mult,ch2_offset)
-    If (ch3_enabled) Then VoltDiff(ch3_value,1,mv5000,CH3_IO,1,0,INTEG, ch3_mult,ch3_offset)
-    If (ch4_enabled) Then VoltDiff(ch4_value,1,mv5000,CH4_IO,1,0,INTEG, ch4_mult,ch4_offset)
-    If (cp_co2_enabled) Then VoltDiff(cp_CO2_value, 1,mv5000,CP_CO2_IO,1,0,INTEG, cp_co2_mult,cp_co2_offset)
-    If (cp_h2o_enabled) Then VoltDiff(cp_H2O_value, 1,mv5000,CP_H2O_IO,1,0,INTEG, cp_h2o_mult,cp_h2o_offset)
-    If (tmpr_enabled) Then
-      Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
-      If (num_levels = 3) Then Therm107(tmpr_mid, 1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
-      Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+    VoltDiff(ch1_value,1,mv5000,CH1_IO,1,0,INTEG,ch1_mult,ch1_offset)
+    VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG,ch2_mult,ch2_offset)
+    VoltDiff(ch3_value,1,mv5000,CH3_IO,1,0,INTEG,ch3_mult,ch3_offset)
+    VoltDiff(ch4_value,1,mv5000,CH4_IO,1,0,INTEG,ch4_mult,ch4_offset)
+    VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG,cp_co2_mult,cp_co2_offset)
+    VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG,cp_h2o_mult,cp_h2o_offset)
+    Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+'    If (num_levels = 3) Then Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+    Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+
+    If (NOT ch1_enabled) Then ch1_value = NAN
+    If (NOT ch2_enabled) Then ch2_value = NAN
+    If (NOT ch3_enabled) Then ch3_value = NAN
+    If (NOT ch4_enabled) Then ch4_value = NAN
+    If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
+    If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
+    If (NOT tmpr_enabled) Then 
+      tmpr_btm = NAN
+      'tmpr_mid = NAN
+      tmpr_top = NAN
     EndIf
 
     'record measurements into correct level variable set
