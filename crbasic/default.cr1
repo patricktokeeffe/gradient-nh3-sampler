@@ -16,7 +16,7 @@ ConstTable
   'these settings are retained across power cycles like "soft" settings
   Const UTC_OFFSET = -8  'default: Pacific Standard Time
 
-  Const ENABLE_GPS = True
+  Const GPS_ENABLED = True
   Const DATA_SRCS = RS232_CSAT3_LI7500_3
 
   Const SDM_SPEED = 30   'default: 30 usec, specify 8 - 3000 (8 us - 3 ms)
@@ -31,15 +31,23 @@ ConstTable
   Const SLOW_INTV = 1       'gradient scan frequency, sec
   Const STATS_INTV = 30     'interval of statistics output, min
   Const CAL_INTV = 60       'interval of themistor cal. stats output, sec
+  
+  Const DF1_ENABLED = True 'XXX 
+  Const DF2_ENABLED = True
+  Const DF3_ENABLED = True
+  Const DF4_ENABLED = True
+  Const CP_CO2_ENABLED = True
+  Const CP_H2O_ENABLED = True
+  Const TMPR_ENABLED = True
 EndConstTable
 
 
 '================================= WIRING =====================================
 'trace gas analyzer analog input
-Const CH1_IO = 1 'DF
-Const CH2_IO = 2 'DF
-Const CH3_IO = 3 'DF
-Const CH4_IO = 4 'DF
+Const DF1_IO = 1
+Const DF2_IO = 2
+Const DF3_IO = 3
+Const DF4_IO = 4
 
 'closed-path CO2/H2O analyzer
 Const CP_CO2_IO = 5 'DF
@@ -105,25 +113,25 @@ Const BOTTOM = "bottom"
 
 'measurements from DF1-4
 Public raw_conc(4)
-Alias raw_conc(1) = ch1_value
-Alias raw_conc(2) = ch2_value
-Alias raw_conc(3) = ch3_value
-Alias raw_conc(4) = ch4_value
+Alias raw_conc(1) = df1_value
+Alias raw_conc(2) = df2_value
+Alias raw_conc(3) = df3_value
+Alias raw_conc(4) = df4_value
 
 'level-partitioned readings of DF1-4
 Public conc(12)
-Alias conc(1)  = ch1_btm
-Alias conc(2)  = ch1_mid
-Alias conc(3)  = ch1_top
-Alias conc(4)  = ch2_btm
-Alias conc(5)  = ch2_mid
-Alias conc(6)  = ch2_top
-Alias conc(7)  = ch3_btm
-Alias conc(8)  = ch3_mid
-Alias conc(9)  = ch3_top
-Alias conc(10) = ch4_btm
-Alias conc(11) = ch4_mid
-Alias conc(12) = ch4_top
+Alias conc(1)  = df1_btm
+Alias conc(2)  = df1_mid
+Alias conc(3)  = df1_top
+Alias conc(4)  = df2_btm
+Alias conc(5)  = df2_mid
+Alias conc(6)  = df2_top
+Alias conc(7)  = df3_btm
+Alias conc(8)  = df3_mid
+Alias conc(9)  = df3_top
+Alias conc(10) = df4_btm
+Alias conc(11) = df4_mid
+Alias conc(12) = df4_top
 
 'measurements from sonic anemometer & open-path CO2/H2O analyer
 Dim ec100_raw(12) 'Campbellsci EC100/EC150/CSAT3A
@@ -186,7 +194,7 @@ Alias tmpr(3) = tmpr_top
 Units tmpr = degC
 
 'GPS receiver
-#If (ENABLE_GPS) Then
+#If (GPS_ENABLED) Then
   Dim nmea_str As String * 90
   Public gps16x(15)
   Alias gps16x(1)  = lat_deg        '(+)=North, (-)=South
@@ -204,13 +212,9 @@ Units tmpr = degC
   Alias gps16x(13) = gps_ready
   Alias gps16x(14) = max_clock_change
   Alias gps16x(15) = num_clock_change
-  Units lat_deg = degreesN
-  Units lat_min = minutesN
-  Units long_deg = degreesN
-  Units long_min = minutesN
   Units speed = m/s
-  Units course = degreesEofN
-  Units mag_var = degreesEofN
+  Units course = degEofN
+  Units mag_var = degEofN
   Units fix_quality = unitless
   Units num_sat = count
   Units altitude = m
@@ -264,22 +268,36 @@ Alias fast_out(8)  = WD_rslt_Std
 Alias fast_out(9)  = op_CO2_Avg
 Alias fast_out(10) = op_H2O_Avg
 Alias fast_out(11) = op_press_Avg
+Units sonic_Ts_Avg = degC
+Units WS_sclr_Avg = m/s
+Units WD_unit_Avg = degEofN
+Units WD_unit_Std = deg
+Units WS_rslt_Avg = m/s
+Units WD_rslt_Avg = degEofN
+Units WD_rslt_Std = deg
+Units op_CO2_Avg = mmol/m^3
+Units op_H2O_Avg = mmol/m^3
+Units op_press_Avg = kPa
 
 Public slow_out(14) 'match length of work_slow table
-Alias slow_out(1)  = ch1_btm_Avg
-Alias slow_out(2)  = ch1_top_Avg
-Alias slow_out(3)  = ch2_btm_Avg
-Alias slow_out(4)  = ch2_top_Avg
-Alias slow_out(5)  = ch3_btm_Avg
-Alias slow_out(6)  = ch3_top_Avg
-Alias slow_out(7)  = ch4_btm_Avg
-Alias slow_out(8)  = ch4_top_Avg
+Alias slow_out(1)  = df1_btm_Avg
+Alias slow_out(2)  = df1_top_Avg
+Alias slow_out(3)  = df2_btm_Avg
+Alias slow_out(4)  = df2_top_Avg
+Alias slow_out(5)  = df3_btm_Avg
+Alias slow_out(6)  = df3_top_Avg
+Alias slow_out(7)  = df4_btm_Avg
+Alias slow_out(8)  = df4_top_Avg
 Alias slow_out(9)  = cp_CO2_btm_Avg
 Alias slow_out(10) = cp_CO2_top_Avg
 Alias slow_out(11) = cp_H2O_btm_Avg
 Alias slow_out(12) = cp_H2O_top_Avg
 Alias slow_out(13) = tmpr_btm_Avg
 Alias slow_out(14) = tmpr_top_Avg
+'Units df1..4 TODO
+'Units cp CO2/H2O TODO
+Units tmpr_btm_Avg = degC
+Units tmpr_top_Avg = degC
 
 'gradient & flux calculation variables
 Public tmpr_gradient
@@ -308,7 +326,7 @@ Const Standby = 0 'False
 '============================ SETTINGS RETENTION ==============================
 Dim filehandle As Long
 Const SETTINGS_FILE = "CPU:grad_settings.dat"
-Const NUM_SETTINGS = {28}
+Const NUM_SETTINGS = {21}
 Const WRITEFILE = 0
 Const READFILE = 1
 
@@ -319,34 +337,39 @@ Const Linear = -1
 Dim toggle_intv As Long 'seconds
 
 Dim settings(NUM_SETTINGS)
-Alias settings(1)  = ch1_enabled
-Alias settings(2)  = ch1_mult
-Alias settings(3)  = ch1_offset
-Alias settings(4)  = ch2_enabled
-Alias settings(5)  = ch2_mult
-Alias settings(6)  = ch2_offset
-Alias settings(7)  = ch3_enabled
-Alias settings(8)  = ch3_mult
-Alias settings(9)  = ch3_offset
-Alias settings(10) = ch4_enabled
-Alias settings(11) = ch4_mult
-Alias settings(12) = ch4_offset
-Alias settings(13) = cp_co2_enabled
-Alias settings(14) = cp_co2_mult
-Alias settings(15) = cp_co2_offset
-Alias settings(16) = cp_h2o_enabled
-Alias settings(17) = cp_h2o_mult
-Alias settings(18) = cp_h2o_offset
-Alias settings(19) = tmpr_enabled
-Alias settings(20) = tmpr_state
-Alias settings(21) = tmpr_top_btm 'cal. offset
-Alias settings(22) = sonic_azimuth
-Alias settings(23) = toggle_time
-Alias settings(24) = inlet_top_H
-Alias settings(25) = inlet_btm_H
-Alias settings(26) = tmpr_top_H
-Alias settings(27) = tmpr_btm_H
-Alias settings(28) = grad_type
+Alias settings(1)  = df1_mult
+Alias settings(2)  = df1_offset
+Alias settings(3)  = df2_mult
+Alias settings(4)  = df2_offset
+Alias settings(5)  = df3_mult
+Alias settings(6)  = df3_offset
+Alias settings(7)  = df4_mult
+Alias settings(8)  = df4_offset
+Alias settings(9)  = cp_co2_mult
+Alias settings(10) = cp_co2_offset
+Alias settings(11) = cp_h2o_mult
+Alias settings(12) = cp_h2o_offset
+Alias settings(13) = tmpr_state
+Alias settings(14) = tmpr_top_btm 'cal. offset
+Alias settings(15) = sonic_azimuth
+Alias settings(16) = toggle_time
+Alias settings(17) = inlet_top_H
+Alias settings(18) = inlet_btm_H
+Alias settings(19) = tmpr_top_H
+Alias settings(20) = tmpr_btm_H
+Alias settings(21) = grad_type
+Units df1_mult = unit/mV
+Units df1_offset = unit@0mV
+Units df2_mult = unit/mV
+Units df2_offset = unit@0mV
+Units df3_mult = unit/mV
+Units df3_offset = unit@0mV
+Units df4_mult = unit/mV
+Units df4_offset = unit@0mV
+'Units cp_co2_mult = ?
+'Units cp_co2_offset = ?
+'Units cp_h2o_mult = ?
+'Units cp_h2o_offset = ? 
 Units tmpr_top_btm = degC
 Units sonic_azimuth = deg TN
 Units toggle_time = min
@@ -356,34 +379,27 @@ Units tmpr_top_H = cm
 Units tmpr_btm_H = cm
 
 Dim choice(NUM_SETTINGS)
-Alias choice(1)  = ch_ch1_enabled
-Alias choice(2)  = ch_ch1_mult
-Alias choice(3)  = ch_ch1_offset
-Alias choice(4)  = ch_ch2_enabled
-Alias choice(5)  = ch_ch2_mult
-Alias choice(6)  = ch_ch2_offset
-Alias choice(7)  = ch_ch3_enabled
-Alias choice(8)  = ch_ch3_mult
-Alias choice(9)  = ch_ch3_offset
-Alias choice(10) = ch_ch4_enabled
-Alias choice(11) = ch_ch4_mult
-Alias choice(12) = ch_ch4_offset
-Alias choice(13) = ch_cp_co2_enabled
-Alias choice(14) = ch_cp_co2_mult
-Alias choice(15) = ch_cp_co2_offset
-Alias choice(16) = ch_cp_h2o_enabled
-Alias choice(17) = ch_cp_h2o_mult
-Alias choice(18) = ch_cp_h2o_offset
-Alias choice(19) = ch_tmpr_enabled
-Alias choice(20) = ch_tmpr_state
-Alias choice(21) = ch_tmpr_top_btm
-Alias choice(22) = ch_sonic_azimuth
-Alias choice(23) = ch_toggle_time
-Alias choice(24) = ch_inlet_top_H
-Alias choice(25) = ch_inlet_btm_H
-Alias choice(26) = ch_tmpr_top_H
-Alias choice(27) = ch_tmpr_btm_H
-Alias choice(28) = ch_grad_type
+Alias choice(1)  = ch_df1_mult
+Alias choice(2)  = ch_df1_offset
+Alias choice(3)  = ch_df2_mult
+Alias choice(4)  = ch_df2_offset
+Alias choice(5)  = ch_df3_mult
+Alias choice(6)  = ch_df3_offset
+Alias choice(7)  = ch_df4_mult
+Alias choice(8)  = ch_df4_offset
+Alias choice(9)  = ch_cp_co2_mult
+Alias choice(10) = ch_cp_co2_offset
+Alias choice(11) = ch_cp_h2o_mult
+Alias choice(12) = ch_cp_h2o_offset
+Alias choice(13) = ch_tmpr_state
+Alias choice(14) = ch_tmpr_top_btm
+Alias choice(15) = ch_sonic_azimuth
+Alias choice(16) = ch_toggle_time
+Alias choice(17) = ch_inlet_top_H
+Alias choice(18) = ch_inlet_btm_H
+Alias choice(19) = ch_tmpr_top_H
+Alias choice(20) = ch_tmpr_btm_H
+Alias choice(21) = ch_grad_type
 
 '=========================== DATA TABLES ====================================
 
@@ -409,67 +425,108 @@ EndTable
 
 DataTable(work_slow,True,10)
   DataInterval(0,STATS_INTV,Min,10)
-  Average(1,ch1_btm,IEEE4,ch1_btm=NAN)
-  Average(1,ch1_top,IEEE4,ch1_top=NAN)
-  Average(1,ch2_btm,IEEE4,ch2_btm=NAN)
-  Average(1,ch2_top,IEEE4,ch2_top=NAN)
-  Average(1,ch3_btm,IEEE4,ch3_btm=NAN)
-  Average(1,ch3_top,IEEE4,ch3_top=NAN)
-  Average(1,ch4_btm,IEEE4,ch4_btm=NAN)
-  Average(1,ch4_top,IEEE4,ch4_top=NAN)
-
+  Average(1,df1_btm,IEEE4,df1_btm=NAN)
+  Average(1,df1_top,IEEE4,df1_top=NAN)
+  Average(1,df2_btm,IEEE4,df2_btm=NAN)
+  Average(1,df2_top,IEEE4,df2_top=NAN)
+  Average(1,df3_btm,IEEE4,df3_btm=NAN)
+  Average(1,df3_top,IEEE4,df3_top=NAN)
+  Average(1,df4_btm,IEEE4,df4_btm=NAN)
+  Average(1,df4_top,IEEE4,df4_top=NAN)
   Average(1,cp_CO2_btm,IEEE4,cp_CO2_btm=NAN)
   Average(1,cp_CO2_top,IEEE4,cp_CO2_top=NAN)
   Average(1,cp_H2O_btm,IEEE4,cp_H2O_btm=NAN)
   Average(1,cp_H2O_top,IEEE4,cp_H2O_top=NAN)
-
   Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR tmpr_state<>Normal)
   Average(1,tmpr_top,FP2,tmpr_top=NAN OR tmpr_state<>Normal)
 EndTable
 
 '----- FINAL OUTPUTS -----
-DataTable(info,True,50)
+#If (GPS_ENABLED) Then
+  DataTable (gps_daily,TRUE,30)
+    DataInterval (0,1,Day,10)
+    CardOut(0,90)
+    Median(1,(lat_deg + lat_min/60),DAILY_MEDNUM,IEEE4,(lat_deg=NAN OR lat_min=NAN))
+      FieldNames("latitude_Med")
+      Units latitude_Med = degN
+    Median(1,(long_deg + long_min/60),DAILY_MEDNUM,IEEE4,(long_deg=NAN OR long_min=NAN))
+      FieldNames("longitude_Med")
+      Units longitude_Med = degE
+    Median(1,mag_var,DAILY_MEDNUM,FP2,mag_var=NAN)
+    Average(1,num_sat,FP2,num_sat=NAN)
+    Median(1,altitude,DAILY_MEDNUM,IEEE4,altitude=NAN)
+    Average(1,altitude,IEEE4,altitude=NAN)
+    Minimum(1,gps_ready,FP2,gps_ready=NAN,0)
+    Sample(1,max_clock_change,UINT2)
+    Sample(1,num_clock_change,UINT2)
+  EndTable
+#EndIf
+
+DataTable(info,True,100)
   CardOut(0,1000)
   Sample(1,toggle_time,FP2)
   Sample(1,inlet_btm_H,FP2)
   Sample(1,inlet_top_H,FP2)
   Sample(1,gas_gradient_H,FP2)
-  Sample(1,ch1_enabled,Boolean)
-  Sample(1,ch1_mult,FP2)
-  Sample(1,ch1_offset,FP2)
-  Sample(1,ch2_enabled,Boolean)
-  Sample(1,ch2_mult,FP2)
-  Sample(1,ch2_offset,FP2)
-  Sample(1,ch3_enabled,Boolean)
-  Sample(1,ch3_mult,FP2)
-  Sample(1,ch3_offset,FP2)
-  Sample(1,ch4_enabled,Boolean)
-  Sample(1,ch4_mult,FP2)
-  Sample(1,ch4_offset,FP2)
-  Sample(1,tmpr_enabled,Boolean)
-  Sample(1,(tmpr_state=Normal),Boolean)
-    FieldNames("tmpr_normal")
-  Sample(1,(tmpr_state=Calibrating),Boolean)
-    FieldNames("tmpr_calibrating")
-  Sample(1,tmpr_top_btm,IEEE4)
-    FieldNames("tmpr_top_less_btm")
-  Sample(1,tmpr_btm_H,FP2)
-  Sample(1,tmpr_top_H,FP2)
-  Sample(1,tmpr_gradient_H,FP2)
-  Sample(1,cp_co2_enabled,Boolean)
-  Sample(1,cp_co2_mult,FP2)
-  Sample(1,cp_co2_offset,FP2)
-  Sample(1,cp_h2o_enabled,Boolean)
-  Sample(1,cp_h2o_mult,FP2)
-  Sample(1,cp_h2o_offset,FP2)
   Sample(1,grad_type,Boolean)
 '  Sample(1,sonic_azimuth,FP2) 'XXX
 '  Sample(1,sonic_height,FP2) 'XXX
-  Sample(1,UTC_OFFSET,FP2)
-    FieldNames("UTC_offset")
-    Units UTC_OFFSET = hours
+  #If (DF1_ENABLED) Then
+    Sample(1,df1_mult,FP2)
+    Sample(1,df1_offset,FP2)
+  #EndIf
+  #If (DF2_ENABLED) Then
+    Sample(1,df2_mult,FP2)
+    Sample(1,df2_offset,FP2)
+  #EndIf
+  #If (DF3_ENABLED) Then
+    Sample(1,df3_mult,FP2)
+    Sample(1,df3_offset,FP2)
+  #EndIf
+  #If (DF4_ENABLED) Then
+    Sample(1,df4_mult,FP2)
+    Sample(1,df4_offset,FP2)
+  #EndIf
+  #If (CP_CO2_ENABLED) Then
+    Sample(1,cp_co2_mult,FP2)
+    Sample(1,cp_co2_offset,FP2)
+  #EndIf
+  #If (CP_H2O_ENABLED) Then
+    Sample(1,cp_h2o_mult,FP2)
+    Sample(1,cp_h2o_offset,FP2)
+  #EndIf
+  #If (TMPR_ENABLED) Then
+    Sample(1,(tmpr_state=Normal),Boolean)
+      FieldNames("tmpr_normal")
+    Sample(1,(tmpr_state=Calibrating),Boolean)
+      FieldNames("tmpr_calibrating")
+    Sample(1,tmpr_top_btm,IEEE4)
+     FieldNames("tmpr_top_less_btm")
+    Sample(1,tmpr_btm_H,FP2)
+    Sample(1,tmpr_top_H,FP2)
+    Sample(1,tmpr_gradient_H,FP2)
+  #EndIf
+  #If (GPS_ENABLED) Then
+    Sample(1,UTC_OFFSET,FP2)
+      FieldNames("UTC_offset")
+      Units UTC_OFFSET = hours
+  #EndIf
   Sample(1,DATA_SRCS,FP2)
     FieldNames("eddycov_sensors")
+  #If (DATA_SRCS=SDM_CSAT3A_EC150_1) Then
+    Sample(1,EC100_ADDR,UINT2)
+      FieldNames("EC100_SDM_address")
+  #ElseIf (DATA_SRCS=SDM_CSAT3_LI7500_2) Then
+    Sample(1,CSAT3_ADDR,UINT2)
+      FieldNames("CSAT3_SDM_address")
+    Sample(1,LI7500_ADDR,UINT2)
+      FieldNames("LI7500_SDM_address")
+  #ElseIf (DATA_SRCS=RS232_CSAT3_LI7500_3) Then
+    Sample(1,CSAT3_BAUD,UINT2)
+      FieldNames("CSAT3_baud_rate")
+    Sample(1,LI7500_BAUD,UINT2)
+      FieldNames("LI7500_baud_rate")
+  #EndIf
 '  Sample(1,Status.CompileResults,String) 'XXX
 '    FieldNames("CompileResults")
 '  Sample(1,Status.CardStatus,String)
@@ -479,6 +536,19 @@ DataTable(info,True,50)
 '  Sample(1,Status.ProgSignature,UINT2)
 '    FieldNames("ProgSig")
 EndTable
+
+#If (TMPR_ENABLED) Then
+  DataTable(tmpr_cal,(tmpr_state=Calibrating),90)
+    DataInterval(0,CAL_INTV,Sec,10)
+    CardOut(1,300)
+    Average(1,tmpr_btm,IEEE4,tmpr_btm=NAN)
+  '  Average(1,tmpr_mid,IEEE4,tmpr_mid=NAN)
+    Average(1,tmpr_top,IEEE4,tmpr_top=NAN)
+    Average(1,(tmpr_top-tmpr_btm),IEEE4,(tmpr_top=NAN OR tmpr_btm=NAN))
+      FieldNames("diff_top_less_btm")
+      Units diff_top_less_btm = degC
+  EndTable
+#EndIf
 
 DataTable(ts_fast,True,-1)
   DataInterval(0,FAST_INTV,mSec,10)
@@ -500,49 +570,63 @@ DataTable(ts_slow,True,-1)
   CardOut(1,-1) 'XXX fixed size ?
   Sample(1,is_sampling_top,Boolean)
 '  Sample(1,is_sampling_mid,Boolean)
-  Sample(1,ch1_value,IEEE4)
-  Sample(1,ch2_value,IEEE4)
-  Sample(1,ch3_value,IEEE4)
-  Sample(1,ch4_value,IEEE4)
-  Sample(1,cp_CO2_value,IEEE4)
-  Sample(1,cp_H2O_value,IEEE4)
-  Sample(1,tmpr_state,FP2)
-  Sample(1,tmpr_btm,IEEE4)
-'  Sample(1,tmpr_mid,IEEE4)
-  Sample(1,tmpr_top,IEEE4)
-EndTable
-
-DataTable(tmpr_cal,(tmpr_enabled AND tmpr_state=Calibrating),-1)
-  DataInterval(0,CAL_INTV,Sec,10)
-  CardOut(1,1000)
-  Average(1,tmpr_btm,IEEE4,tmpr_btm=NAN)
-'  Average(1,tmpr_mid,IEEE4,tmpr_mid=NAN)
-  Average(1,tmpr_top,IEEE4,tmpr_top=NAN)
-  Average(1,(tmpr_top-tmpr_btm),IEEE4,(tmpr_top=NAN OR tmpr_btm=NAN))
-    FieldNames("diff_top_less_btm")
-    Units diff_top_less_btm = degC
+  #If (DF1_ENABLED) Then
+    Sample(1,df1_value,IEEE4)
+  #EndIf
+  #If (DF2_ENABLED) Then
+    Sample(1,df2_value,IEEE4)
+  #EndIf
+  #If (DF3_ENABLED) Then
+    Sample(1,df3_value,IEEE4)
+  #EndIf
+  #If (DF4_ENABLED) Then
+    Sample(1,df4_value,IEEE4)
+  #EndIf
+  #If (CP_CO2_ENABLED) Then
+    Sample(1,cp_CO2_value,IEEE4)
+  #EndIf
+  #If (CP_H2O_ENABLED) Then
+    Sample(1,cp_H2O_value,IEEE4)  
+  #EndIf
+  #If (TMPR_ENABLED) Then
+    Sample(1,tmpr_state,FP2)
+    Sample(1,tmpr_btm,IEEE4)
+    Sample(1,tmpr_top,IEEE4)
+  #EndIf
 EndTable
 
 DataTable(stats,True,-1)
   DataInterval(0,STATS_INTV,Min,10)
   CardOut(1,-1)
-  Sample(1,ch1_btm_Avg,FP2)
-  Sample(1,ch1_top_Avg,FP2)
-  Sample(1,ch2_btm_Avg,FP2)
-  Sample(1,ch2_top_Avg,FP2)
-  Sample(1,ch3_btm_Avg,FP2)
-  Sample(1,ch3_top_Avg,FP2)
-  Sample(1,ch4_btm_Avg,FP2)
-  Sample(1,ch4_top_Avg,FP2)
-
-  Sample(1,cp_CO2_btm_Avg,FP2)
-  Sample(1,cp_CO2_top_Avg,FP2)
-  Sample(1,cp_H2O_btm_Avg,FP2)
-  Sample(1,cp_H2O_top_Avg,FP2)
-
-  Sample(1,tmpr_btm_Avg,FP2)
-  Sample(1,tmpr_top_Avg,FP2)
-  Sample(1,tmpr_gradient,IEEE4)
+  #If (DF1_ENABLED) Then
+    Sample(1,df1_btm_Avg,FP2)
+    Sample(1,df1_top_Avg,FP2)
+  #EndIf
+  #If (DF2_ENABLED) Then
+    Sample(1,df2_btm_Avg,FP2)
+    Sample(1,df2_top_Avg,FP2)
+  #EndIf
+  #If (DF3_ENABLED) Then
+    Sample(1,df3_btm_Avg,FP2)
+    Sample(1,df3_top_Avg,FP2)
+  #EndIf
+  #If (DF4_ENABLED) Then
+    Sample(1,df4_btm_Avg,FP2)
+    Sample(1,df4_top_Avg,FP2)
+  #EndIf
+  #If (CP_CO2_ENABLED) Then
+    Sample(1,cp_CO2_btm_Avg,FP2)
+    Sample(1,cp_CO2_top_Avg,FP2)
+  #EndIf
+  #If (CP_H2O_ENABLED) Then
+    Sample(1,cp_H2O_btm_Avg,FP2)
+    Sample(1,cp_H2O_top_Avg,FP2)
+  #EndIf
+  #If (TMPR_ENABLED) Then
+    Sample(1,tmpr_btm_Avg,FP2)
+    Sample(1,tmpr_top_Avg,FP2)
+    Sample(1,tmpr_gradient,IEEE4)
+  #EndIf
   'TODO add gradient, flux stats
 
   Sample(1,sonic_Ts_Avg,FP2)
@@ -563,26 +647,6 @@ DataTable(stats,True,-1)
   Average(1,logger_temp,FP2,logger_temp=NAN)
 EndTable
 
-#If (ENABLE_GPS) Then
-  DataTable (gps_daily,TRUE,-1)
-    DataInterval (0,1,Day,10)
-    CardOut(0,60)
-    Median(1,(lat_deg + lat_min/60),DAILY_MEDNUM,IEEE4,(lat_deg=NAN OR lat_min=NAN))
-      FieldNames("latitude_Med")
-      Units latitude_Med = degreesN
-    Median(1,(long_deg + long_min/60),DAILY_MEDNUM,IEEE4,(long_deg=NAN OR long_min=NAN))
-      FieldNames("longitude_Med")
-      Units longitude_Med = degreesE
-    Median(1,mag_var,DAILY_MEDNUM,FP2,mag_var=NAN)
-    Average(1,num_sat,FP2,num_sat=NAN)
-    Median(1,altitude,DAILY_MEDNUM,IEEE4,altitude=NAN)
-    Average(1,altitude,IEEE4,altitude=NAN)
-    Minimum(1,gps_ready,FP2,gps_ready=NAN,0)
-    Sample(1,max_clock_change,UINT2)
-    Sample(1,num_clock_change,UINT2)
-  EndTable
-#EndIf
-
 
 '=============================== MENU =========================================
 Const Yes = True
@@ -592,75 +656,33 @@ Dim save_changes As Boolean
 Dim discard_changes As Boolean
 Dim set_defaults As Boolean
 Dim recompile As Boolean
-DisplayMenu("Gradient setup", 0) 'as submenu to main
-  SubMenu("Gas gradient")
-    MenuItem("Dwell, min", ch_toggle_time)
-      'TODO figure out best-compatible values for future 3rd level addition
-      MenuPick(0.5, 1, 1.5, 2, 3, 5, 6, 10, 15)
-    MenuItem("# levels", num_levels)
-      MenuPick(2)',3)
-    MenuItem("Top H, cm", ch_inlet_top_H
-    MenuItem("Btm H, cm", ch_inlet_btm_H
-    MenuItem("Calc. type", ch_grad_type)
-      MenuPick(Logarithmic, Linear)
-  EndSubMenu
-  SubMenu("Analog input")
-    MenuItem("Save DF 1?", ch_ch1_enabled)
-      MenuPick(No, Yes)
-    MenuItem("DF 1 mult", ch_ch1_mult)
-    MenuItem("DF 1 offset", ch_ch1_offset)
-    MenuItem("Save DF 2?", ch_ch2_enabled)
-      MenuPick(No, Yes)
-    MenuItem("DF 2 mult.", ch_ch2_mult)
-    MenuItem("DF 2 offset", ch_ch2_offset)
-    MenuItem("Save DF 3?", ch_ch3_enabled)
-      MenuPick(No, Yes)
-    MenuItem("DF 3 mult.", ch_ch3_mult)
-    MenuItem("DF 3 offset", ch_ch3_offset)
-    MenuItem("Save DF 4?", ch_ch4_enabled)
-      MenuPick(No, Yes)
-    MenuItem("DF 4 mult.", ch_ch4_mult)
-    MenuItem("DF 4 offset", ch_ch4_offset)
-  EndSubMenu
-  SubMenu("Thermistors")
-    MenuItem("Save data?", ch_tmpr_enabled)
-      MenuPick(No, Yes)
-    MenuItem("Set mode", ch_tmpr_state)
-      MenuPick(Standby, Normal, Calibrating)
-    MenuItem("Top H, cm", ch_tmpr_top_H
-    MenuItem("Btm H, cm", ch_tmpr_btm_H
-    MenuItem("T-B offset", ch_tmpr_top_btm)
-    ' XXX maybe ability change duration of calibration stats output (from 1min)
-  EndSubMenu
-  SubMenu("Closed-path IRGA")
-    MenuItem("Save CO2?", ch_cp_co2_enabled)
-      MenuPick(No, Yes)
-    MenuItem("CO2 mult", ch_cp_co2_mult)
-    MenuItem("CO2 offset", ch_cp_co2_offset)
-    MenuItem("Save H2O?", ch_cp_h2o_enabled)
-      MenuPick(No, Yes)
-    MenuItem("H2O mult", ch_cp_h2o_mult)
-    MenuItem("H2O offset", ch_cp_h2o_offset)
-  EndSubMenu
-  SubMenu("Sonic anemometer")
-    MenuItem("Azimuth, deg", ch_sonic_azimuth)
-  EndSubMenu
-  SubMenu("Save changes")
-    MenuItem("Save now?", save_changes)
-      MenuPick(Cancel,Yes)
-    MenuItem("Discard?", discard_changes)
-      MenuPick(Cancel,Yes)
-    MenuItem("Set default?", set_defaults)
-      MenuPick(Cancel,Yes)
-  EndSubMenu
-  SubMenu("Internals")
+
+DisplayMenu("Gradient system", -2)
+  SubMenu("Initial setup")
+'    MenuItem("# gas levels", NUM_LEVELS)
+'      MenuPick(NUM_LEVELS, 2, 3)
+    MenuItem("Enable DF 1?", DF1_ENABLED)
+      MenuPick(DF1_ENABLED, No, Yes)
+    MenuItem("Enable DF 2?", DF2_ENABLED)
+      MenuPick(DF2_ENABLED, No, Yes)
+    MenuItem("Enable DF 3?", DF3_ENABLED)
+      MenuPick(DF3_ENABLED, No, Yes)
+    MenuItem("Enable DF 4?", DF4_ENABLED)
+      MenuPick(DF4_ENABLED, No, Yes)
+    MenuItem("Enable CO2?", CP_CO2_ENABLED)
+      MenuPick(CP_CO2_ENABLED, No, Yes)
+    MenuItem("Enable H2O?", CP_H2O_ENABLED)
+      MenuPick(CP_H2O_ENABLED, No, Yes)
+    MenuItem("Enable temp?", TMPR_ENABLED)
+      MenuPick(TMPR_ENABLED, No, Yes)
+'    MenuItem("# tmpr levels", NUM_TMPR_LEVELS)
+'      MenuPick(NUM_TMPR_LEVELS, 2, 3)
+    MenuItem("Enable GPS?", GPS_ENABLED)
+      MenuPick(GPS_ENABLED, No, Yes)
     MenuItem("Time zone", UTC_OFFSET)
       MenuPick(UTC_OFFSET, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
-    MenuItem("Enable GPS?", ENABLE_GPS)
-      MenuPick(ENABLE_GPS, No, Yes)
     MenuItem("Sonic/IRGA", DATA_SRCS)
       MenuPick(DATA_SRCS,SDM_CSAT3A_EC150_1,SDM_CSAT3_LI7500_2, RS232_CSAT3_LI7500_3)
-    MenuItem("SDM speed", SDM_SPEED)
     MenuItem("EC100 addr", EC100_ADDR)
       MenuPick(EC100_ADDR,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14)
     MenuItem("CSAT3 addr", CSAT3_ADDR)
@@ -674,29 +696,96 @@ DisplayMenu("Gradient setup", 0) 'as submenu to main
     MenuRecompile("Recompile?", recompile)
       MenuPick(Cancel,Yes)
   EndSubMenu
+
+  SubMenu("Gradient settings")
+    SubMenu("Gas sampling")
+      MenuItem("Dwell, min", ch_toggle_time)
+        'TODO figure out best-compatible values for future 3rd level addition
+        MenuPick(0.25, 0.5, 1, 1.5, 2, 3, 5, 6, 10, 15)
+      MenuItem("Top H, cm", ch_inlet_top_H)
+      MenuItem("Btm H, cm", ch_inlet_btm_H)
+    EndSubMenu
+
+    #If (DF1_ENABLED OR DF2_ENABLED OR DF3_ENABLED OR DF4_ENABLED) Then
+    SubMenu("Analog input")
+    #EndIf
+      #If (DF1_ENABLED) Then
+        MenuItem("DF 1 mult.", ch_df1_mult)
+        MenuItem("DF 1 offset", ch_df1_offset)
+      #EndIf
+      #If (DF2_ENABLED) Then
+        MenuItem("DF 2 mult.", ch_df2_mult)
+        MenuItem("DF 2 offset", ch_df2_offset)
+      #EndIf
+      #If (DF3_ENABLED) Then
+        MenuItem("DF 3 mult.", ch_df3_mult)
+        MenuItem("DF 3 offset", ch_df3_offset)
+      #EndIf
+      #If (DF4_ENABLED) Then
+        MenuItem("DF 4 mult.", ch_df4_mult)
+        MenuItem("DF 4 offset", ch_df4_offset)
+      #EndIf
+    #If (DF1_ENABLED OR DF2_ENABLED OR DF3_ENABLED OR DF4_ENABLED) Then
+    EndSubMenu
+    #EndIf
+    
+    #If (CP_CO2_ENABLED OR CP_H2O_ENABLED) Then
+    SubMenu("Closed-path IRGA")
+    #EndIf
+      #If (CP_CO2_ENABLED) Then
+        MenuItem("CO2 mult.", ch_cp_co2_mult)
+        MenuItem("CO2 offset", ch_cp_co2_offset)
+      #EndIf
+      #If (CP_H2O_ENABLED) Then
+        MenuItem("H2O mult.", ch_cp_h2o_mult)
+        MenuItem("H2O offset", ch_cp_h2o_offset)
+      #EndIf
+    #If (CP_CO2_ENABLED OR CP_H2O_ENABLED) Then
+    EndSubMenu
+    #EndIf
+    
+    #If (TMPR_ENABLED) Then
+    SubMenu("Thermistors")
+      MenuItem("Set mode", ch_tmpr_state)
+        MenuPick(Standby, Normal, Calibrating)
+      MenuItem("Top H, cm", ch_tmpr_top_H)
+      MenuItem("Btm H, cm", ch_tmpr_btm_H)
+      MenuItem("T-B offset", ch_tmpr_top_btm)
+      ' XXX maybe ability change duration of calibration stats output (from 1min)
+    EndSubMenu
+    #EndIf
+    
+    SubMenu("Processing")
+      MenuItem("Calc. type", ch_grad_type)
+        MenuPick(Logarithmic, Linear)
+      MenuItem("Azimuth, deg", ch_sonic_azimuth)
+    EndSubMenu
+    SubMenu("Save changes")
+      MenuItem("Save now?", save_changes)
+        MenuPick(Cancel,Yes)
+      MenuItem("Discard?", discard_changes)
+        MenuPick(Cancel,Yes)
+      MenuItem("Set default?", set_defaults)
+        MenuPick(Cancel,Yes)
+    EndSubMenu
+  EndSubMenu
 EndMenu
+
 
 '============================== SUBROUTINES ===================================
 Sub set_default_choices()
-  ch_ch1_enabled    = No
-  ch_ch1_mult       = 1.0
-  ch_ch1_offset     = 0
-  ch_ch2_enabled    = No
-  ch_ch2_mult       = 1.0
-  ch_ch2_offset     = 0
-  ch_ch3_enabled    = No
-  ch_ch3_mult       = 1.0
-  ch_ch3_offset     = 0
-  ch_ch4_enabled    = No
-  ch_ch4_mult       = 1.0
-  ch_ch4_offset     = 0
-  ch_cp_co2_enabled = No
+  ch_df1_mult       = 1.0
+  ch_df1_offset     = 0
+  ch_df2_mult       = 1.0
+  ch_df2_offset     = 0
+  ch_df3_mult       = 1.0
+  ch_df3_offset     = 0
+  ch_df4_mult       = 1.0
+  ch_df4_offset     = 0
   ch_cp_co2_mult    = 1.0
   ch_cp_co2_offset  = 0
-  ch_cp_h2o_enabled = No
   ch_cp_h2o_mult    = 1.0
   ch_cp_h2o_offset  = 0
-  ch_tmpr_enabled   = No
   ch_tmpr_state     = Standby
   ch_tmpr_top_btm   = 0.0
   ch_sonic_azimuth  = 0
@@ -757,13 +846,6 @@ Sub save_current_choices()
     tmpr_top_H = 0
     tmpr_gradient_H = 0
   EndIf
-  If (NOT ch1_enabled) Then ch1_value = NAN
-  If (NOT ch2_enabled) Then ch2_value = NAN
-  If (NOT ch3_enabled) Then ch3_value = NAN
-  If (NOT ch4_enabled) Then ch4_value = NAN
-  If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
-  If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
-  If (NOT tmpr_enabled) Then Move(tmpr(1),3,NAN,1)
 
   'replace choices with validated settings and save to file
   Move(choice(1),NUM_SETTINGS,settings(1),NUM_SETTINGS)
@@ -784,6 +866,12 @@ Sub setup()
   is_sampling_top = False
   is_sampling_mid = False
   'no need for bottom state indicator; both top/mid false implies bottom=true
+
+  Move(sonic(1),5,NAN,1)
+  Move(op_irga(1),4,NAN,1)
+  Move(raw_conc(1),4,NAN,1)
+  Move(raw_cp_irga(1),2,NAN,1)
+  Move(tmpr(1),3,NAN,1)
 
   #If (DATA_SRCS=RS232_CSAT3_LI7500_3) Then
     SerialOpen(CSAT3_COM,CSAT3_BAUD,3,0,25)
@@ -909,79 +997,83 @@ BeginProg
 	
   SlowSequence
   Scan(SLOW_INTV,Sec,10,-1)
-    VoltDiff(ch1_value,1,mv5000,CH1_IO,1,0,INTEG,ch1_mult,ch1_offset)
-    VoltDiff(ch2_value,1,mv5000,CH2_IO,1,0,INTEG,ch2_mult,ch2_offset)
-    VoltDiff(ch3_value,1,mv5000,CH3_IO,1,0,INTEG,ch3_mult,ch3_offset)
-    VoltDiff(ch4_value,1,mv5000,CH4_IO,1,0,INTEG,ch4_mult,ch4_offset)
-    VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG,cp_co2_mult,cp_co2_offset)
-    VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG,cp_h2o_mult,cp_h2o_offset)
-    Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-'    If (num_levels = 3) Then Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
-    Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
-
-    #If (ENABLE_GPS) Then
+    #If (DF1_ENABLED) Then
+      VoltDiff(df1_value,1,mv5000,DF1_IO,1,0,INTEG,df1_mult,df1_offset)
+    #EndIf
+    #If (DF2_ENABLED) Then
+      VoltDiff(df2_value,1,mv5000,DF2_IO,1,0,INTEG,df2_mult,df2_offset)
+    #EndIf
+    #If (DF3_ENABLED) Then
+      VoltDiff(df3_value,1,mv5000,DF3_IO,1,0,INTEG,df3_mult,df3_offset)
+    #EndIf
+    #If (DF4_ENABLED) Then
+      VoltDiff(df4_value,1,mv5000,DF4_IO,1,0,INTEG,df4_mult,df4_offset)
+    #EndIf
+    #If (CP_CO2_ENABLED) Then
+      VoltDiff(cp_CO2_value,1,mv5000,CP_CO2_IO,1,0,INTEG,cp_co2_mult,cp_co2_offset)
+    #EndIf
+    #If (CP_H2O_ENABLED) Then
+      VoltDiff(cp_H2O_value,1,mv5000,CP_H2O_IO,1,0,INTEG,cp_h2o_mult,cp_h2o_offset)
+    #EndIf
+    #If (tmpr_enabled) Then
+      Therm107(tmpr_btm,1,TMPR_BTM_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+'      If (num_levels = 3) Then Therm107(tmpr_mid,1,TMPR_MID_IO,TMPR_VX_IO,0,INTEG, TMPR_MULT,TMPR_OFF)
+      Therm107(tmpr_top,1,TMPR_TOP_IO,TMPR_VX_IO,0,INTEG,TMPR_MULT,TMPR_OFF)
+    #EndIf
+    #If (GPS_ENABLED) Then
       GPS(gps16x(1),GPS_COM,UTC_OFFSET*3600,MAX_DIFF,nmea_str(1))
       CallTable(gps_daily)
     #EndIf
 
-    If (NOT ch1_enabled) Then ch1_value = NAN
-    If (NOT ch2_enabled) Then ch2_value = NAN
-    If (NOT ch3_enabled) Then ch3_value = NAN
-    If (NOT ch4_enabled) Then ch4_value = NAN
-    If (NOT cp_co2_enabled) Then cp_CO2_value = NAN
-    If (NOT cp_h2o_enabled) Then cp_H2O_value = NAN
-    If (NOT tmpr_enabled) Then 
-      tmpr_btm = NAN
-      'tmpr_mid = NAN
-      tmpr_top = NAN
-    EndIf
-
     'record measurements into correct level variable set
     'other variables are set to NAN during source level transition
     If (is_sampling_mid) Then
-      ch1_mid = ch1_value
-      ch2_mid = ch2_value
-      ch3_mid = ch3_value
-      ch4_mid = ch4_value
+      df1_mid = df1_value
+      df2_mid = df2_value
+      df3_mid = df3_value
+      df4_mid = df4_value
       cp_CO2_mid = cp_CO2_value
       cp_H2O_mid = cp_H2O_value
     ElseIf (is_sampling_top) Then
-      ch1_top = ch1_value
-      ch2_top = ch2_value
-      ch3_top = ch3_value
-      ch4_top = ch4_value
+      df1_top = df1_value
+      df2_top = df2_value
+      df3_top = df3_value
+      df4_top = df4_value
       cp_CO2_top = cp_CO2_value
       cp_H2O_top = cp_H2O_value
     Else
-      ch1_btm = ch1_value
-      ch2_btm = ch2_value
-      ch3_btm = ch3_value
-      ch4_btm = ch4_value
+      df1_btm = df1_value
+      df2_btm = df2_value
+      df3_btm = df3_value
+      df4_btm = df4_value
       cp_CO2_btm = cp_CO2_value
       cp_H2O_btm = cp_H2O_value
     EndIf
-    CallTable tmpr_cal
+
     CallTable ts_slow
+    #If (tmpr_enabled)
+      CallTable tmpr_cal
+    #EndIf
 
     CallTable work_slow
     If (work_slow.Output(1,1)) Then
       GetRecord(slow_out(1),work_slow,1)
 
-      If (NOT tmpr_enabled) Then
-        tmpr_gradient = NAN
-      ElseIf (NOT tmpr_gradient_H > 0) Then
-        tmpr_gradient = NAN
-      ElseIf (grad_type = Logarithmic) Then
-        tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
-        tmpr_gradient /= (LN(tmpr_top_H/tmpr_btm_H)*tmpr_gradient_H)
-        tmpr_gradient *= 100 'scale degC/cm => degC/m
-      ElseIf (grad_type = Linear) Then
-        tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
-        tmpr_gradient /= (tmpr_top_H - tmpr_btm_H)
-        tmpr_gradient *= 100 'scale degC/cm => degC/m
-      Else
-        tmpr_gradient = NAN
-      EndIf
+      #If (tmpr_enabled) Then
+        If (NOT tmpr_gradient_H > 0) Then
+          tmpr_gradient = NAN
+        ElseIf (grad_type = Logarithmic) Then
+          tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
+          tmpr_gradient /= (LN(tmpr_top_H/tmpr_btm_H)*tmpr_gradient_H)
+          tmpr_gradient *= 100 'scale degC/cm => degC/m
+        ElseIf (grad_type = Linear) Then
+          tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
+          tmpr_gradient /= (tmpr_top_H - tmpr_btm_H)
+          tmpr_gradient *= 100 'scale degC/cm => degC/m
+        Else
+          tmpr_gradient = NAN
+        EndIf
+      #EndIf
     EndIf
 
     If (work_fast.Output(1,1) AND work_slow.Output(1,1)) Then CallTable stats
