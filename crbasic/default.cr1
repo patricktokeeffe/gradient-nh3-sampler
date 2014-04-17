@@ -23,15 +23,10 @@ ConstTable
   Const CSAT3_ADDR = 3   'CSAT3 SDM address, default: 3
   Const LI7500_ADDR = 7  'LI7500 SDM address, default: 7
   Const EC100_ADDR = 1   'EC100/EC150/CSAT3A SDM address, default: 1
-  
+
   Const CSAT3_BAUD = 9600   '9600 or 19200
   Const LI7500_BAUD = 38400 '19200 or 38400 (9600 is too slow!)
 
-  Const FAST_INTV = 100     'eddy cov. scan frequency, ms
-  Const SLOW_INTV = 1       'gradient scan frequency, sec
-  Const STATS_INTV = 30     'interval of statistics output, min
-  Const CAL_INTV = 60       'interval of themistor cal. stats output, sec
-  
   Const DF1_ENABLED = True 'XXX 
   Const DF2_ENABLED = True
   Const DF3_ENABLED = True
@@ -44,10 +39,10 @@ EndConstTable
 
 '================================= WIRING =====================================
 'trace gas analyzer analog input
-Const DF1_IO = 1
-Const DF2_IO = 2
-Const DF3_IO = 3
-Const DF4_IO = 4
+Const DF1_IO = 1 'DF
+Const DF2_IO = 2 'DF
+Const DF3_IO = 3 'DF
+Const DF4_IO = 4 'DF
 
 'closed-path CO2/H2O analyzer
 Const CP_CO2_IO = 5 'DF
@@ -58,6 +53,11 @@ Const TMPR_BTM_IO = 14 'SE
 Const TMPR_MID_IO = 15 'SE
 Const TMPR_TOP_IO = 16 'SE
 Const TMPR_VX_IO = Vx3
+
+'RS-232 devices
+Const CSAT3_COM = Com1  'C1 C2
+Const LI7500_COM = Com2 'C3 C4
+Const GPS_COM = Com3    'C5 C6
 
 'level-selection valves
 Const VALVE_1_CTRL = 7   'C7
@@ -79,6 +79,10 @@ Const MW_co2 = 44.010    'molecular weight of carbon dioxide, g/mol
 Const MW_h2o = 18.01528  'molecular weight of water vapor, g/mol
 
 '----- PROGRAM OPERATION ------
+Const FAST_INTV = 100     'eddy cov. scan frequency, ms
+Const SLOW_INTV = 1       'gradient scan frequency, sec
+Const STATS_INTV = 30     'interval of statistics output, min
+Const CAL_INTV = 60       'interval of themistor cal. stats output, sec
 Const INTEG = 250
 
 '----- SDM DEVICES -----
@@ -87,11 +91,7 @@ Const CSAT3_OPT = INT(1000/FAST_INTV) 'calc Hz from interval
 Const LI7500_CMD = 6 'get CO2, H2O, press, diagnostic
 Const EC100_CMD = 1 'get 3D wind, temp, CO2, H2O, press, (2) diagnostic
 
-'----- RS-232 DEVICES -----
-Const CSAT3_COM = Com1
-Const LI7500_COM = Com2
-
-Const GPS_COM = Com3
+'----- GPS -----
 Const MAX_DIFF = -1 'XXX
 Const DAILY_MEDNUM = 480
 
