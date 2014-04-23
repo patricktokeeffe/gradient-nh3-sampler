@@ -265,20 +265,35 @@ Units logger_voltage = volts
 'Units lag_op_diag = bitmap
 'Units lag_op_signal = ratio
 
+Public cov_array(1,4)  '= [ [Uz, Ts, CO2, H2O] ]
+
 'for post-statistics manipulation
-Public fast_out(11) 'match length of work_fast table
+Public fast_out(22) 'match length of work_fast table
 Alias fast_out(1)  = sonic_Ts_Avg
-Alias fast_out(2)  = WS_sclr_Avg
-Alias fast_out(3)  = WD_unit_Avg
-Alias fast_out(4)  = WD_unit_Std
-'Alias fast_out(5)  = duplicate
-Alias fast_out(6)  = WS_rslt_Avg
-Alias fast_out(7)  = WD_rslt_Avg
-Alias fast_out(8)  = WD_rslt_Std
-Alias fast_out(9)  = op_CO2_Avg
-Alias fast_out(10) = op_H2O_Avg
-Alias fast_out(11) = op_press_Avg
+Alias fast_out(2)  = Uz_Std
+Alias fast_out(3)  = cov_Uz_Ts
+Alias fast_out(4)  = cov_Uz_CO2
+Alias fast_out(5)  = cov_Uz_H2O
+Alias fast_out(6)  = sonic_Ts_Std
+'Alias fast_out(7)  = cov_Ts_CO2
+'Alias fast_out(8)  = cov_Ts_H2O
+Alias fast_out(9)  = op_CO2_Std
+'Alias fast_out(10) = cov_CO2_H2O
+Alias fast_out(11) = op_H2O_Std
+Alias fast_out(12)  = WS_sclr_Avg
+Alias fast_out(13)  = WD_unit_Avg
+Alias fast_out(14)  = WD_unit_Std
+'Alias fast_out(15)  = dup: WS_sclr_Avg
+Alias fast_out(16)  = WS_rslt_Avg
+Alias fast_out(17)  = WD_rslt_Avg
+Alias fast_out(18)  = WD_rslt_Std
+Alias fast_out(19)  = op_CO2_Avg
+Alias fast_out(20) = op_H2O_Avg
+Alias fast_out(21) = op_press_Avg
+Alias fast_out(22) = op_temp_Avg
 Units sonic_Ts_Avg = degC
+Units sonic_Ts_Std = degC
+Units Uz_Std = m/s
 Units WS_sclr_Avg = m/s
 Units WD_unit_Avg = degEofN
 Units WD_unit_Std = deg
@@ -288,6 +303,9 @@ Units WD_rslt_Std = deg
 Units op_CO2_Avg = mmol/m^3
 Units op_H2O_Avg = mmol/m^3
 Units op_press_Avg = kPa
+Units op_temp_Avg = degC
+Units op_CO2_Std = mmol/m^3
+Units op_H2O_Std = mmol/m^3
 
 Public slow_out(14) 'match length of work_slow table
 Alias slow_out(1)  = df1_btm_Avg
@@ -309,6 +327,18 @@ Alias slow_out(14) = tmpr_top_Avg
 Units tmpr_btm_Avg = degC
 Units tmpr_top_Avg = degC
 
+Public gas_gradient(4)
+Alias gas_gradient(1) = df1_gradient
+Alias gas_gradient(2) = df2_gradient
+Alias gas_gradient(3) = df3_gradient
+Alias gas_gradient(4) = df4_gradient
+Units gas_gradient = unit/m
+
+Public cp_gradient(2)
+Alias cp_gradient(1) = cp_co2_gradient
+Alias cp_gradient(2) = cp_h2o_gradient
+'Units TODO !
+
 'gradient & flux calculation variables
 Public tmpr_gradient
 Units tmpr_gradient = degC/m
@@ -319,8 +349,17 @@ Units tmpr_gradient_H = cm
 Public gas_gradient_H
 Units gas_gradient_H = cm
 
-' TODO !!!! need sonic integration for online evaluation of eddy diffusivity
-' specifically, need cov_w_Ts
+Dim gas_denom, tmpr_denom
+
+Public K_estimates(4)
+Alias K_estimates(1) = K_para
+Alias K_estimates(2) = K_h
+Alias K_estimates(3) = K_co2
+Alias K_estimates(4) = K_w
+
+'XXX
+Public fluxest_df1
+
 
 'level-selection valve control
 Dim num_levels = {2} '2 or 3, determines if mid level is sampled
@@ -413,24 +452,22 @@ Alias choice(21) = ch_grad_type
 
 '=========================== DATA TABLES ====================================
 
+'TODO use aligned sonic/op IRGA data
+
 '----- WORKING TABLES -----
 DataTable(work_fast,True,10)
   DataInterval(0,STATS_INTV,Min,10)
   Average(1,sonic_Ts,IEEE4,sonic_Ts=NAN)
-  'TODO std dev? --> comes with cov()
-  'TODO covariance?
-  'TODO use aligned sonic/op IRGA data
+  Covariance(4,cov_array(1,1),IEEE4,disable_sonic OR disable_op,10)
   WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,1)
   'Opt1: mean horiz WS, unit vctr mean WD, and std WD using Yamartino eqn
   WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,2)
   'Opt2: mean horiz WS, rslt mean WS, rslt mean WD, WS-weighted WD sdev CSI eqn
-  'TODO sonic_uptime
 
   Average(1,op_CO2,IEEE4,disable_op)
   Average(1,op_H2O,IEEE4,disable_op)
   Average(1,op_press,IEEE4,disable_op)
-  'TODO std dev? --> comes with cov()
-  'TODO covariance?
+  Average(1,op_temp,IEEE4,disable_op)
 EndTable
 
 DataTable(work_slow,True,10)
@@ -615,51 +652,73 @@ DataTable(stats,True,-1)
   #If (DF1_ENABLED) Then
     Sample(1,df1_btm_Avg,FP2)
     Sample(1,df1_top_Avg,FP2)
+    Sample(1,df1_gradient,IEEE4)
   #EndIf
   #If (DF2_ENABLED) Then
     Sample(1,df2_btm_Avg,FP2)
     Sample(1,df2_top_Avg,FP2)
+    Sample(1,df2_gradient,IEEE4)
   #EndIf
   #If (DF3_ENABLED) Then
     Sample(1,df3_btm_Avg,FP2)
     Sample(1,df3_top_Avg,FP2)
+    Sample(1,df3_gradient,IEEE4)
   #EndIf
   #If (DF4_ENABLED) Then
     Sample(1,df4_btm_Avg,FP2)
     Sample(1,df4_top_Avg,FP2)
+    Sample(1,df4_gradient,IEEE4)
   #EndIf
   #If (CP_CO2_ENABLED) Then
     Sample(1,cp_CO2_btm_Avg,FP2)
     Sample(1,cp_CO2_top_Avg,FP2)
+    Sample(1,cp_CO2_gradient,IEEE4)
   #EndIf
   #If (CP_H2O_ENABLED) Then
     Sample(1,cp_H2O_btm_Avg,FP2)
     Sample(1,cp_H2O_top_Avg,FP2)
+    Sample(1,cp_H2O_gradient,IEEE4)
   #EndIf
   #If (TMPR_ENABLED) Then
     Sample(1,tmpr_btm_Avg,FP2)
     Sample(1,tmpr_top_Avg,FP2)
     Sample(1,tmpr_gradient,IEEE4)
   #EndIf
-  'TODO add gradient, flux stats
 
   Sample(1,sonic_Ts_Avg,FP2)
-  Sample(1,WS_sclr_Avg,FP2) 'XXX clean up / reorder
+  Sample(1,sonic_Ts_Std,FP2)
+  Sample(1,Uz_Std,FP2)
+  Sample(1,WS_sclr_Avg,FP2) 
   Sample(1,WD_unit_Avg,FP2)
   Sample(1,WD_unit_Std,FP2)
   Sample(1,WS_rslt_Avg,FP2)
   Sample(1,WD_rslt_Avg,FP2)
   Sample(1,WD_rslt_Std,FP2)
-  Sample(1,op_CO2_Avg,IEEE4) 'XXX make FP2?
+  Sample(1,op_CO2_Avg,IEEE4)
+  Sample(1,op_CO2_Std,FP2)
   Sample(1,op_H2O_Avg,IEEE4)
+  Sample(1,op_H2O_Std,FP2)
   Sample(1,op_press_Avg,IEEE4)
-  'TODO basic fluxes
-  'TODO Cov(Ts,Uz), Cov(CO2,Uz), Cov(H2O,Uz)
   #If (DATA_SRCS=SDM_CSAT3A_EC150_1) Then
     Sample(1,op_temp_Avg,FP2)
     StdDev(1,op_temp,FP2,op_temp=NAN) 'XXX implement inter-scan tracking!
     Average(1,op_co2_signal,FP2,op_co2_signal=NAN)
     Average(1,op_h2o_signal,FP2,op_h2o_signal=NAN)
+  #EndIf
+  
+  #If (CP_CO2_ENABLED) Then
+    Sample(1,cov_Uz_CO2,IEEE4)
+    Sample(1,K_co2,IEEE4)
+  #EndIf
+  #If (CP_H2O_ENABLED) Then
+    Sample(1,cov_Uz_H2O,IEEE4)
+    Sample(1,K_w,IEEE4)
+  #EndIf
+
+  #If (TMPR_ENABLED) Then
+    Sample(1,cov_Uz_Ts,IEEE4)
+    Sample(1,K_h,IEEE4)
+    Sample(1,fluxest_df1,IEEE4)
   #EndIf
 
   Average(1,logger_voltage,FP2,logger_voltage=NAN)
@@ -838,8 +897,10 @@ Sub save_current_choices()
       gas_gradient_H = 0
     ElseIf (grad_type = Logarithmic) Then
       gas_gradient_H = SQR(inlet_top_H * inlet_btm_H)
+      gas_denom = LN(inlet_top_H/inlet_btm_H)*gas_gradient_H
     ElseIf (grad_type = Linear) Then
       gas_gradient_H = (inlet_top_H + inlet_btm_H)/2
+      gas_denom = inlet_top_H - inlet_btm_H
     Else
       gas_gradient_H = 0
     EndIf
@@ -855,8 +916,10 @@ Sub save_current_choices()
       tmpr_gradient_H = 0
     ElseIf (grad_type = Logarithmic) Then
       tmpr_gradient_H = SQR(tmpr_top_H * tmpr_btm_H)
+      tmpr_denom = LN(tmpr_top_H/tmpr_btm_H)*tmpr_gradient_H
     ElseIf (grad_type = Linear) Then
       tmpr_gradient_H = (tmpr_top_H + tmpr_btm_H)/2
+      tmpr_denom = tmpr_top_H - tmpr_btm_H
     Else
       tmpr_gradient_H = 0
     EndIf
@@ -926,6 +989,7 @@ BeginProg
     #If (DATA_SRCS=SDM_CSAT3A_EC150_1) Then
       EC100(ec100_raw(1),EC100_ADDR,1)
       Move(sonic(1),5,ec100_raw(1),5)
+      disable_sonic = sonic_diag > 0
       'convert mass density to molar density for LI7500 compatibility
       op_CO2 = ec100_raw(6)/MW_co2 'mg/m^3 -> mmol/m^3
       op_H2O = ec100_raw(7)*1000/MW_h2o 'g/m^3 -> mmol/m^3
@@ -934,9 +998,12 @@ BeginProg
       op_press = ec100_raw(10)
       op_co2_signal = ec100_raw(11)
       op_h2o_signal = ec100_raw(12)
+      disable_op = op_diag > 0
     #ElseIf (DATA_SRCS=SDM_CSAT3_LI7500_2) Then
       CS7500(op_CO2,1,LI7500_ADDR,LI7500_CMD)
+      disable_op = (op_diag XOR &hF0) AND &hF0
       CSAT3(sonic_Ux,1,CSAT3_ADDR,CSAT3_CMD,CSAT3_OPT)
+      disable_sonic = (sonic_diag AND &hF000)
     #ElseIf (DATA_SRCS=RS232_CSAT3_LI7500_3) Then
       SerialInRecord(CSAT3_COM,csat3_record,0,10,&h55AA,bytes,11)
       SerialInRecord(LI7500_COM,li7500_record,&h0A,0,&h090D,bytes,11)
@@ -955,17 +1022,24 @@ BeginProg
         sonic(i) *= csat3_ranges(rcode+1)
       Next i
       sonic_Ts = sonic_temp(sonic(4)*0.001 + 340)
-      sonic_diag = (word4 AND &hF000) >> 12 'extract diag flags
+      sonic_diag = word4
+      disable_sonic = (sonic_diag AND &hF000)
 
       SplitStr(li7500_vals,li7500_record,"",4,0)
       op_diag = li7500_vals(1)
       op_CO2 = li7500_vals(2)
       op_H2O = li7500_vals(3)
       op_press = li7500_vals(4)
+      disable_op = (op_diag XOR &hF0) AND &hF0
     #EndIf
 
     CallTable ts_fast
     'TODO -> alignment table
+
+    cov_array(1,1) = sonic_Uz
+    cov_array(1,2) = sonic_Ts
+    cov_array(1,3) = op_CO2
+    cov_array(1,4) = op_H2O
     CallTable work_fast
 
     If (TimeIntoInterval(0,toggle_intv,Sec)) Then 
@@ -1080,24 +1154,56 @@ BeginProg
     If (work_slow.Output(1,1)) Then
       GetRecord(slow_out(1),work_slow,1)
 
-      #If (tmpr_enabled) Then
-        If (NOT tmpr_gradient_H > 0) Then
-          tmpr_gradient = NAN
-        ElseIf (grad_type = Logarithmic) Then
-          tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
-          tmpr_gradient /= (LN(tmpr_top_H/tmpr_btm_H)*tmpr_gradient_H)
-          tmpr_gradient *= 100 'scale degC/cm => degC/m
-        ElseIf (grad_type = Linear) Then
-          tmpr_gradient = (tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg)
-          tmpr_gradient /= (tmpr_top_H - tmpr_btm_H)
-          tmpr_gradient *= 100 'scale degC/cm => degC/m
+      If (gas_gradient_H > 0) Then
+        #If (DF1_ENABLED) Then
+          df1_gradient = (df1_top_Avg - df1_btm_Avg)*100/gas_denom
+        #EndIf
+        #If (DF2_ENABLED) Then
+          df2_gradient = (df2_top_Avg - df2_btm_Avg)*100/gas_denom
+        #EndIf
+        #If (DF3_ENABLED) Then
+          df3_gradient = (df3_top_Avg - df3_btm_Avg)*100/gas_denom
+        #EndIf
+        #If (DF4_ENABLED) Then
+          df4_gradient = (df4_top_Avg - df4_btm_Avg)*100/gas_denom
+        #EndIf
+        #If (CP_CO2_ENABLED) Then
+          cp_co2_gradient = (cp_CO2_top_Avg - cp_CO2_btm_Avg)*100/gas_denom
+        #EndIf
+        #If (CP_H2O_ENABLED) Then
+          cp_h2o_gradient = (cp_H2O_top_Avg - cp_H2O_btm_Avg)*100/gas_denom
+        #EndIf
+      EndIf
+
+      #If (TMPR_ENABLED) Then
+        If (tmpr_gradient_H > 0) Then
+          tmpr_gradient = tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg
+          tmpr_gradient *= 100/tmpr_denom 'scale degC/cm => degC/m
         Else
           tmpr_gradient = NAN
         EndIf
       #EndIf
     EndIf
 
-    If (work_fast.Output(1,1) AND work_slow.Output(1,1)) Then CallTable stats
+    If (work_fast.Output(1,1) AND work_slow.Output(1,1)) Then 
+      GetRecord(fast_out(1),work_fast,1)
+
+      WD_unit_Avg += (360 + sonic_azimuth) MOD 360 'TODO add mag declin
+      WD_rslt_Avg += (360 + sonic_azimuth) MOD 360
+
+      #If (CP_CO2_ENABLED) Then
+        K_co2 = cov_Uz_CO2/cp_co2_gradient
+      #EndIf
+      #If (CP_H2O_ENABLED) Then
+        K_w = cov_Uz_H2O/cp_h2o_gradient
+      #EndIf
+      #If (TMPR_ENABLED) Then
+        K_h = cov_Uz_Ts/tmpr_gradient
+        fluxest_df1 = df1_gradient * K_h
+      #EndIf
+    EndIf
+    
+    CallTable stats
 
   NextScan
 EndProg
