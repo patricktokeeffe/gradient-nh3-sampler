@@ -148,17 +148,27 @@ Units sonic_Ts = degC
 Units sonic_diag = bitmap
 Public disable_sonic As Boolean 
 
-Public op_irga(5)
+Public op_irga(4)
 Alias op_irga(1) = op_CO2
 Alias op_irga(2) = op_H2O
 Alias op_irga(3) = op_press
 Alias op_irga(4) = op_diag
-Alias op_irga(5) = op_signal 'TODO retain AGC or CO2/H2O signal strength?
 Units op_irga = mmol/m^3
 Units op_press = kPa
 Units op_diag = bitmap
-Units op_signal = ratio 'XXX
 Public disable_op As Boolean
+
+#If (DATA_SRCS=SDM_CSAT3A_EC150_1) Then
+  Public extra_irga(3)
+#Else
+  Dim extra_irga(3) 'hide from Public menu if not using
+#EndIf
+Alias extra_irga(1) = op_temp
+Alias extra_irga(2) = op_co2_signal
+Alias extra_irga(3) = op_h2o_signal
+Units op_temp = degC
+Units op_co2_signal = ratio
+Units op_h2o_signal = ratio
 
 'serial input handling for sensors in RS-232 mode
 Dim bytes
@@ -562,7 +572,11 @@ DataTable(ts_fast,True,-1)
   Sample(1,op_H2O,IEEE4)
   Sample(1,op_press,IEEE4)
   Sample(1,op_diag,UINT2)
-'  Sample(1,op_signal,UINT2)
+  #If (DATA_SRCS=SDM_CSAT3A_EC150_1) Then
+    Sample(1,op_temp,IEEE4)
+    Sample(1,op_co2_signal,FP2)
+    Sample(1,op_h2o_signal,FP2)
+  #EndIf
 EndTable
 
 DataTable(ts_slow,True,-1)
@@ -639,9 +653,14 @@ DataTable(stats,True,-1)
   Sample(1,op_CO2_Avg,IEEE4) 'XXX make FP2?
   Sample(1,op_H2O_Avg,IEEE4)
   Sample(1,op_press_Avg,IEEE4)
-  'XXX ambient temp?
   'TODO basic fluxes
   'TODO Cov(Ts,Uz), Cov(CO2,Uz), Cov(H2O,Uz)
+  #If (DATA_SRCS=SDM_CSAT3A_EC150_1) Then
+    Sample(1,op_temp_Avg,FP2)
+    StdDev(1,op_temp,FP2,op_temp=NAN) 'XXX implement inter-scan tracking!
+    Average(1,op_co2_signal,FP2,op_co2_signal=NAN)
+    Average(1,op_h2o_signal,FP2,op_h2o_signal=NAN)
+  #EndIf
 
   Average(1,logger_voltage,FP2,logger_voltage=NAN)
   Average(1,logger_temp,FP2,logger_temp=NAN)
@@ -869,6 +888,7 @@ Sub setup()
 
   Move(sonic(1),5,NAN,1)
   Move(op_irga(1),4,NAN,1)
+  Move(extra_irga(1),3,NAN,1)
   Move(raw_conc(1),4,NAN,1)
   Move(raw_cp_irga(1),2,NAN,1)
   Move(tmpr(1),3,NAN,1)
@@ -910,9 +930,10 @@ BeginProg
       op_CO2 = ec100_raw(6)/MW_co2 'mg/m^3 -> mmol/m^3
       op_H2O = ec100_raw(7)*1000/MW_h2o 'g/m^3 -> mmol/m^3
       op_diag = ec100_raw(8)
+      op_temp = ec100_raw(9)
       op_press = ec100_raw(10)
-      'TODO ambient temp?
-      'TODO op_signal
+      op_co2_signal = ec100_raw(11)
+      op_h2o_signal = ec100_raw(12)
     #ElseIf (DATA_SRCS=SDM_CSAT3_LI7500_2) Then
       CS7500(op_CO2,1,LI7500_ADDR,LI7500_CMD)
       CSAT3(sonic_Ux,1,CSAT3_ADDR,CSAT3_CMD,CSAT3_OPT)
