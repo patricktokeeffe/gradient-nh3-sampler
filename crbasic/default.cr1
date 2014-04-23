@@ -1188,8 +1188,8 @@ BeginProg
     If (work_fast.Output(1,1) AND work_slow.Output(1,1)) Then 
       GetRecord(fast_out(1),work_fast,1)
 
-      WD_unit_Avg += (360 + sonic_azimuth) MOD 360 'TODO add mag declin
-      WD_rslt_Avg += (360 + sonic_azimuth) MOD 360
+      WD_unit_Avg = (360 + WD_unit_Avg + sonic_azimuth) MOD 360 'TODO add mag declin
+      WD_rslt_Avg = (360 + WD_rslt_Avg + sonic_azimuth) MOD 360
 
       #If (CP_CO2_ENABLED) Then
         K_co2 = cov_Uz_CO2/cp_co2_gradient
