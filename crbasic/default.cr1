@@ -268,29 +268,44 @@ Units logger_voltage = volts
 Public cov_array(1,4)  '= [ [Uz, Ts, CO2, H2O] ]
 
 'for post-statistics manipulation
-Public fast_out(22) 'match length of work_fast table
-Alias fast_out(1)  = sonic_Ts_Avg
-Alias fast_out(2)  = Uz_Std
-Alias fast_out(3)  = cov_Uz_Ts
-Alias fast_out(4)  = cov_Uz_CO2
-Alias fast_out(5)  = cov_Uz_H2O
-Alias fast_out(6)  = sonic_Ts_Std
-'Alias fast_out(7)  = cov_Ts_CO2
-'Alias fast_out(8)  = cov_Ts_H2O
-Alias fast_out(9)  = op_CO2_Std
-'Alias fast_out(10) = cov_CO2_H2O
-Alias fast_out(11) = op_H2O_Std
-Alias fast_out(12)  = WS_sclr_Avg
-Alias fast_out(13)  = WD_unit_Avg
-Alias fast_out(14)  = WD_unit_Std
-'Alias fast_out(15)  = dup: WS_sclr_Avg
-Alias fast_out(16)  = WS_rslt_Avg
-Alias fast_out(17)  = WD_rslt_Avg
-Alias fast_out(18)  = WD_rslt_Std
-Alias fast_out(19)  = op_CO2_Avg
-Alias fast_out(20) = op_H2O_Avg
-Alias fast_out(21) = op_press_Avg
-Alias fast_out(22) = op_temp_Avg
+Public work_out(36) 'match length of work table
+Alias work_out(1)  = sonic_Ts_Avg
+Alias work_out(2)  = Uz_Std
+Alias work_out(3)  = cov_Uz_Ts
+Alias work_out(4)  = cov_Uz_CO2
+Alias work_out(5)  = cov_Uz_H2O
+Alias work_out(6)  = sonic_Ts_Std
+'Alias work_out(7)  = cov_Ts_CO2
+'Alias work_out(8)  = cov_Ts_H2O
+Alias work_out(9)  = op_CO2_Std
+'Alias work_out(10) = cov_CO2_H2O
+Alias work_out(11) = op_H2O_Std
+Alias work_out(12)  = WS_sclr_Avg
+Alias work_out(13)  = WD_unit_Avg
+Alias work_out(14)  = WD_unit_Std
+'Alias work_out(15)  = dup: WS_sclr_Avg
+Alias work_out(16)  = WS_rslt_Avg
+Alias work_out(17)  = WD_rslt_Avg
+Alias work_out(18)  = WD_rslt_Std
+Alias work_out(19)  = op_CO2_Avg
+Alias work_out(20) = op_H2O_Avg
+Alias work_out(21) = op_press_Avg
+Alias work_out(22) = op_temp_Avg
+Alias work_out(23)  = df1_btm_Avg
+Alias work_out(24)  = df1_top_Avg
+Alias work_out(25)  = df2_btm_Avg
+Alias work_out(26)  = df2_top_Avg
+Alias work_out(27)  = df3_btm_Avg
+Alias work_out(28)  = df3_top_Avg
+Alias work_out(29)  = df4_btm_Avg
+Alias work_out(30)  = df4_top_Avg
+Alias work_out(31)  = cp_CO2_btm_Avg
+Alias work_out(32) = cp_CO2_top_Avg
+Alias work_out(33) = cp_H2O_btm_Avg
+Alias work_out(34) = cp_H2O_top_Avg
+Alias work_out(35) = tmpr_btm_Avg
+Alias work_out(36) = tmpr_top_Avg
+
 Units sonic_Ts_Avg = degC
 Units sonic_Ts_Std = degC
 Units Uz_Std = m/s
@@ -307,21 +322,6 @@ Units op_temp_Avg = degC
 Units op_CO2_Std = mmol/m^3
 Units op_H2O_Std = mmol/m^3
 
-Public slow_out(14) 'match length of work_slow table
-Alias slow_out(1)  = df1_btm_Avg
-Alias slow_out(2)  = df1_top_Avg
-Alias slow_out(3)  = df2_btm_Avg
-Alias slow_out(4)  = df2_top_Avg
-Alias slow_out(5)  = df3_btm_Avg
-Alias slow_out(6)  = df3_top_Avg
-Alias slow_out(7)  = df4_btm_Avg
-Alias slow_out(8)  = df4_top_Avg
-Alias slow_out(9)  = cp_CO2_btm_Avg
-Alias slow_out(10) = cp_CO2_top_Avg
-Alias slow_out(11) = cp_H2O_btm_Avg
-Alias slow_out(12) = cp_H2O_top_Avg
-Alias slow_out(13) = tmpr_btm_Avg
-Alias slow_out(14) = tmpr_top_Avg
 'Units df1..4 TODO
 'Units cp CO2/H2O TODO
 Units tmpr_btm_Avg = degC
@@ -360,6 +360,10 @@ Alias K_estimates(4) = K_w
 'XXX
 Public fluxest_df1
 
+
+'inter-table flagging
+Dim just_had_1hz_scan As Boolean
+Dim inbetween_1hz_scan As Boolean
 
 'level-selection valve control
 Dim num_levels = {2} '2 or 3, determines if mid level is sampled
@@ -455,37 +459,32 @@ Alias choice(21) = ch_grad_type
 'TODO use aligned sonic/op IRGA data
 
 '----- WORKING TABLES -----
-DataTable(work_fast,True,10)
+DataTable(work,True,10)
   DataInterval(0,STATS_INTV,Min,10)
+
   Average(1,sonic_Ts,IEEE4,sonic_Ts=NAN)
   Covariance(4,cov_array(1,1),IEEE4,disable_sonic OR disable_op,10)
   WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,1)
-  'Opt1: mean horiz WS, unit vctr mean WD, and std WD using Yamartino eqn
   WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,2)
-  'Opt2: mean horiz WS, rslt mean WS, rslt mean WD, WS-weighted WD sdev CSI eqn
-
   Average(1,op_CO2,IEEE4,disable_op)
   Average(1,op_H2O,IEEE4,disable_op)
   Average(1,op_press,IEEE4,disable_op)
   Average(1,op_temp,IEEE4,disable_op)
-EndTable
 
-DataTable(work_slow,True,10)
-  DataInterval(0,STATS_INTV,Min,10)
-  Average(1,df1_btm,IEEE4,df1_btm=NAN)
-  Average(1,df1_top,IEEE4,df1_top=NAN)
-  Average(1,df2_btm,IEEE4,df2_btm=NAN)
-  Average(1,df2_top,IEEE4,df2_top=NAN)
-  Average(1,df3_btm,IEEE4,df3_btm=NAN)
-  Average(1,df3_top,IEEE4,df3_top=NAN)
-  Average(1,df4_btm,IEEE4,df4_btm=NAN)
-  Average(1,df4_top,IEEE4,df4_top=NAN)
-  Average(1,cp_CO2_btm,IEEE4,cp_CO2_btm=NAN)
-  Average(1,cp_CO2_top,IEEE4,cp_CO2_top=NAN)
-  Average(1,cp_H2O_btm,IEEE4,cp_H2O_btm=NAN)
-  Average(1,cp_H2O_top,IEEE4,cp_H2O_top=NAN)
-  Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR tmpr_state<>Normal)
-  Average(1,tmpr_top,FP2,tmpr_top=NAN OR tmpr_state<>Normal)
+  Average(1,df1_btm,IEEE4,df1_btm=NAN OR inbetween_1hz_scan)
+  Average(1,df1_top,IEEE4,df1_top=NAN OR inbetween_1hz_scan)
+  Average(1,df2_btm,IEEE4,df2_btm=NAN OR inbetween_1hz_scan)
+  Average(1,df2_top,IEEE4,df2_top=NAN OR inbetween_1hz_scan)
+  Average(1,df3_btm,IEEE4,df3_btm=NAN OR inbetween_1hz_scan)
+  Average(1,df3_top,IEEE4,df3_top=NAN OR inbetween_1hz_scan)
+  Average(1,df4_btm,IEEE4,df4_btm=NAN OR inbetween_1hz_scan)
+  Average(1,df4_top,IEEE4,df4_top=NAN OR inbetween_1hz_scan)
+  Average(1,cp_CO2_btm,IEEE4,cp_CO2_btm=NAN OR inbetween_1hz_scan)
+  Average(1,cp_CO2_top,IEEE4,cp_CO2_top=NAN OR inbetween_1hz_scan)
+  Average(1,cp_H2O_btm,IEEE4,cp_H2O_btm=NAN OR inbetween_1hz_scan)
+  Average(1,cp_H2O_top,IEEE4,cp_H2O_top=NAN OR inbetween_1hz_scan)
+  Average(1,tmpr_btm,FP2,tmpr_btm=NAN OR tmpr_state<>Normal OR inbetween_1hz_scan)
+  Average(1,tmpr_top,FP2,tmpr_top=NAN OR tmpr_state<>Normal OR inbetween_1hz_scan)
 EndTable
 
 '----- FINAL OUTPUTS -----
@@ -1036,12 +1035,6 @@ BeginProg
     CallTable ts_fast
     'TODO -> alignment table
 
-    cov_array(1,1) = sonic_Uz
-    cov_array(1,2) = sonic_Ts
-    cov_array(1,3) = op_CO2
-    cov_array(1,4) = op_H2O
-    CallTable work_fast
-
     If (TimeIntoInterval(0,toggle_intv,Sec)) Then 
       If (num_levels = 3) Then
         If (is_sampling_mid) Then
@@ -1068,11 +1061,54 @@ BeginProg
     EndIf
     PortSet(VALVE_1_CTRL,is_sampling_top) 'not allowed in conditional
     PortSet(VALVE_2_CTRL,is_sampling_mid)
-		
-    If (work_fast.Output(1,1)) Then
-      'do stuff
+
+    cov_array(1,1) = sonic_Uz
+    cov_array(1,2) = sonic_Ts
+    cov_array(1,3) = op_CO2
+    cov_array(1,4) = op_H2O
+    CallTable work
+    If (work.Output(1,1)) Then
+      GetRecord(work_out(1),work,1)
+
+      WD_unit_Avg = (360 + WD_unit_Avg + sonic_azimuth) MOD 360 'TODO add mag declin
+      WD_rslt_Avg = (360 + WD_rslt_Avg + sonic_azimuth) MOD 360
+
+      If (gas_gradient_H > 0) Then
+        #If (DF1_ENABLED) Then
+          df1_gradient = (df1_top_Avg - df1_btm_Avg)*100/gas_denom
+        #EndIf
+        #If (DF2_ENABLED) Then
+          df2_gradient = (df2_top_Avg - df2_btm_Avg)*100/gas_denom
+        #EndIf
+        #If (DF3_ENABLED) Then
+          df3_gradient = (df3_top_Avg - df3_btm_Avg)*100/gas_denom
+        #EndIf
+        #If (DF4_ENABLED) Then
+          df4_gradient = (df4_top_Avg - df4_btm_Avg)*100/gas_denom
+        #EndIf
+        #If (CP_CO2_ENABLED) Then
+          cp_co2_gradient = (cp_CO2_top_Avg - cp_CO2_btm_Avg)*100/gas_denom
+          K_co2 = cov_Uz_CO2/cp_co2_gradient
+        #EndIf
+        #If (CP_H2O_ENABLED) Then
+          cp_h2o_gradient = (cp_H2O_top_Avg - cp_H2O_btm_Avg)*100/gas_denom
+          K_w = cov_Uz_H2O/cp_h2o_gradient
+        #EndIf
+      EndIf
+
+      #If (TMPR_ENABLED) Then
+        If (tmpr_gradient_H > 0) Then
+          tmpr_gradient = tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg
+          tmpr_gradient *= 100/tmpr_denom 'scale degC/cm => degC/m
+          K_h = cov_Uz_Ts/tmpr_gradient
+          fluxest_df1 = df1_gradient * K_h
+        Else
+          tmpr_gradient = NAN
+        EndIf
+      #EndIf
     EndIf
-		
+    CallTable stats
+
     If (save_changes) Then
       Call save_current_choices()  
       save_changes = Cancel
@@ -1087,6 +1123,12 @@ BeginProg
       Call reset_settings()
       set_defaults = Cancel
       CallTable info
+    EndIf
+
+    inbetween_1hz_scan = TRUE
+    If (just_had_1hz_scan) Then
+      just_had_1hz_scan = FALSE
+      inbetween_1hz_scan = FALSE
     EndIf
 	NextScan 
 	
@@ -1150,61 +1192,7 @@ BeginProg
       CallTable tmpr_cal
     #EndIf
 
-    CallTable work_slow
-    If (work_slow.Output(1,1)) Then
-      GetRecord(slow_out(1),work_slow,1)
-
-      If (gas_gradient_H > 0) Then
-        #If (DF1_ENABLED) Then
-          df1_gradient = (df1_top_Avg - df1_btm_Avg)*100/gas_denom
-        #EndIf
-        #If (DF2_ENABLED) Then
-          df2_gradient = (df2_top_Avg - df2_btm_Avg)*100/gas_denom
-        #EndIf
-        #If (DF3_ENABLED) Then
-          df3_gradient = (df3_top_Avg - df3_btm_Avg)*100/gas_denom
-        #EndIf
-        #If (DF4_ENABLED) Then
-          df4_gradient = (df4_top_Avg - df4_btm_Avg)*100/gas_denom
-        #EndIf
-        #If (CP_CO2_ENABLED) Then
-          cp_co2_gradient = (cp_CO2_top_Avg - cp_CO2_btm_Avg)*100/gas_denom
-        #EndIf
-        #If (CP_H2O_ENABLED) Then
-          cp_h2o_gradient = (cp_H2O_top_Avg - cp_H2O_btm_Avg)*100/gas_denom
-        #EndIf
-      EndIf
-
-      #If (TMPR_ENABLED) Then
-        If (tmpr_gradient_H > 0) Then
-          tmpr_gradient = tmpr_top_Avg - tmpr_top_btm - tmpr_btm_Avg
-          tmpr_gradient *= 100/tmpr_denom 'scale degC/cm => degC/m
-        Else
-          tmpr_gradient = NAN
-        EndIf
-      #EndIf
-    EndIf
-
-    If (work_fast.Output(1,1) AND work_slow.Output(1,1)) Then 
-      GetRecord(fast_out(1),work_fast,1)
-
-      WD_unit_Avg = (360 + WD_unit_Avg + sonic_azimuth) MOD 360 'TODO add mag declin
-      WD_rslt_Avg = (360 + WD_rslt_Avg + sonic_azimuth) MOD 360
-
-      #If (CP_CO2_ENABLED) Then
-        K_co2 = cov_Uz_CO2/cp_co2_gradient
-      #EndIf
-      #If (CP_H2O_ENABLED) Then
-        K_w = cov_Uz_H2O/cp_h2o_gradient
-      #EndIf
-      #If (TMPR_ENABLED) Then
-        K_h = cov_Uz_Ts/tmpr_gradient
-        fluxest_df1 = df1_gradient * K_h
-      #EndIf
-    EndIf
-    
-    CallTable stats
-
+  just_had_1hz_scan = TRUE
   NextScan
 EndProg
 
