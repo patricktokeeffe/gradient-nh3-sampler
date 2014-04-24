@@ -1134,6 +1134,9 @@ BeginProg
 	
   SlowSequence
   Scan(SLOW_INTV,Sec,10,-1)
+    PanelTemp(logger_temp,INTEG)
+    Battery(logger_voltage)
+
     #If (DF1_ENABLED) Then
       VoltDiff(df1_value,1,mv5000,DF1_IO,1,0,INTEG,df1_mult,df1_offset)
     #EndIf
