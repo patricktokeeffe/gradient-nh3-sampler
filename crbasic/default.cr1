@@ -117,6 +117,7 @@ Alias raw_conc(1) = df1_value
 Alias raw_conc(2) = df2_value
 Alias raw_conc(3) = df3_value
 Alias raw_conc(4) = df4_value
+Units raw_conc = unit
 
 'level-partitioned readings of DF1-4
 Public conc(12)
@@ -132,6 +133,7 @@ Alias conc(9)  = df3_top
 Alias conc(10) = df4_btm
 Alias conc(11) = df4_mid
 Alias conc(12) = df4_top
+Units conc = unit
 
 'measurements from sonic anemometer & open-path CO2/H2O analyer
 Dim ec100_raw(12) 'Campbellsci EC100/EC150/CSAT3A
@@ -700,7 +702,7 @@ DataTable(stats,True,-1)
   Sample(1,op_press_Avg,IEEE4)
   #If (DATA_SRCS=SDM_CSAT3A_EC150_1) Then
     Sample(1,op_temp_Avg,FP2)
-    StdDev(1,op_temp,FP2,op_temp=NAN) 'XXX implement inter-scan tracking!
+    StdDev(1,op_temp,FP2,op_temp=NAN)
     Average(1,op_co2_signal,FP2,op_co2_signal=NAN)
     Average(1,op_h2o_signal,FP2,op_h2o_signal=NAN)
   #EndIf
@@ -828,7 +830,6 @@ DisplayMenu("Gradient system", -2)
       MenuItem("Top H, cm", ch_tmpr_top_H)
       MenuItem("Btm H, cm", ch_tmpr_btm_H)
       MenuItem("T-B offset", ch_tmpr_top_btm)
-      ' XXX maybe ability change duration of calibration stats output (from 1min)
     EndSubMenu
     #EndIf
     
@@ -1110,16 +1111,14 @@ BeginProg
     CallTable stats
 
     If (save_changes) Then
-      Call save_current_choices()  
+      Call save_current_choices()
       save_changes = Cancel
       CallTable info
-    EndIf
-    If (discard_changes) Then
+    ElseIf (discard_changes) Then
       Call populate_choices()
       discard_changes = Cancel
       CallTable info
-    EndIf
-    If (set_defaults) Then
+    ElseIf (set_defaults) Then
       Call reset_settings()
       set_defaults = Cancel
       CallTable info
@@ -1165,8 +1164,7 @@ BeginProg
       CallTable(gps_daily)
     #EndIf
 
-    'record measurements into correct level variable set
-    'other variables are set to NAN during source level transition
+    'push values into correct 'level'; other 'levels' are set NAN during transition
     If (is_sampling_mid) Then
       df1_mid = df1_value
       df2_mid = df2_value
@@ -1181,7 +1179,7 @@ BeginProg
       df4_top = df4_value
       cp_CO2_top = cp_CO2_value
       cp_H2O_top = cp_H2O_value
-    Else
+    Else 'bottom
       df1_btm = df1_value
       df2_btm = df2_value
       df3_btm = df3_value
@@ -1189,7 +1187,6 @@ BeginProg
       cp_CO2_btm = cp_CO2_value
       cp_H2O_btm = cp_H2O_value
     EndIf
-
     CallTable ts_slow
     #If (tmpr_enabled)
       CallTable tmpr_cal
