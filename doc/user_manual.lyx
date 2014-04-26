@@ -26,19 +26,20 @@
 \makesavenoteenv{tabular}
 
 % http://tex.stackexchange.com/q/33841
-% default TOC settings from paper.cls
-% tocdepth: 3
-% 1 section: 1.5em 2.3em
-% 2 subsection: 1.5em 2.3em
-% 3 subsubsection: 3.8em 3.2em 
-% 4 paragraph: 7.0em 4.1em 
-% 5 subparagraph: 10em 5em
-% \renewcommand*\l@<type>{\@dottedtocline{<level>}{<indent>}{<numwidth>}
-\renewcommand*\l@subsection{\@dottedtocline{2}{3.8em}{3.2em}}
+% default TOC settings from paper.cls:
+%    \newcommand*\l@section{\@dottedtocline{1}{1.5em}{2.3em}}
+%    \newcommand*\l@subsection{\@dottedtocline{2}{3.8em}{3.2em}}
+%    \newcommand*\l@subsubsection{\@dottedtocline{3}{7.0em}{4.1em}}
+%    \newcommand*\l@paragraph{\@dottedtocline{4}{10em}{5em}}
+%    \newcommand*\l@subparagraph{\@dottedtocline{5}{12em}{6em}}
+% format: l@<type>{\@dottedtocline{<level>}{<indent>}{<numwidth>}
+% don't change indent of section for consistency with TOC entries for Lists
+\renewcommand*\l@section{\@dottedtocline{1}{1.5em}{1.5em}}
+\renewcommand*\l@subsection{\@dottedtocline{2}{3em}{2.3em}}
+\renewcommand*\l@subsubsection{\@dottedtocline{3}{5.3em}{3.5em}}
 
-\renewcommand{\nomname}{List of Symbols} % change "Nomenclature"
-
-\usepackage{framed} % for framing multi-page code listings
+\renewcommand{\nomname}{List of Symbols}% was "Nomenclature"
+\renewcommand{\lstlistlistingname}{List of Program Listings}% http://stackoverflow.com/a/9480618/2946116
 
 % number listings by section like figure/table/eqns
 % http://www.latex-community.org/forum/viewtopic.php?f=5&p=10165#p10168
@@ -47,6 +48,8 @@
 % including "Listing" in formatted reference for listings
 % http://tex.stackexchange.com/a/65704/48287
 \newref{lis}{name=listing~,Name=Listing~,names=listings~,Names=Listings~}
+
+\usepackage{framed} % for framing multi-page code listings
 
 %% define syntax highlighting for CRBASIC code
 % specify listing option `language=[CR]Basic
@@ -65,7 +68,7 @@
   upquote=true,%
   string=[bd][\color{crbStrings}]{"},% TODO check how delimiters are escaped
   showstringspaces=false,%
-  morekeywords=[1]{Const, Public, Dim, Alias, Units, ConstTable, EndConstTable, DataTable, EndTable, DataInterval, CardOut, Average, Covariance, WindVector, Sample, FieldNames, Totalize, DisplayMenu, SubMenu, EndSubMenu, MenuItem, MenuPick, MenuRecompile, EndMenu, Sub, EndSub, Function, Return, EndFunction, If, Then, ElseIf, Else, EndIf, While, Wend, Move, OR, AND, XOR, SDMSpeed, CallTable, WriteIO, BeginProg, Scan, SlowSequence, NextScan, EndProg, SerialOpen, SerialInRecord, As, For, Next, MoveBytes, To, EC100, CSAT3, CS7500, PipeLineMode, Call, CHR, Float, String, Long, ASCII, SplitStr, VoltDiff, Therm107, NOT, GetRecord},% TODO !
+  morekeywords=[1]{Const, Public, Dim, Alias, Units, ConstTable, EndConstTable, DataTable, EndTable, DataInterval, CardOut, Average, Covariance, WindVector, Sample, FieldNames, Totalize, DisplayMenu, SubMenu, EndSubMenu, MenuItem, MenuPick, MenuRecompile, EndMenu, Sub, EndSub, Function, Return, EndFunction, If, Then, ElseIf, Else, EndIf, While, Wend, Move, OR, AND, XOR, SDMSpeed, CallTable, WriteIO, BeginProg, Scan, SlowSequence, NextScan, EndProg, SerialOpen, SerialInRecord, As, For, Next, MoveBytes, To, EC100, CSAT3, CS7500, PipeLineMode, Call, CHR, Float, String, Long, ASCII, SplitStr, VoltDiff, Therm107, NOT, GetRecord, Median, Minimum},% TODO !
   keywordstyle={[1]{\color{crbKeywords}}},%
   otherkeywords={=, /, *, +, -, *=, /=, +=, -=, <<, >>},%
   morekeywords=[2]{=, /, *, +, -, *=, /=, +=, -=, <<, >>},%
@@ -74,19 +77,34 @@
 }
 
 % insist on using line, not column width, and not indenting shadow boxes
-%\setlength{\fboxrule}{1\linewidth}
 \let\oldshadowbox\shadowbox
 \renewcommand{\shadowbox}[1]{%
-  \noindent \oldshadowbox{#1}}
+  \noindent \oldshadowbox{#1}%
+}
 
-% use consistent name for list of listings
-% http://stackoverflow.com/a/9480618/2946116
-\renewcommand{\lstlistlistingname}{List of Program Listings}
+% redefine shadowbox to override Lyx's default width of 1\columnwidth
+% note: this is hackish because it wraps the minipage inherently inside a 
+% shadowbox with another minipage explicitly 1\linewidth wide. thus, 
+% individual box widths cannot be specified
+%\let\oldshadowbox\shadowbox
+%\renewcommand{\shadowbox}[1]{%
+%  \noindent \oldshadowbox{%
+%    \begin{minipage}[t]{1\linewidth}
+%    #1
+%    \end{minipage}}%
+%}
 
 % enable color for banding rows in tables
 \usepackage{colortbl}
 \definecolor{band1}{gray}{0.85}
 \definecolor{band2}{gray}{0.75}
+
+% globally compact numbered lists:
+%\usepackage{enumitem}
+%\setenumerate{noitemsep}
+
+\usepackage{rotating} % for \sideways in imported spreadsheets
+\usepackage{isodate}\isodate % for proper dates: YYYY-MM-DD
 \end_preamble
 \options intoc
 \use_default_options true
@@ -168,7 +186,7 @@ End
 \rightmargin 2.5cm
 \bottommargin 2.5cm
 \secnumdepth 3
-\tocdepth 2
+\tocdepth 3
 \paragraph_separation indent
 \paragraph_indentation default
 \quotes_language english
@@ -277,7 +295,19 @@ Notes
 \begin_inset Text
 
 \begin_layout Plain Layout
-2014-03-20
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+today
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -296,7 +326,7 @@ P.
 \begin_inset Text
 
 \begin_layout Plain Layout
-Pre-release draft
+Pre-release draft for internal use only
 \end_layout
 
 \end_inset
@@ -563,6 +593,13 @@ Overview
 \end_layout
 
 \begin_layout Standard
+This user manual describes a sampling system which enables researchers to
+ conduct measurements of trace gas gradients and derive surface fluxes of
+ trace gases from such measurements.
+ 
+\end_layout
+
+\begin_layout Standard
 A block diagram of the gradient system is shown in figure 
 \begin_inset CommandInset ref
 LatexCommand vref
@@ -570,8 +607,7 @@ reference "fig:System-block-diagram"
 
 \end_inset
 
-.
- Labels are described in 
+ with labels provided in 
 \begin_inset CommandInset ref
 LatexCommand formatted
 reference "tab:System-block-diagram"
@@ -586,7 +622,7 @@ reference "tab:System-block-diagram"
 placement p
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \noindent
@@ -629,7 +665,7 @@ name "fig:System-block-diagram"
 placement p
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \begin_inset Caption
@@ -1040,8 +1076,8 @@ The gradient system is, for the most part, made of commercial off-the-shelf
 \end_layout
 
 \begin_layout Itemize
-Fiberglass enclosure (datalogger, control components, \SpecialChar \ldots{}
-)
+Fiberglass enclosure (datalogger, control relays, power supply and solenoid
+ valves)
 \end_layout
 
 \begin_layout Itemize
@@ -1121,7 +1157,7 @@ Open-path CO
 
 \end_inset
 
-O analyzer (LI-7500; LI-COR Biosciences)
+O infrared gas analyzer (IRGA) (LI-7500; LI-COR Biosciences)
 \end_layout
 
 \begin_layout Standard
@@ -1147,7 +1183,7 @@ Integrated sonic anemometer & open-path CO
 
 \end_inset
 
-O analyzer 
+O infrared gas analyzer (IRGA) 
 \begin_inset Newline newline
 \end_inset
 
@@ -1169,12 +1205,12 @@ Mounting booms:
 
 \begin_deeper
 \begin_layout Itemize
-(1) 6-8 ft length of Bosch-brand 45mm T-slotted aluminum square tube for
- sonic anemometer
+6-8 ft of Bosch-brand 45mm T-slotted aluminum square tube for anemometer
+ & IRGA
 \end_layout
 
 \begin_layout Itemize
-(1) 6-8 ft length of 45mm square tube or 1
+6-8 ft of 45mm square tube or 1
 \begin_inset Quotes erd
 \end_inset
 
@@ -1182,7 +1218,7 @@ Mounting booms:
 \end_layout
 
 \begin_layout Itemize
-(1) 8-10 ft length of 1
+8-10 ft of 1
 \begin_inset Quotes erd
 \end_inset
 
@@ -1528,10 +1564,6 @@ requirements: ?
 Principle of Operation
 \end_layout
 
-\begin_layout Subsection
-Gas sampling
-\end_layout
-
 \begin_layout Standard
 Two sampling lines are installed on horizontal booms placed at strategic
  heights on a small (3m) tower.
@@ -1546,10 +1578,6 @@ Two sampling lines are installed on horizontal booms placed at strategic
  
 \end_layout
 
-\begin_layout Subsection
-Gradient measurement
-\end_layout
-
 \begin_layout Standard
 A datalogger tracks the state of the solenoid valve, records analog output
  signals from the trace gas analyzers at moderate frequency (1 Hz) and partition
@@ -1560,11 +1588,6 @@ s those signals accordingly to generate mean gas concentrations at each
  The data logging device records precision temperature measurements at two
  strategic heights as well and uses mean temperature at those two heights
  to generate a temperature gradient for each output interval.
- 
-\end_layout
-
-\begin_layout Subsection
-Flux determination
 \end_layout
 
 \begin_layout Standard
@@ -1633,7 +1656,42 @@ sonic temperature closely approximates virtual temperature within the typical
 \end_layout
 
 \begin_layout Section
-Setup
+Installation
+\end_layout
+
+\begin_layout Standard
+OLD INTRO PARAGRAPH: Guidance on the physical installation of equipment
+ is provided in the following sections.
+ Considerations which should be given with respect to mounting location
+ are discussed.
+ 
+\end_layout
+
+\begin_layout Standard
+The following instructions 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+are not comprehensive
+\end_layout
+
+\end_inset
+
+ and the user should refer to the appropriate user manuals for detailed
+ installation procedures
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manual-cr1000,manual-csat3,manual-ec100,manual-li7500"
+
+\end_inset
+
+.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -1651,25 +1709,160 @@ The modular nature of the gradient system faciliates several different modes
 \end_layout
 
 \begin_layout Description
-Minimal The gradient system needs, at a minimum, a closed-path trace gas
- analyzer to monitor the air sample being drawn from each inlet.
- This produces sufficient information to calculate a gas gradient and without
- additional information, some estimates must be made to yield a trace gas
- flux.
+Minimal At bare minimum, a closed-path trace gas analyzer is used to monitor
+ the air sample being drawn from each inlet.
+ Sufficient information is captured to calculate gas gradients but deriving
+ trace gas fluxes must be done in post-processing with an external estimate
+ of the eddy diffusivity.
+ 
+\begin_inset VSpace defskip
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100line%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+The non-use of a sonic/IRGA has not yet been implemented.
+ You could just pick any option and live with the garbage data recorded.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+Typical A basic setup includes a closed-path trace gas analyzer for monitoring
+ gas gradients, a sonic anemometer for monitoring wind direction and atmospheric
+ turbulence and an open-path infrared gas analyzer for monitoring eddy covarianc
+e fluxes of CO
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+, H
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+O, sensible and latent heats.
+ In this case, eddy diffusivity is estimated using empirical parameterizations.
+ 
+\begin_inset VSpace defskip
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100line%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Parameterized eddy diffusivity calculations are not implemented yet!
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+Advanced In advanced setups, additional sensors are used to improve estimates
+ of eddy diffusivity:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+with
+\begin_inset space \space{}
+\end_inset
+
+closed-path
+\begin_inset space \space{}
+\end_inset
+
+IRGA Adding a closed-path IRGA to sample CO
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+/H
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+O in the air drawn from gradient inlets enables quantified estimates of
+ eddy diffusivity.
  
 \end_layout
 
 \begin_layout Description
-Typical has basic sonic/irga + closed path irga
+with
+\begin_inset space \space{}
+\end_inset
+
+thermistors Adding a set of aspirated thermistors to sample the temperature
+ gradient provides another quantified estimate of eddy diffusivity.
 \end_layout
 
-\begin_layout Description
-Advanced includes thermistors
+\end_deeper
+\begin_layout Standard
+The above modes of deployment are not selected using an explicit setting
+ in the datalogger program.
+ Rather the combination of available sensors and program settings determines
+ the operating mode.
 \end_layout
 
-\begin_layout Description
-Co-deployment It is possible to record data from the sonic anemometer and
- open-path IRGA simultaneously with another CRBasic-compatible
+\begin_layout Paragraph
+Co-deployment 
+\end_layout
+
+\begin_layout Standard
+It is also possible to record data from the sonic anemometer and open-path
+ IRGA simultaneously with another CRBasic-compatible
 \begin_inset Foot
 status collapsed
 
@@ -1711,8 +1904,8 @@ reference "sec:Notes-to-Developers"
 \end_inset
 
  datalogger.
- The gradient system only supports this deployment mode while using the
- CSAT3 sonic anemometer (Campbell Scientific) and LI-7500 infrared CO
+ The gradient system only supports this setup when using a CSAT3 sonic anemomete
+r (Campbell Scientific) and LI-7500 infrared CO
 \begin_inset script subscript
 
 \begin_layout Plain Layout
@@ -1732,19 +1925,328 @@ reference "sec:Notes-to-Developers"
 
 O analyzer (LI-COR).
  
+\begin_inset VSpace defskip
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-\begin_inset Float table
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+The co-deployment mode was initially created for cooperative deployments
+ with the 
+\begin_inset Flex Emph
+status collapsed
+
+\begin_layout Plain Layout
+Denuder-based Trace Gas Sampling System
+\end_layout
+
+\end_inset
+
+ but is not limited to such situations.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Optimal mounting heights
+\end_layout
+
+\begin_layout Standard
+To achieve maximum performance, various factors must be considered when
+ selecting individual sampling heights.
+ The following discussions highlight specific considerations for each type
+ of sensor and, where available, provide guidance from peer-reviewed literature.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Gas gradient inlets
+\end_layout
+
+\begin_layout Standard
+The gradient inlets must be sufficiently separated with respect to height
+ that differences in velocity, concentration and temperature are well resolved
+ but must be sufficiently close that finite-difference approximations accurately
+ represent the real gradients.
+ Arya (2001) recommends a compromise whereby the ratio of inlet heights
+ 
+\begin_inset Formula $z_{2}/z_{1}=2\; to\;4$
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "book-arya2001"
+
+\end_inset
+
+.
+ Table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:grad-height-ratios"
+
+\end_inset
+
+ (pg 
+\begin_inset CommandInset ref
+LatexCommand pageref
+reference "tab:grad-height-ratios"
+
+\end_inset
+
+) is presented as a guidance tool for selecting mounting heights satisfying
+ this recommendation.
+\end_layout
+
+\begin_layout Standard
+The lowest inlet height must also be well-clear of any surface roughness
+ elements.
+ A minimum seperation distance of 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+??
+\end_layout
+
+\end_inset
+
+ between the top of roughness elements and the lower inlet height is recommended
+ (
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+by who?
+\end_layout
+
+\end_inset
+
+).
+ Long-term deployments should take into consideration changes in roughness
+ height over the course of the measurement period to avoid necessary adjustments
+ in inlet height.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Changes in crop/canopy height may affect zero plane displacement, which
+ would change the effective gradient sampling heights.
+ Fully addressing this phenomenon is beyond the scope of this manual at
+ this time.
+\end_layout
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Thermistors
+\end_layout
+
+\begin_layout Standard
+The thermistors should be at the same heights as the gas inlets in order
+ to achieve the same effective gradient height.
+ 
+\end_layout
+
+\begin_layout Standard
+Due to the shape of the aspirated radiation shields and triangular cross-section
+ of nearly all micrometeorological towers, it is often impractical to affix
+ the thermistor shields to the vertical tower legs at the same height as
+ the gas gradient inlet booms.
+ Instead, users might place the shields 'through' the tower and affix them
+ to horizontal tower struts, then select the gradient inlet position.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Eddy covariance sensors
+\end_layout
+
+\begin_layout Standard
+The height of the sonic anemometer and open-path IRGA should match the effective
+ height of the gas and temperature gradients determined above.
+ These will depend on the assumed vertical profile: linear or logarithmic.
+ Tables 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:grad-height-linear"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:grad-height-log"
+
+\end_inset
+
+ (pages 
+\begin_inset CommandInset ref
+LatexCommand pageref
+reference "tab:grad-height-linear"
+
+\end_inset
+
+, 
+\begin_inset CommandInset ref
+LatexCommand pageref
+reference "tab:grad-height-log"
+
+\end_inset
+
+) provide approximate effective heights for linear and logarithmic profiles,
+ respectively, over the same range of heights examined in table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:grad-height-ratios"
+
+\end_inset
+
+.
+ The relative positions of both effective gradient heights are depicted
+ to-scale in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:Effective-gradient-heights"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement bh
 wide false
 sideways false
-status collapsed
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename images/effective_gradient_heights.png
+
+\end_inset
+
+
+\end_layout
 
 \begin_layout Plain Layout
 \begin_inset Caption
 
 \begin_layout Plain Layout
-a table
+Effective gradient heights (TODO: add crop clearance)
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Effective-gradient-heights"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Orientation 
+\end_layout
+
+\begin_layout Standard
+Discuss which direction the booms and sonic should be pointed: into the
+ wind, der.
+\end_layout
+
+\begin_layout Subsection
+Required tools
+\end_layout
+
+\begin_layout Standard
+The most common tools required for installation are listed in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:Installation-tools"
+
+\end_inset
+
+.
+ It is not an exhaustive list and the user may need several of a given tool
+ (e.g.
+ multiple 
+\begin_inset Formula $\nicefrac{1}{2}"$
+\end_inset
+
+ combination wrenches).
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Installation tools & consumables
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:Installation-tools"
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -1755,95 +2257,25 @@ a table
 \begin_layout Plain Layout
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="8" columns="6">
+<lyxtabular version="3" rows="10" columns="6">
 <features tabularvalignment="middle">
-<column alignment="left" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0pt">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0pt">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0pt">
+<column alignment="left" valignment="top" width="1ex">
+<column alignment="left" valignment="top" width="0pt">
+<column alignment="left" valignment="top" width="1ex">
+<column alignment="left" valignment="top" width="0pt">
+<column alignment="left" valignment="top" width="1ex">
+<column alignment="left" valignment="top" width="0pt">
 <row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-Gas gradient + \SpecialChar \ldots{}
-
+Tools
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rotate="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Trace gas analyzer
-\begin_inset space \quad{}
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rotate="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Closed-path IRGA
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rotate="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Thermistors
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rotate="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Sonic anemometer
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" rotate="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Open-path IRGA
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Parameterized wind stats
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-X
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell multicolumn="2" alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1852,7 +2284,7 @@ X
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell multicolumn="2" alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1861,16 +2293,7 @@ X
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-X
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1879,114 +2302,20 @@ X
 
 \end_inset
 </cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
-Temperature gradient
+Consumables
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-X
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-X
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-X
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-CO2/H2O gradient + CO2/H2O EC flux
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-X
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-X
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-X
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-X
 \end_layout
 
 \end_inset
@@ -2002,11 +2331,135 @@ X
 
 \end_inset
 </cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+combination wrench, 
+\begin_inset Formula $\nicefrac{9}{16}$
+\end_inset
+
+"
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+wire strippers
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+cable ties
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+combination wrench, 
+\begin_inset Formula $\nicefrac{1}{2}$
+\end_inset
+
+"
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+wire (diagonal) cutters
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+flagging tape
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
 <cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+combination wrench, 
+\begin_inset Formula $\nicefrac{7}{16}$
+\end_inset
+
+"
 \end_layout
 
 \end_inset
@@ -2024,7 +2477,7 @@ X
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+allen wrench set (SAE)
 \end_layout
 
 \end_inset
@@ -2042,6 +2495,178 @@ X
 \begin_inset Text
 
 \begin_layout Plain Layout
+aluminum foil
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+crescent wrench, 
+\begin_inset Formula $\geq10$
+\end_inset
+
+"
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+tape measure
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+screwdriver, small slotted (-) 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+compass
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+screwdriver, small phillips (+)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+torpedo level
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
 
 \end_layout
 
@@ -2062,7 +2687,7 @@ X
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+screwdriver, large phillips (+)
 \end_layout
 
 \end_inset
@@ -2080,7 +2705,7 @@ X
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+razor knife
 \end_layout
 
 \end_inset
@@ -2229,225 +2854,7 @@ X
 \end_layout
 
 \begin_layout Subsection
-Installation
-\end_layout
-
-\begin_layout Standard
-Procedures and guidance on the physical installation of equipment is provided
- in the following sections.
- The following instructions are not comprehensive; the user is advised to
- reference appropriate user manuals for sensors and equipment used 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "manual-cr1000,manual-csat3,manual-ec100,manual-li7500"
-
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Subsubsection
-Required Tools
-\end_layout
-
-\begin_layout Standard
-\begin_inset Tabular
-<lyxtabular version="3" rows="9" columns="2">
-<features tabularvalignment="middle">
-<column alignment="center" valignment="top" width="0">
-<column alignment="left" valignment="top" width="0">
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-9/16" open-end/combo wrench
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-1/2" open-end/combo wrench
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-10" adjustable (crescent) wrench
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-small standard (-) screwdriver
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-small phillips (+) screwdriver
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-allen wrench, SAE 
-\color red
-[WHAT SIZE?]
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-wire strippers
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsubsection
-Order of operations
+Physical Setup
 \end_layout
 
 \begin_layout Standard
@@ -2464,19 +2871,44 @@ Turn this list in to a flow chart or even a NS diagram.
 \end_layout
 
 \begin_layout Enumerate
-Setup tower on base, secure it
+Setup tower on secure, anchored base platform
 \end_layout
 
+\begin_layout Enumerate
+Attach gas gradient hardware
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Booms
+\end_layout
+
+\begin_layout Enumerate
+Tubing
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Attach eddy covariance sensors, if using (future version will permit no
+ sonic)
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Booms
+\end_layout
+
+\end_deeper
 \begin_layout Enumerate
 Attach booms to tower
 \end_layout
 
 \begin_layout Enumerate
-Attach sonic anemometer sensor head to boom, not control box
+Attach sonic anemometer sensor head to boom (not control box yet)
 \end_layout
 
 \begin_layout Enumerate
-Attach irga to boom, not control box
+Attach IRGA to boom (not control box yet)
 \end_layout
 
 \begin_layout Enumerate
@@ -2484,105 +2916,11 @@ Route sensor cables to determine where control boxes can be placed
 \end_layout
 
 \begin_layout Enumerate
-Position control box & pump box
+Position sonic and IRGA control boxes & pump box
 \end_layout
 
 \begin_layout Enumerate
 Route plumbing
-\end_layout
-
-\begin_layout Subsubsection
-Combined sonic anemometer/IRGA (EC100/EC150/CSAT3A)
-\end_layout
-
-\begin_layout Enumerate
-?
-\end_layout
-
-\begin_layout Subsubsection
-Sonic anemometer (CSAT3)
-\end_layout
-
-\begin_layout Standard
-First mount the sensor head:
-\end_layout
-
-\begin_layout Enumerate
-Position the horizontal arm in the channel on top of the Bosch square tube
- so the sensor head mounting bolt is accessible at the end of the boom.
- Secure the horizontal arm using U-bolts.
- 
-\end_layout
-
-\begin_layout Enumerate
-Mount the sensor head to the horizontal arm and finger-tighten the bolt
- underneath the block.
- 
-\end_layout
-
-\begin_layout Enumerate
-Rotate the sensor head so when the boom is mounted on the tower, the predominant
- wind direction is into the sensors.
- Adjust for terrain as well, if necessary: 
-\end_layout
-
-\begin_deeper
-\begin_layout Enumerate
-For flat level terrain, level the block using the bubble level located on
- top of the block.
- 
-\end_layout
-
-\begin_layout Enumerate
-For sloping terrain, adjust the block so the top block surface is parallel
- to the terrain.
- ?!?!?!?! 
-\begin_inset Note Note
-status collapsed
-
-\begin_layout Plain Layout
-XXX
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_deeper
-\begin_layout Enumerate
-Secure the lower bolt with a 9/16” wrench.
-\end_layout
-
-\begin_layout Standard
-Once the sensor head is mounted, the optimal position of the control box
- can be determined.
- The major constraint is the length of signal cable coming from the sensor
- head:
-\end_layout
-
-\begin_layout Enumerate
-Mount the anemometer electronics box securely to the tower near the boom.
- 
-\end_layout
-
-\begin_layout Enumerate
-Connect the cable from the anemometer sensors to the Transducer Head input.
- 
-\end_layout
-
-\begin_layout Enumerate
-Connect the dual gray cables from the data logger field box to the +12V
- SDM input of the electronics box.
- 
-\end_layout
-
-\begin_layout Subsubsection
-Infrared gas analyzer (LI-7500)
-\end_layout
-
-\begin_layout Enumerate
-?
 \end_layout
 
 \begin_layout Subsubsection
@@ -2604,6 +2942,151 @@ Ensure the denuders are safely within reach to facilitate swapping cartridges.
 Attach the boom securely to the tower using straps, clamps, U-bolts or another
  robust method.
  
+\end_layout
+
+\begin_layout Subsubsection
+Sample tubing
+\end_layout
+
+\begin_layout Enumerate
+?
+\end_layout
+
+\begin_layout Subsubsection
+Combined sonic anemometer/IRGA (EC100/EC150/CSAT3A)
+\end_layout
+
+\begin_layout Enumerate
+?
+\end_layout
+
+\begin_layout Subsubsection
+Sonic anemometer (CSAT3)
+\end_layout
+
+\begin_layout Standard
+First mount the sensor head:
+\end_layout
+
+\begin_layout Enumerate
+Position the tubular horizontal arm in the T-channel on top of the Bosch
+ square tube boom so the sensor head mounting bolt is accessible at the
+ end of the boom.
+ Secure the horizontal arm to the boom using U-bolts.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Mount the sensor head to the captive bolt in the horizontal arm and secure
+ the bolt to finger-tight.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Rotate the sensor head to face into the predominant wind direction and adjust
+ for local terrain: 
+\begin_inset VSpace defskip
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100line%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+The author has never experienced a situation where option (b) is preferable
+ to option (a).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+For flat level terrain, level the block using the bubble level located on
+ top of the block.
+ 
+\end_layout
+
+\begin_layout Enumerate
+For sloping terrain, adjust the block so the top block surface is parallel
+ to the terrain.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Secure the lower bolt with a 
+\begin_inset Formula $\nicefrac{9}{16}$
+\end_inset
+
+" wrench.
+ Ensure tightening the bolt has not adversely affected the instrument's
+ level.
+ Loosen, adjust and re-tighten as necessary.
+ 
+\end_layout
+
+\begin_layout Standard
+Once the sensor head is mounted, the optimal position of the control box
+ can be determined.
+ The major constraint is the length of signal cable coming from the sensor
+ head:
+\end_layout
+
+\begin_layout Enumerate
+Mount the anemometer electronics box securely to the tower near the boom.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Connect the cable from the transducer block to the 
+\begin_inset Quotes eld
+\end_inset
+
+Transducer Head
+\begin_inset Quotes erd
+\end_inset
+
+ input.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Connect the gray double-cable (power/SDM) from the data logger field box
+ to the 
+\begin_inset Quotes eld
+\end_inset
+
++12V SDM
+\begin_inset Quotes erd
+\end_inset
+
+ input of the electronics box.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Infrared gas analyzer (LI-7500)
+\end_layout
+
+\begin_layout Enumerate
+?
 \end_layout
 
 \begin_layout Subsubsection
@@ -2645,46 +3128,295 @@ If no GPS receiver is being used, skip to the next set of steps.
 ?
 \end_layout
 
-\begin_layout Subsubsection
-Sample tubing
-\end_layout
-
-\begin_layout Enumerate
-?
-\end_layout
-
 \begin_layout Subsection
-Initial Program Setup
+Wiring
 \end_layout
 
 \begin_layout Standard
-The gradient system must be configured for the selected instruments and
- their operating parameters by updating options under the 
-\begin_inset Flex MenuItem
+There is a diagram inside the enclosure cover.
+ Maybe it should be included here? Or as an apppendix?
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Operation
+\end_layout
+
+\begin_layout Subsection
+Start/Stop Procedure
+\end_layout
+
+\begin_layout Subsubsection*
+Starting the system 
+\end_layout
+
+\begin_layout Standard
+Upon receiving power, the datalogger will turn on and compile the operating
+ program.
+\begin_inset Foot
 status collapsed
 
 \begin_layout Plain Layout
-Initial
-\begin_inset space \space{}
+The program file is named 
+\begin_inset Quotes eld
 \end_inset
 
-setup
+
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+default.cr1
 \end_layout
 
 \end_inset
 
- menu.
- These options, summarized in table 
-\begin_inset CommandInset ref
-LatexCommand vref
-reference "tab:menu-InitialSetup"
+
+\begin_inset Quotes erd
+\end_inset
+
+ so it is loaded in preference to any other programs in the logger's memory.
+ 
+\end_layout
 
 \end_inset
 
-, affect core aspects of the operating program such as execution of measurements
-, intermediate processing routines, and format of data tables.
+ Program settings and initial setup configuration are retained across power
+ cycles; once compilation finishes, the user can change the operating configurat
+ion and program settings as described in sections 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Initial-Setup"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Program-Settings"
+
+\end_inset
+
+, respectively.
+ If the last operating state of the program was satisfactory, then supplying
+ power is typically enough to begin measurements.
  
 \begin_inset VSpace defskip
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Pro tip: to minimize compilation time and prevent collecting garbage data,
+ do not insert external memory cards until the system is fully configured
+ with the desired settings.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The location of the master power switch depends on the physical enclosure
+ hardware (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:Location-of-master-power-switch"
+
+\end_inset
+
+).
+ If the sensors are wired correctly, they will only receive 12Vdc power
+ when the master switch is ON.
+ Sensors which depend on 120Vac power must be provided power independently
+ -- the datalogger has no incentives or provisions to control power to such
+ devices.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement ph
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset space \hfill{}
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename images/li7500_cts-rts_loopback.jpg
+	lyxscale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Style A
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset space \hfill{}
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename images/li7500_cts-rts_loopback.jpg
+	lyxscale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Style B
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset space \hfill{}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Location of master power switch
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Location-of-master-power-switch"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Shutting down the system
+\end_layout
+
+\begin_layout Standard
+The datalogger continuously buffers recorded measurements to data tables
+ so an explicit shutdown procedure is actually unnecessary.
+ However, due to the potential of malformed records caused by abrupt power
+ loss, it is 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+highly recommended
+\end_layout
+
+\end_inset
+
+ to safely eject external memory cards 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+before
+\end_layout
+
+\end_inset
+
+ shutting the system down (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sub:Data-Retrieval"
+
+\end_inset
+
+).
+ 
+\end_layout
+
+\begin_layout Standard
+To shut down the system, remove power by turning the master power switch
+ off.
+\end_layout
+
+\begin_layout Subsection
+Initial Setup
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Initial-Setup"
+
 \end_inset
 
 
@@ -2702,18 +3434,17 @@ width "100line%"
 special "none"
 height "1in"
 height_special "totalheight"
-status collapsed
+status open
 
 \begin_layout Plain Layout
-Generally, there is no need to reconfigure instruments but if necessary,
- initial sensor configuration is covered in appendix 
+If sensors are not yet configured, refer to appendix 
 \begin_inset CommandInset ref
 LatexCommand vref
 reference "sec:Initial-Sensor-Configuration"
 
 \end_inset
 
-.
+ for instructions.
 \end_layout
 
 \end_inset
@@ -2722,7 +3453,8 @@ reference "sec:Initial-Sensor-Configuration"
 \end_layout
 
 \begin_layout Standard
-All changes should be made to options under 
+The gradient system must be adjusted to the particular instrument configuration
+ by updating options under the 
 \begin_inset Flex MenuItem
 status collapsed
 
@@ -2736,7 +3468,22 @@ setup
 
 \end_inset
 
- first so that relevant options are enabled under 
+ menu.
+ These settings, summarized in table 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "tab:menu-InitialSetup"
+
+\end_inset
+
+, affect core aspects of the operating program including intermediate processing
+ routines and data table schemas.
+ 
+\end_layout
+
+\begin_layout Standard
+The selections in this menu also determine which options are displayed under
+ the 
 \begin_inset Flex MenuItem
 status collapsed
 
@@ -2750,7 +3497,7 @@ settings
 
 \end_inset
 
- (section 
+ menu (section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:Program-Settings"
@@ -2776,63 +3523,12 @@ Yes
 \end_inset
 
 .
- A general procedure might look like:
-\end_layout
-
-\begin_layout Enumerate
-Remove memory card, if present, and retrieve any data from the logger's
- internal memory.
+ In most cases, data table definitions will be changed.
  
-\end_layout
-
-\begin_layout Enumerate
-Modify relevant settings within the 
-\begin_inset Flex MenuItem
-status collapsed
-
-\begin_layout Plain Layout
-Initial
-\begin_inset space \space{}
+\begin_inset VSpace defskip
 \end_inset
 
-setup
-\end_layout
 
-\end_inset
-
- menu.
-\end_layout
-
-\begin_layout Enumerate
-Save changes by selecting 
-\begin_inset Flex MenuItem
-status collapsed
-
-\begin_layout Plain Layout
-Initial
-\begin_inset space \space{}
-\end_inset
-
-setup\SpecialChar \menuseparator
-Recompile?\SpecialChar \menuseparator
-Yes
-\end_layout
-
-\end_inset
-
-.
- Wait to recompile.
-\end_layout
-
-\begin_layout Enumerate
-\SpecialChar \ldots{}
-Do other things\SpecialChar \ldots{}
-
-\end_layout
-
-\begin_layout Enumerate
-When things have simmered down, insert memory card.
- 
 \end_layout
 
 \begin_layout Standard
@@ -2847,7 +3543,7 @@ width "100line%"
 special "none"
 height "1in"
 height_special "totalheight"
-status collapsed
+status open
 
 \begin_layout Plain Layout
 Refer to data table schema in section 
@@ -2858,7 +3554,7 @@ reference "sub:logger-data-files"
 \end_inset
 
  for specific information on which columns are conditionally included based
- on options under the 
+ on selections in the 
 \begin_inset Flex MenuItem
 status collapsed
 
@@ -2878,6 +3574,10 @@ setup
 \end_inset
 
 
+\end_layout
+
+\begin_layout Subsubsection*
+Setting descriptions
 \end_layout
 
 \begin_layout Description
@@ -2941,7 +3641,7 @@ No
 
 \end_inset
 
- (default), the corresponding channel is not enabled; related menu settings
+ (default), the corresponding channel is not enabled; relevant menu settings
  are hidden; and dependent data columns are not included in output files.
 \end_layout
 
@@ -3019,7 +3719,7 @@ No
 
 \end_inset
 
- channel is not enabled; related menu settings are hidden; and dependent
+ channel is not enabled; relevant menu settings are hidden; and dependent
  data columns are not included in output files.
 \end_layout
 
@@ -3097,7 +3797,7 @@ No
 
 \end_inset
 
-O channel is not enabled; related menu settings are hidden; and dependent
+O channel is not enabled; relevant menu settings are hidden; and dependent
  data columns are not included in output files.
  
 \end_layout
@@ -3242,7 +3942,11 @@ zone Select the correct UTC offset for the time zone of the deployment location.
 \begin_inset Formula $[-12...14]$
 \end_inset
 
-; default is -8 (USA/Pacific Standard Time).
+; default is 
+\begin_inset Formula $-8$
+\end_inset
+
+ (USA/Pacific Standard Time).
 \end_layout
 
 \begin_layout Description
@@ -3289,7 +3993,7 @@ width "100line%"
 special "none"
 height "1in"
 height_special "totalheight"
-status collapsed
+status open
 
 \begin_layout Plain Layout
 Co-deployment is not yet possible with this choice.
@@ -3413,6 +4117,7 @@ Cancel
 
 \begin_layout Standard
 \begin_inset Float table
+placement h
 wide false
 sideways false
 status collapsed
@@ -5072,33 +5777,6 @@ Yes
 
 \end_layout
 
-\begin_layout Standard
-\begin_inset Newpage clearpage
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section
-Operation
-\end_layout
-
-\begin_layout Itemize
-Starting up from power-off
-\end_layout
-
-\begin_layout Itemize
-Performing sample runs
-\end_layout
-
-\begin_layout Itemize
-Shutting down to power-off
-\end_layout
-
-\begin_layout Itemize
-Retrieving data sets
-\end_layout
-
 \begin_layout Subsection
 Program Settings
 \begin_inset CommandInset label
@@ -5257,7 +5935,7 @@ width "100line%"
 special "none"
 height "1in"
 height_special "totalheight"
-status collapsed
+status open
 
 \begin_layout Plain Layout
 This submenu is only shown if one or more differential analog inputs were
@@ -5297,9 +5975,21 @@ DF
 \end_inset
 
 mult.
- Scaling factor applied to measurements of differential analog input channel
- #1.
- Calculate this value as: 
+ Multiplier applied to measurements of channel 
+\begin_inset Flex Emph
+status collapsed
+
+\begin_layout Plain Layout
+DF
+\begin_inset space \space{}
+\end_inset
+
+1
+\end_layout
+
+\end_inset
+
+ of the form: 
 \begin_inset Formula 
 \[
 mult=\frac{MaxValue-MinValue}{MaxVoltage-MinVoltage}\:\left[=\frac{units}{millivolt}\right]
@@ -5319,9 +6009,21 @@ DF
 \begin_inset space \space{}
 \end_inset
 
-offset Offset applied to measurements of differential analog input channel
- #1.
- Calculate this value as: 
+offset Offset added to scaled measurements of channel 
+\begin_inset Flex Emph
+status collapsed
+
+\begin_layout Plain Layout
+DF
+\begin_inset space \space{}
+\end_inset
+
+1
+\end_layout
+
+\end_inset
+
+ of the form: 
 \begin_inset Formula 
 \[
 offset=Value\:@\:0\: millivolts\:\left[=units\right]
@@ -5334,8 +6036,49 @@ offset=Value\:@\:0\: millivolts\:\left[=units\right]
 
 \begin_layout Description
 \SpecialChar \ldots{}
- Remaining settings are analogous for differential analog input channels
- #2, #3, and #4.
+ Remaining settings are analogous for input channels 
+\begin_inset Flex Emph
+status collapsed
+
+\begin_layout Plain Layout
+DF
+\begin_inset space \space{}
+\end_inset
+
+2
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset Flex Emph
+status collapsed
+
+\begin_layout Plain Layout
+DF
+\begin_inset space \space{}
+\end_inset
+
+3
+\end_layout
+
+\end_inset
+
+, and 
+\begin_inset Flex Emph
+status collapsed
+
+\begin_layout Plain Layout
+DF
+\begin_inset space \space{}
+\end_inset
+
+4
+\end_layout
+
+\end_inset
+
+.
 \end_layout
 
 \end_deeper
@@ -5355,8 +6098,21 @@ CO2
 \end_inset
 
 mult.
- Scaling factor applied to measurements from differential analog input #5.
- Calculate this value as:
+ Multiplier applied to measurements of channel 
+\begin_inset Flex Emph
+status collapsed
+
+\begin_layout Plain Layout
+DF
+\begin_inset space \space{}
+\end_inset
+
+5
+\end_layout
+
+\end_inset
+
+ of the form:
 \begin_inset Formula 
 \[
 mult=\frac{MaxCO2-MinCO2}{MaxVoltage-MinVoltage}\:\left[=\frac{??}{millivolt}\right]
@@ -5372,9 +6128,21 @@ CO2
 \begin_inset space \space{}
 \end_inset
 
-offset Offset applied to measurements of differential analog input channel
- #5.
- Calculate this value as:
+offset Offset added to scaled measurements of channel 
+\begin_inset Flex Emph
+status collapsed
+
+\begin_layout Plain Layout
+DF
+\begin_inset space \space{}
+\end_inset
+
+5
+\end_layout
+
+\end_inset
+
+ of the form:
 \begin_inset Formula 
 \[
 offset=CO2\:@\:0\: millivolts\:\left[=??\right]
@@ -5390,9 +6158,21 @@ H2O
 \begin_inset space \space{}
 \end_inset
 
-mult Scaling factor applied to measurements from differential analog input
- #6.
- Calculate this value as:
+mult Multiplier applied to measurements of channel 
+\begin_inset Flex Emph
+status collapsed
+
+\begin_layout Plain Layout
+DF
+\begin_inset space \space{}
+\end_inset
+
+6
+\end_layout
+
+\end_inset
+
+ of the form:
 \begin_inset Formula 
 \[
 mult=\frac{MaxH2O-MinH2O}{MaxVoltage-MinVoltage}\:\left[=\frac{??}{millivolt}\right]
@@ -5408,9 +6188,21 @@ H2O
 \begin_inset space \space{}
 \end_inset
 
-offset Offset applied to measurements of differential analog input channel
- #6.
- Calculate this value as:
+offset Offset added to scaled measurements of channel 
+\begin_inset Flex Emph
+status collapsed
+
+\begin_layout Plain Layout
+DF
+\begin_inset space \space{}
+\end_inset
+
+6
+\end_layout
+
+\end_inset
+
+ of the form:
 \begin_inset Formula 
 \[
 offset=H2O\:@\:0\: millivolts\:\left[=??\right]
@@ -5552,11 +6344,17 @@ tmpr_cal
 
 \end_deeper
 \begin_layout Description
+Processing\SpecialChar \menuseparator
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
 Calc.
 \begin_inset space \space{}
 \end_inset
 
-type Specifies whether gradient is calculated assuming a logarithmic (
+type Specifies whether gradients are fitted against a logarithmic (
 \begin_inset Flex Code
 status collapsed
 
@@ -5576,7 +6374,7 @@ Linear
 
 \end_inset
 
-) vertical wind profile.
+) vertical profile.
  
 \begin_inset VSpace defskip
 \end_inset
@@ -5649,6 +6447,7 @@ TODO: integrate magnetic declination, sonic height (?)
 
 \end_layout
 
+\end_deeper
 \begin_layout Description
 Save
 \begin_inset space \space{}
@@ -7256,8 +8055,152 @@ Yes
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Data Retrieval
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Data-Retrieval"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The most straightforward method of data retrieval is with CompactFlash media.
+ When present, data is recorded to the external CompactFlash memory card.
+ Retrieval is as simple as exchanging the used memory card with a blank
+ one.
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+To
+\begin_inset space \space{}
+\end_inset
+
+remove: completely loosen the retaining thumb screw and open the cover,
+ then press the large white button labeled 
+\begin_inset Quotes eld
+\end_inset
+
+Removal button.
+\begin_inset Quotes erd
+\end_inset
+
+ When the green light appears, press the small lever-button to eject the
+ card.
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+To
+\begin_inset space \space{}
+\end_inset
+
+install: align the memory card correctly as indicated by the key-groove,
+ then press firmly to insert completely.
+ Close the module cover and lightly secure the thumbscrew.
+\end_layout
+
+\begin_layout Standard
+Alternately, data tables can be retrieved from the datalogger via its serial
+ (RS-232) or network (ethernet) interfaces using compatible software such
+ as LoggerNet, PC400, PC200W
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+https://www.campbellsci.com/pc200w
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ or an FTP client.
+ This is the only method to access data recorded to datalogger internal
+ memory.
+ Data recorded to external memory cards can also be accessed without removing
+ the card using this method.
+ 
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+LoggerNet This proprietary program supports serial and network connections.
+ If scheduled retrieval is desired, this is the only convenient option.
+ 
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+PC400 This proprietary program supports both serial and network connections.
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+PC200W This no-cost program supports serial connections only.
+ 
+\end_layout
+
+\begin_layout Labeling
+\labelwidthstring 00.00.0000
+FTP The datalogger offers access to its file systems via File Transfer Protocol.
+ By default, anonymous access is allowed and the standard port (21) is used.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+Collecting data while conducting measurements may interfere with processing
+ tasks.
+ Do not collect tables of real-time measurements (ts_fast, ts_slow) if external
+ media is present.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsection
 Maintenance
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Maintenance"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -7265,7 +8208,13 @@ Inlets
 \end_layout
 
 \begin_layout Itemize
-Filters should be replaced weekly or as needed
+Under continuous operation, the teflon disc filters should be inspected
+ every 3-4 days and replaced as necessary.
+ 
+\end_layout
+
+\begin_layout Itemize
+Dusty conditions may warrant daily inspection.
 \end_layout
 
 \begin_layout Subsubsection
@@ -7273,11 +8222,192 @@ Pumps
 \end_layout
 
 \begin_layout Itemize
-Diaphragms should be inspected annually
+Diaphragms should be inspected:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+biannually or annually if the system has experienced a high level of use
+\end_layout
+
+\begin_layout Itemize
+if flow rates become erratic or taper significantly
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Diaphragms should be replaced:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+when significant wear is evident 
+\end_layout
+
+\begin_layout Itemize
+if removed from the plunger head during inspection (does not apply to smaller
+ KNF sampling pump)
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Troubleshooting
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Troubleshooting"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-\begin_inset Newpage clearpage
+\begin_inset Tabular
+<lyxtabular version="3" rows="6" columns="2">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="0">
+<column alignment="left" valignment="top" width="40line%">
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Condition
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Possible explanation(s)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+No data is received from the sonic anemometer (CSAT3)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100line%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Itemize
+If running in co-deployment mode, the sensor may have been turned off 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
 \end_inset
 
 
@@ -7320,7 +8450,7 @@ width "100col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 This section does not apply to the gradient system yet!
@@ -7413,7 +8543,7 @@ width "100col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 This section does not apply to the gradient system yet!
@@ -7522,7 +8652,7 @@ width "100col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 This section does not apply to the gradient system yet!
@@ -7569,7 +8699,7 @@ width "100col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 This section does not apply to the gradient system yet!
@@ -7671,7 +8801,7 @@ width "100col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 This section does not apply to the gradient system yet!
@@ -7764,6 +8894,13 @@ Gradient Flux
 
 \begin_layout Standard
 TODO
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -7943,7 +9080,7 @@ Other values are possible but not likely and they would be suspicious (7999,
 \begin_inset Float table
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Box Frameless
@@ -7957,7 +9094,7 @@ width "100line%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Caption
@@ -8455,7 +9592,7 @@ Presumably, the gradient system is deployed in a static location and so
 placement ph
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Caption
@@ -9115,7 +10252,7 @@ eddycov_sensors Depending on the value of this column, only certain of the
 placement ph
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Caption
@@ -11314,7 +12451,7 @@ diff_top_less_btm
 placement ph
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Caption
@@ -11597,7 +12734,7 @@ width "100line%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 While calibrating the thermistors should be positioned directly adjacent
@@ -11627,6 +12764,52 @@ reference "tab:schema-ts_fast"
  with no lag-compensation applied.
  The size of the file is determined at compile time using an allocation
  method designed to maximize available recording time.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Shadowbox
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100line%"
+special "none"
+height "1in"
+height_special "totalheight"
+status collapsed
+
+\begin_layout Plain Layout
+Rows in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:schema-ts_fast"
+
+\end_inset
+
+ with shaded backgrounds indicate groups of columns which are conditionally
+ included only when the corresponding device or chanel is enabled under
+ the 
+\begin_inset Flex MenuItem
+status collapsed
+
+\begin_layout Plain Layout
+Initial
+\begin_inset space \space{}
+\end_inset
+
+setup
+\end_layout
+
+\end_inset
+
+ menu.
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Description
@@ -11672,13 +12855,26 @@ reference "tab:schema-ts_fast"
 
  Sonic temperature is generally a few degrees higher than ambient temperature
  because of water vapor effects on the speed of sound.
- The sonic temperature closely approximates the virtual temperature
-\begin_inset Foot
-status open
+ The sonic temperature closely approximates the virtual temperature 
+\begin_inset Formula $T_{v}$
+\end_inset
 
-\begin_layout Plain Layout
-TODO verify these equations
-\end_layout
+ as indicated by the relationships based on ambient temperature 
+\begin_inset Formula $T_{a}$
+\end_inset
+
+ and specific humidity 
+\begin_inset Formula $q$
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "book-arya-1999,manual-csat3"
 
 \end_inset
 
@@ -11686,7 +12882,7 @@ TODO verify these equations
 \begin_inset Formula 
 \[
 \begin{array}{ccc}
-T_{s}\approx T_{a}(1+0.61Q) & \qquad & T_{v}\approx(1+0.51Q)\end{array}
+T_{s}\approx T_{a}(1+0.51q) & \qquad & T_{v}\approx T_{a}(1+0.61q)\end{array}
 \]
 
 \end_inset
@@ -11699,36 +12895,6 @@ sonic_diag The meaning of this bitmap value depends on which sonic anemometer
  is being used.
  No manipulations are performed prior to storage in this table.
  
-\begin_inset VSpace defskip
-\end_inset
-
-
-\begin_inset Newline newline
-\end_inset
-
-
-\begin_inset Box Shadowbox
-position "t"
-hor_pos "c"
-has_inner_box 1
-inner_pos "t"
-use_parbox 0
-use_makebox 0
-width "100line%"
-special "none"
-height "1in"
-height_special "totalheight"
-status open
-
-\begin_layout Plain Layout
-Presently, the diagnostic value recorded via the CSAT3's RS-232 interface
- IS different than it would be if recorded over SDM.
- This issue will be addressed in a future version.
-\end_layout
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Description
@@ -11831,20 +12997,27 @@ MW_h2o
 \end_layout
 
 \begin_layout Description
-op_temp In a future version, this column will be conditionally included
- whenever the combined anemometer/IRGA (CSAT3A/EC150) is used.
-\end_layout
-
-\begin_layout Description
 op_diag The meaning of this bitmap value depends on which infrared gas analyzer
  (IRGA) is being used.
  No manipulations are performed prior to storage in this table.
+ Refer to the appropriate instrument manual for more details.
+\end_layout
+
+\begin_layout Description
+op_temp This column is conditionally included when a combined anemometer/IRGA
+ (CSAT3A/EC150) is used.
+ It represents fast-response temperature in a non-aspirated radiation shield.
  
 \end_layout
 
 \begin_layout Description
-op_co2/h2o_signal In a future version, this column will be conditionally
- included whenever the combined anemometer/IRGA (CSAT3A/EC150) is used.
+op_co2/h2o_signal This column is conditionally included when a combined
+ anemometer/IRGA (CSAT3A/EC150) is used.
+ Values represent the signal quality as a ratio; typically 
+\begin_inset Formula $>0.95$
+\end_inset
+
+ under good conditions.
 \end_layout
 
 \begin_layout Standard
@@ -11852,7 +13025,7 @@ op_co2/h2o_signal In a future version, this column will be conditionally
 placement ph
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Caption
@@ -12463,7 +13636,19 @@ diagnostic word
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+rowcolor{band1}
+\end_layout
+
+\end_inset
+
+10
 \end_layout
 
 \end_inset
@@ -12521,7 +13706,19 @@ ambient temperature
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+rowcolor{band1}
+\end_layout
+
+\end_inset
+
+11
 \end_layout
 
 \end_inset
@@ -12548,7 +13745,7 @@ op_co2_signal
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+ratio
 \end_layout
 
 \end_inset
@@ -12568,7 +13765,19 @@ op_co2_signal
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+rowcolor{band1}
+\end_layout
+
+\end_inset
+
+12
 \end_layout
 
 \end_inset
@@ -12595,7 +13804,7 @@ op_h2o_signal
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+ratio
 \end_layout
 
 \end_inset
@@ -13718,7 +14927,7 @@ description "wind direction"
 \end_inset
 
 , 
-\begin_inset Formula $+X$
+\begin_inset Formula $-X$
 \end_inset
 
  axis orientation 
@@ -13738,7 +14947,7 @@ description "anemometer azimuth (bearing of +X axis) "
 status collapsed
 
 \begin_layout Plain Layout
-If true North, 
+If oriented true North, 
 \begin_inset Formula $D_{mag}$
 \end_inset
 
@@ -13755,13 +14964,17 @@ If true North,
 
 \end_inset
 
-) of the sonic anemometer and magnetic declination
+) of the sonic anemometer and (in future version; currently 
+\begin_inset Formula $D_{mag}=0$
+\end_inset
+
+) magnetic declination
 \begin_inset Foot
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Flex URL
-status open
+status collapsed
 
 \begin_layout Plain Layout
 
@@ -13843,12 +15056,39 @@ e Gaussian dispersion models, but may be used to model transport direction
  
 \end_layout
 
+\begin_layout Description
+fluxest_df1 This is an estimated flux based on measurements on channel 1
+ (DF 1) and the eddy diffusivity 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+K_tmpr
+\end_layout
+
+\end_inset
+
+ derived from temperature gradient and covariance of sonic temperature with
+ vertical wind speed: 
+\begin_inset Formula 
+\[
+\begin{array}{ccc}
+\widetilde{F}=\nabla\! F\cdot K_{tmpr} & \quad where & K_{tmpr}=\frac{\overline{U_{z}^{\prime}T_{s}^{\prime}}}{\nabla\! T_{a}}\\
+\\
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Standard
 \begin_inset Float table
 placement ph
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Box Frameless
@@ -13862,7 +15102,7 @@ width "100col%"
 special "none"
 height "1in"
 height_special "totalheight"
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Caption
@@ -13887,7 +15127,7 @@ name "tab:schema-stats"
 \noindent
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="47" columns="5">
+<lyxtabular version="3" rows="49" columns="5">
 <features tabularvalignment="middle">
 <column alignment="center" valignment="top" width="0">
 <column alignment="left" valignment="top" width="0">
@@ -14076,7 +15316,7 @@ rowcolor{band1}
 
 \end_inset
 
-*
+3
 \end_layout
 
 \end_inset
@@ -14135,7 +15375,7 @@ rowcolor{band2}
 
 \end_inset
 
-3
+4
 \end_layout
 
 \end_inset
@@ -14194,7 +15434,7 @@ rowcolor{band2}
 
 \end_inset
 
-4
+5
 \end_layout
 
 \end_inset
@@ -14253,7 +15493,7 @@ rowcolor{band2}
 
 \end_inset
 
-*
+6
 \end_layout
 
 \end_inset
@@ -14312,7 +15552,7 @@ rowcolor{band1}
 
 \end_inset
 
-5
+7
 \end_layout
 
 \end_inset
@@ -14371,7 +15611,7 @@ rowcolor{band1}
 
 \end_inset
 
-6
+8
 \end_layout
 
 \end_inset
@@ -14430,7 +15670,7 @@ rowcolor{band1}
 
 \end_inset
 
-*
+9
 \end_layout
 
 \end_inset
@@ -14489,7 +15729,7 @@ rowcolor{band2}
 
 \end_inset
 
-7
+10
 \end_layout
 
 \end_inset
@@ -14548,7 +15788,7 @@ rowcolor{band2}
 
 \end_inset
 
-8
+11
 \end_layout
 
 \end_inset
@@ -14607,7 +15847,7 @@ rowcolor{band2}
 
 \end_inset
 
-*
+12
 \end_layout
 
 \end_inset
@@ -14686,7 +15926,7 @@ rowcolor{band1}
 
 \end_inset
 
-9
+13
 \end_layout
 
 \end_inset
@@ -14754,7 +15994,7 @@ rowcolor{band1}
 
 \end_inset
 
-10
+14
 \end_layout
 
 \end_inset
@@ -14822,7 +16062,7 @@ rowcolor{band1}
 
 \end_inset
 
-*
+15
 \end_layout
 
 \end_inset
@@ -14881,7 +16121,7 @@ rowcolor{band2}
 
 \end_inset
 
-11
+16
 \end_layout
 
 \end_inset
@@ -14949,7 +16189,7 @@ rowcolor{band2}
 
 \end_inset
 
-12
+17
 \end_layout
 
 \end_inset
@@ -15017,7 +16257,7 @@ rowcolor{band2}
 
 \end_inset
 
-*
+18
 \end_layout
 
 \end_inset
@@ -15094,7 +16334,7 @@ rowcolor{band1}
 
 \end_inset
 
-13
+19
 \end_layout
 
 \end_inset
@@ -15156,7 +16396,7 @@ rowcolor{band1}
 
 \end_inset
 
-14
+20
 \end_layout
 
 \end_inset
@@ -15218,7 +16458,7 @@ rowcolor{band1}
 
 \end_inset
 
-15
+21
 \end_layout
 
 \end_inset
@@ -15276,7 +16516,7 @@ temperature gradient at effective height
 \begin_inset Text
 
 \begin_layout Plain Layout
-16
+22
 \end_layout
 
 \end_inset
@@ -15326,7 +16566,7 @@ mean sonic temperature
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
+23
 \end_layout
 
 \end_inset
@@ -15376,7 +16616,7 @@ standard deviation of sonic temperature
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
+24
 \end_layout
 
 \end_inset
@@ -15434,7 +16674,7 @@ standard deviation of vertical wind speed
 \begin_inset Text
 
 \begin_layout Plain Layout
-17
+25
 \end_layout
 
 \end_inset
@@ -15481,7 +16721,7 @@ mean horizontal scalar wind speed
 \begin_inset Text
 
 \begin_layout Plain Layout
-18
+26
 \end_layout
 
 \end_inset
@@ -15528,7 +16768,7 @@ unit-vector mean wind direction
 \begin_inset Text
 
 \begin_layout Plain Layout
-19
+27
 \end_layout
 
 \end_inset
@@ -15575,7 +16815,7 @@ standard deviation of wind direction
 \begin_inset Text
 
 \begin_layout Plain Layout
-20
+28
 \end_layout
 
 \end_inset
@@ -15622,7 +16862,7 @@ mean horizontal vector wind speed
 \begin_inset Text
 
 \begin_layout Plain Layout
-21
+29
 \end_layout
 
 \end_inset
@@ -15669,7 +16909,7 @@ resultant mean wind direction
 \begin_inset Text
 
 \begin_layout Plain Layout
-22
+30
 \end_layout
 
 \end_inset
@@ -15716,7 +16956,7 @@ standard deviation of wind direction
 \begin_inset Text
 
 \begin_layout Plain Layout
-23
+31
 \end_layout
 
 \end_inset
@@ -15784,7 +17024,7 @@ mean CO
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
+32
 \end_layout
 
 \end_inset
@@ -15852,7 +17092,7 @@ standard deviation of CO
 \begin_inset Text
 
 \begin_layout Plain Layout
-24
+33
 \end_layout
 
 \end_inset
@@ -15920,7 +17160,7 @@ O
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
+34
 \end_layout
 
 \end_inset
@@ -15988,7 +17228,7 @@ standard deviation of of CO
 \begin_inset Text
 
 \begin_layout Plain Layout
-25
+35
 \end_layout
 
 \end_inset
@@ -16050,7 +17290,7 @@ rowcolor{band2}
 
 \end_inset
 
-*
+36
 \end_layout
 
 \end_inset
@@ -16112,7 +17352,69 @@ rowcolor{band2}
 
 \end_inset
 
-*
+37
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+op_temp_Std
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\sigma_{T_{OP}}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+degC
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+standard deviation of ambient temperature
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+rowcolor{band2}
+\end_layout
+
+\end_inset
+
+38
 \end_layout
 
 \end_inset
@@ -16122,6 +17424,183 @@ rowcolor{band2}
 
 \begin_layout Plain Layout
 op_co2_signal_Avg
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+ratio
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+rowcolor{band2}
+\end_layout
+
+\end_inset
+
+39
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+op_h2o_signal_Avg
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+ratio
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+rowcolor{band1}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+cov_Uz_CO2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+rowcolor{band1}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+K_co2
 \end_layout
 
 \end_inset
@@ -16171,7 +17650,7 @@ rowcolor{band2}
 
 \end_inset
 
-*
+
 \end_layout
 
 \end_inset
@@ -16180,7 +17659,7 @@ rowcolor{band2}
 \begin_inset Text
 
 \begin_layout Plain Layout
-op_h2o_signal_Avg
+cov_Uz_H2O
 \end_layout
 
 \end_inset
@@ -16218,71 +17697,18 @@ op_h2o_signal_Avg
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-L
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
+\begin_inset ERT
+status collapsed
 
 \begin_layout Plain Layout
 
+
+\backslash
+rowcolor{band2}
 \end_layout
 
 \end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
 
-\begin_layout Plain Layout
-m
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Obukhov length
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-*
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-u_star
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
 
 \end_layout
 
@@ -16292,36 +17718,7 @@ u_star
 \begin_inset Text
 
 \begin_layout Plain Layout
-m/s
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-friction velocity
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-*
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-tau
+K_h2o
 \end_layout
 
 \end_inset
@@ -16348,7 +17745,7 @@ tau
 \begin_inset Text
 
 \begin_layout Plain Layout
-momentum flux (?)
+
 \end_layout
 
 \end_inset
@@ -16359,7 +17756,19 @@ momentum flux (?)
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+rowcolor{band1}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -16368,7 +17777,7 @@ momentum flux (?)
 \begin_inset Text
 
 \begin_layout Plain Layout
-Hs
+cov_Ts_Uz
 \end_layout
 
 \end_inset
@@ -16395,7 +17804,7 @@ Hs
 \begin_inset Text
 
 \begin_layout Plain Layout
-sensible heat EC flux
+
 \end_layout
 
 \end_inset
@@ -16406,7 +17815,19 @@ sensible heat EC flux
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+rowcolor{band1}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -16415,7 +17836,7 @@ sensible heat EC flux
 \begin_inset Text
 
 \begin_layout Plain Layout
-LE
+K_tmpr
 \end_layout
 
 \end_inset
@@ -16442,7 +17863,7 @@ LE
 \begin_inset Text
 
 \begin_layout Plain Layout
-latent heat EC flux 
+
 \end_layout
 
 \end_inset
@@ -16453,7 +17874,19 @@ latent heat EC flux
 \begin_inset Text
 
 \begin_layout Plain Layout
-*
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+rowcolor{band1}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -16462,7 +17895,7 @@ latent heat EC flux
 \begin_inset Text
 
 \begin_layout Plain Layout
-Fco2
+fluxest_df1
 \end_layout
 
 \end_inset
@@ -16489,7 +17922,7 @@ Fco2
 \begin_inset Text
 
 \begin_layout Plain Layout
-carbon dioxide EC flux
+
 \end_layout
 
 \end_inset
@@ -16500,7 +17933,7 @@ carbon dioxide EC flux
 \begin_inset Text
 
 \begin_layout Plain Layout
-26
+
 \end_layout
 
 \end_inset
@@ -16547,7 +17980,7 @@ mean supply voltage to datalogger
 \begin_inset Text
 
 \begin_layout Plain Layout
-27
+
 \end_layout
 
 \end_inset
@@ -16623,7 +18056,11 @@ key "book-arya-1999"
 Arya.
  S.
  Pal.
- Air pollution meteorology and dispersion.
+ 
+\emph on
+Air Pollution Meteorology and Dispersion
+\emph default
+.
  1999.
  Oxford University Press, Inc.
  ISBN: 0-19-507398-3.
@@ -16886,8 +18323,189 @@ Wikipedia, The Free Encyclopedia
 
 \end_layout
 
-\begin_layout Section
+\begin_layout Standard
 \start_of_appendix
+\align center
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Section
+Height tables
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+captionof{table}[Gradient height ratios]{Gradient height ratios, optimal
+ range ($2<=Z_2/Z_1<=4$) highlighted 
+\backslash
+label{tab:grad-height-ratios}}
+\backslash
+nopagebreak
+\backslash
+addtocounter{table}{-1}
+\end_layout
+
+\end_inset
+
+
+\begin_inset External
+	template GnumericSpreadsheet
+	filename tables/inlet_height_ratios.ods
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+captionof{table}[Effective gradient height (linear profile)]{Effective gradient
+ height, linear profile: $Z_{grad}=
+\backslash
+frac{Z_2+Z_1}{2}$ (highlighting, 
+\backslash
+tabref{grad-height-ratios}) 
+\backslash
+label{tab:grad-height-linear}}
+\backslash
+nopagebreak
+\backslash
+addtocounter{table}{-1}
+\end_layout
+
+\end_inset
+
+
+\begin_inset External
+	template GnumericSpreadsheet
+	filename tables/effective_height_linear.ods
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+captionof{table}[Effective gradient height (logarithmic profile)]{Effective
+ gradient height, logarithmic profile: $Z_{grad}=
+\backslash
+sqrt{Z_2Z_1}$  (highlighting, 
+\backslash
+tabref{grad-height-ratios}) 
+\backslash
+label{tab:grad-height-log}}
+\backslash
+nopagebreak
+\backslash
+addtocounter{table}{-1}
+\end_layout
+
+\end_inset
+
+
+\begin_inset External
+	template GnumericSpreadsheet
+	filename tables/effective_height_log.ods
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage clearpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
 Initial Sensor Configuration
 \begin_inset CommandInset label
 LatexCommand label
@@ -16899,20 +18517,355 @@ name "sec:Initial-Sensor-Configuration"
 \end_layout
 
 \begin_layout Standard
-The following sections cover the initial configuration of some auxilary
- instruments associated with the gradient system.
- Generally, it is not necessary to re-configure sensors after initial setup.
+Generally, sensors are configured during bench testing and should be usable
+ right away.
+ Should it be necessary to re-configure a sensor, refer to the following
+ sections and the corresponding user manual(s).
+ In several cases, the configuration procedure involves a Windows® with
+ no-cost, manufacturer-provided software.
+ 
 \end_layout
 
 \begin_layout Subsection
-GPS receiver (GPS16x-HVS)
+Trace gas analyzer(s)
 \end_layout
 
 \begin_layout Standard
-The GPS receiver is ready to use in its factory-default state.
- If settings have been modified, it may be necessary to reset them to default
- values.
- Refer to the device manuals for details.
+The analyzer(s) used to monitor trace gas concentrations in the gradient
+ sampling lines must be compatible with 0-5000mV differential analog voltage
+ measurements.
+ If the device cannot be configured to operate within this voltage range,
+ a physical precision voltage divider 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+(add CSI part #?)
+\end_layout
+
+\end_inset
+
+ can be used instead.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+N
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+O/CO/H
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+O Analyzer (Los Gatos Research)
+\end_layout
+
+\begin_layout Standard
+The specific voltage range 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+(confirm XXX)
+\end_layout
+
+\end_inset
+
+ of analog outputs and the linear scaling applied to yield engineering units
+ are modified through the device's setup menu.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+add small screenshot of this screen
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+~
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+NH
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+
+ Analyzer (G1103; Picarro, Inc)
+\end_layout
+
+\begin_layout Standard
+This device only supports 0-10V differential analog output
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+It's possible this isn't true but evidence supports the hypothesis.
+\end_layout
+
+\end_inset
+
+ and must therefore be used with a physical precision voltage divider.
+ The ADC gain (V/units) and offset (V) are specified in the plain-text configura
+tion file 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+C:
+\backslash
+Picarro
+\backslash
+...?...
+\backslash
+something.txt
+\end_layout
+
+\end_inset
+
+ at approximately lines 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+???
+\end_layout
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "numbers=none"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+<snip>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+configuration options of relevance
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<snip>
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Additionally, one of the NH
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+
+ output signals should be modified from 30-sec and 5-min running average
+ concentrations to 
+\begin_inset Quotes eld
+\end_inset
+
+raw
+\begin_inset Quotes erd
+\end_inset
+
+ (~7s) concentration:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "numbers=none"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+<snip>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+...
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<snip>
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+CO
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+/CH
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+
+/H
+\begin_inset script subscript
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+
+O Analyzer (G2301-f; Picarro, Inc)
+\end_layout
+
+\begin_layout Standard
+This device only supports 0-5V differential analog output
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+see above footnote
+\end_layout
+
+\end_inset
+
+.
+ The ADC gain (V/units) and offset (V) are specified in the plain-text file
+ 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+C:
+\backslash
+Picarro
+\backslash
+something
+\backslash
+file.ini
+\end_layout
+
+\end_inset
+
+ at approximately lines 
+\begin_inset Flex Strong
+status collapsed
+
+\begin_layout Plain Layout
+???
+\end_layout
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+lstparams "numbers=none"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+<snip>
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+?
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+<snip>
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -16954,7 +18907,7 @@ key "manual-ec100"
 
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Paragraph
 Standalone
 \end_layout
 
@@ -17011,7 +18964,7 @@ Internals
 placement h
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \begin_inset Caption
@@ -17254,7 +19207,7 @@ Disabled for EC150
 
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Paragraph
 Co-deployment
 \end_layout
 
@@ -17312,7 +19265,7 @@ key "manual-csat3"
 
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Paragraph
 Standalone 
 \end_layout
 
@@ -17366,7 +19319,7 @@ Internals
 
 \begin_layout Standard
 \begin_inset Float table
-placement H
+placement h
 wide false
 sideways false
 status collapsed
@@ -17609,8 +19562,8 @@ status collapsed
 
 \end_layout
 
-\begin_layout Subsubsection
-Denuder-REA co-deployment
+\begin_layout Paragraph
+Co-deployment
 \end_layout
 
 \begin_layout Standard
@@ -17628,7 +19581,7 @@ reference "tab:codeploy-config-csat3"
 
 \begin_layout Standard
 \begin_inset Float table
-placement H
+placement h
 wide false
 sideways false
 status collapsed
@@ -17761,7 +19714,7 @@ status collapsed
 
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subparagraph
 Some notes
 \end_layout
 
@@ -17841,7 +19794,7 @@ sr2718
  backdoor command.
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subparagraph
 To modify settings
 \end_layout
 
@@ -17986,7 +19939,7 @@ Normal.
 
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subparagraph
 To start unprompted output mode
 \end_layout
 
@@ -18089,7 +20042,7 @@ and exit the program.
 \end_layout
 
 \begin_layout Subsection
-Infrared gas analyzer (LI-7500)
+Open-path infrared gas analyzer (LI-7500)
 \begin_inset CommandInset label
 LatexCommand label
 name "sub:li7500-initial-config"
@@ -18214,10 +20167,10 @@ Internals
 
 \begin_layout Standard
 \begin_inset Float table
-placement h
+placement ph
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \begin_inset Caption
@@ -18346,7 +20299,7 @@ SDM Address
 \end_layout
 
 \begin_layout Paragraph
-Denuder-REA co-deployment
+Co-deployment
 \end_layout
 
 \begin_layout Standard
@@ -18441,10 +20394,10 @@ key "manual-li7500"
 
 \begin_layout Standard
 \begin_inset Float table
-placement h
+placement ph
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \begin_inset Caption
@@ -18728,7 +20681,7 @@ Line Feed (0A)
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \noindent
@@ -18770,7 +20723,7 @@ name "fig:LI7500-Output-settings"
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \noindent
@@ -18808,7 +20761,7 @@ name "fig:LI7500-RS232-settings"
 
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subparagraph
 Hardware
 \begin_inset space \space{}
 \end_inset
@@ -18847,7 +20800,7 @@ reference "fig:LI7500-CTS/RTS-loopback"
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \noindent
@@ -18882,6 +20835,35 @@ name "fig:LI7500-CTS/RTS-loopback"
 \end_inset
 
 
+\end_layout
+
+\begin_layout Subsection
+Closed-path infrared gas analyzer (LI-6262)
+\end_layout
+
+\begin_layout Standard
+TODO - I don't think there is much, if any, configuration required.
+\end_layout
+
+\begin_layout Subsection
+Thermistors (Model 107)
+\end_layout
+
+\begin_layout Standard
+The thermistors do not require any configuration prior to use.
+ Do verify the aspirated radiation shields are functional.
+ 
+\end_layout
+
+\begin_layout Subsection
+GPS receiver (GPS16x-HVS)
+\end_layout
+
+\begin_layout Standard
+The GPS receiver is ready to use in its factory-default state.
+ If settings have been modified, it may be necessary to reset them to default
+ values.
+ Refer to the device manuals for details.
 \end_layout
 
 \begin_layout Standard
@@ -19034,6 +21016,13 @@ Laboratory tests indicate the latter option (SlowSequence) is highly preferred
 
 \begin_layout Subsection
 Conditional compilation
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Conditional-compilation"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -19142,8 +21131,37 @@ It is worth noting conditional compilation
 \emph on
 is not 
 \emph default
-used to determine variable declarations or the format of intermediate processing
- data tables.
+used to determine variable declarations
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+In a few instances, variables are conditionally declared using the 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Public
+\end_layout
+
+\end_inset
+
+ or 
+\begin_inset Flex Code
+status collapsed
+
+\begin_layout Plain Layout
+Dim
+\end_layout
+
+\end_inset
+
+ instructions but they are always declared.
+\end_layout
+
+\end_inset
+
+ or the format of intermediate processing data tables.
  The primary reason is no efficient means have been devised to retrieve
  variable-length records from intermediate data tables.
  The array length required to hold a retrieved record and the order of aliases
@@ -20590,41 +22608,6 @@ BeginProg
 \end_layout
 
 \begin_layout Standard
-\begin_inset VSpace defskip
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Box Shadowbox
-position "t"
-hor_pos "c"
-has_inner_box 1
-inner_pos "t"
-use_parbox 0
-use_makebox 0
-width "100col%"
-special "none"
-height "1in"
-height_special "totalheight"
-status collapsed
-
-\begin_layout Plain Layout
-Measurement instructions cannot be placed into conditional statements while
- operating in pipeline mode.
- Consequently, all input channels are measured regardless of whether enabled
- in the program settings.
- After measurements occur, if a particular sensor is not enabled, its measured
- value is set to NAN.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
 The 
 \begin_inset Flex Code
 status collapsed
@@ -20878,8 +22861,8 @@ key "helpfile-movebytes"
 
 \end_inset
 
- but incoming words are little endian so byte order must be reversed.
- CRBasic only supports long (4-byte) signed integers 
+ and incoming words are little endian so byte order must be reversed.
+ The datalogger supports long (4-byte) signed integers 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "manual-cr1000"
@@ -20964,8 +22947,16 @@ status collapsed
 
 \begin_layout Plain Layout
 The integer value of the fifth word has no instrinsic meaning but converting
- from the raw data word simplifies extraction of diagnostic flags, range
- codes, and the counter.
+ from the raw bytes is necessary for consistency with the diagnostic word
+ retrieved via the 
+\begin_inset Quotes eld
+\end_inset
+
+SDM
+\begin_inset Quotes erd
+\end_inset
+
+ interface.
 \end_layout
 
 \end_inset
@@ -20981,12 +22972,13 @@ Converting to decimal values
 Once the binary data words are resolved to integer values, the proper range
  scale multipliers can be determined and applied to yield decimal values
  representing actual measurements.
- 
+ The fifth integer value, or diagnostic word, does not need to be converted
+ to a decimal value.
 \end_layout
 
 \begin_layout Standard
-The fifth integer value represents the range codes for wind measurements
- (words 0-2) in bits 06-11 as described in table 
+The diagnostic word represents the range codes for wind measurements (words
+ 0-2) in bits 06-11 as described in table 
 \begin_inset CommandInset ref
 LatexCommand vref
 reference "tab:csat3-record-format"
@@ -21144,7 +23136,7 @@ c\;(m\; s^{-1})=integer\: value*0.001+340.0\label{eq:scaling-speed-of-sound}
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\begin{alignedat}{2}T_{s}\:(\text{º}C)=\frac{c^{2}}{\phi R_{d}}-273.15 & \: where & \phi & \equiv\left(\frac{C_{p}}{C_{v}}\right)_{moist\: air}=1.4\\
+\begin{alignedat}{2}T_{s}\:(\text{º}C)=\frac{c^{2}}{\phi R_{d}}-273.15 & \quad where & \phi & \equiv\left(\frac{C_{p}}{C_{v}}\right)_{moist\: air}=1.4\\
  &  & R_{d} & =287.04\: J\: K^{-1}\: kg^{-1}
 \end{alignedat}
 \label{eq:c-to-sonic-temp}
@@ -21184,16 +23176,14 @@ key "book-arya-1999,manual-csat3"
 
 \end_inset
 
-:
+: 
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \[
-\begin{array}{c}
-T_{s}=T(1+0.51q)\\
-T_{v}=T(1+0.61q)
-\end{array}
+\begin{array}{ccc}
+T_{s}\approx T_{a}(1+0.51q) & \qquad & T_{v}\approx T_{a}(1+0.61q)\end{array}
 \]
 
 \end_inset
@@ -21831,98 +23821,6 @@ Resolution (mm s
 
 \end_layout
 
-\begin_layout Paragraph
-Extracting diagnostic flags
-\end_layout
-
-\begin_layout Standard
-Warning flags indicating specific operating conditions are contained in
- bits 12-15 of the fifth integer value as described in table 
-\begin_inset CommandInset ref
-LatexCommand vref
-reference "tab:csat3-record-format"
-
-\end_inset
-
-.
- These flags are first extracted by performing a bitwise comparison of the
- value against the appropriate bitmask (
-\begin_inset Flex Code
-status collapsed
-
-\begin_layout Plain Layout
-0xF000
-\end_layout
-
-\end_inset
-
-) using the 
-\begin_inset Flex Code
-status collapsed
-
-\begin_layout Plain Layout
-AND
-\end_layout
-
-\end_inset
-
- instruction, then shifting bits rightwards 12 positions to the least significan
-t position.
- 
-\end_layout
-
-\begin_layout Standard
-While not strictly necessary to perform these manipulations, doing so results
- in a diagnostic bitmap which closely resembles that produced by the CSAT3's
- newer counterpart, the CSAT3A.
-\end_layout
-
-\begin_layout Paragraph
-Extracting incremental counter
-\end_layout
-
-\begin_layout Standard
-An incremental, circular counter is encoded in the 6 least significant bits
- of the fifth integer word as indicated in table 
-\begin_inset CommandInset ref
-LatexCommand vref
-reference "tab:csat3-record-format"
-
-\end_inset
-
-.
- The value of the counter 
-\emph on
-could 
-\emph default
-be extracted by performing a bitwise comparison of the value against the
- appropriate bitmask (
-\begin_inset Flex Code
-status collapsed
-
-\begin_layout Plain Layout
-0x3F
-\end_layout
-
-\end_inset
-
-) using the 
-\begin_inset Flex Code
-status collapsed
-
-\begin_layout Plain Layout
-AND
-\end_layout
-
-\end_inset
-
- instruction.
- It is, however, not extracted because it is not retained in any data tables
- nor is it used for quality assurance or in any intermediate processing
- step.
- 
-\end_layout
-
 \begin_layout Standard
 \begin_inset Newpage clearpage
 \end_inset
@@ -21934,7 +23832,7 @@ AND
 \begin_inset listings
 lstparams "language={[CR]Basic},numbers=none"
 inline false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 
@@ -22187,7 +24085,12 @@ BeginProg
 
 \begin_layout Plain Layout
 
-    sonic_diag = (word4 AND &hF000) >> 12 'extract diag flags
+    sonic_diag = word4 
+\end_layout
+
+\begin_layout Plain Layout
+
+    disable_sonic = (sonic_diag AND &hF000) >> 12 'extract diag flags
 \end_layout
 
 \begin_layout Plain Layout
@@ -24124,7 +26027,7 @@ Status.ProcessTime
 \begin_inset listings
 lstparams "language={[CR]Basic}"
 inline false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 
