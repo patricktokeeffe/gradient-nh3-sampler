@@ -466,7 +466,7 @@ DataTable(work,True,10)
 
   Average(1,sonic_Ts,IEEE4,sonic_Ts=NAN)
   Covariance(4,cov_array(1,1),IEEE4,disable_sonic OR disable_op,10)
-  WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,1)
+  WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,0)
   WindVector(1,-1*sonic_Uy,sonic_Ux,IEEE4,disable_sonic,0,1,2)
   Average(1,op_CO2,IEEE4,disable_op)
   Average(1,op_H2O,IEEE4,disable_op)
