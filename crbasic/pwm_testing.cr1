@@ -1,0 +1,27 @@
+'Proof of concept: controlling heaters using PWM
+'2015-02-11
+'Patrick O'Keeffe
+
+Public duty_cycle = {0.10}
+Public panel_tmpr
+Public valve_tmpr
+
+Const HEAT_CTRL = 4 'C4
+Const TC_DIFF = 1 'DF 1
+Const TC_TYPE = 0 'T, Copper/Constantan
+
+DisplayMenu("PWM Learn", -2)
+  MenuItem("duty cycle", duty_cycle)
+  DisplayValue("panel temp", panel_tmpr)
+  DisplayValue("valve temp", valve_tmpr)
+EndMenu
+
+BeginProg
+  Scan(1,sec,1,0)
+    PWM(duty_cycle, HEAT_CTRL, 100, msec)
+
+    PanelTemp(panel_tmpr,250)
+    TCDiff(valve_tmpr,1,mV2_5,TC_DIFF,TC_TYPE,panel_tmpr,1,0,250,1,0)
+  NextScan
+  
+EndProg
